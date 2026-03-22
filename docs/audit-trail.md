@@ -33,6 +33,8 @@ All commits are on the `main` branch, in chronological order:
 | `0aaec1a` | 2026-03-22 01:49 | feat: add omopy.vis module (Phase 3C — visOmopResults equivalent) |
 | `78eaf52` | 2026-03-22 01:53 | docs: complete documentation with vis module reference and user guide |
 | `9bdc436` | 2026-03-22 02:05 | docs: add rewrite roadmap and audit trail |
+| `249744e` | 2026-03-22 | feat: add omopy.characteristics module (Phase 4A — CohortCharacteristics equivalent) |
+| `5cc4faf` | 2026-03-22 | feat: add omopy.incidence module (Phase 4B — IncidencePrevalence equivalent) |
 
 ---
 
@@ -443,6 +445,108 @@ The core of the module is an internal aggregation engine in `_summarise.py`:
 
 ---
 
+## Phase 4B: Incidence (IncidencePrevalence equivalent)
+
+### What was built
+
+The `omopy.incidence` module (6 source files, ~2,200 lines) provides
+incidence and prevalence estimation — the Python equivalent of the R
+`IncidencePrevalence` package.
+
+### Source files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `_denominator.py` | ~580 | Denominator cohort generation with age/sex/observation filtering and attrition |
+| `_estimate.py` | ~670 | Incidence and prevalence estimation with interval engine and CIs |
+| `_result.py` | ~160 | Result conversion from SummarisedResult to tidy DataFrames |
+| `_table.py` | ~280 | 4 table functions + 2 options functions (wrappers around `vis_omop_table()`) |
+| `_plot.py` | ~300 | 4 plot functions + 2 grouping helpers (wrappers around vis plots) |
+| `_mock.py` | ~210 | Mock CDM generation and benchmarking |
+
+### Public API (21 exports)
+
+- **2 denominator functions:** `generate_denominator_cohort_set`,
+  `generate_target_denominator_cohort_set`
+- **3 estimation functions:** `estimate_incidence`, `estimate_point_prevalence`,
+  `estimate_period_prevalence`
+- **2 result conversion:** `as_incidence_result`, `as_prevalence_result`
+- **6 table functions:** `table_incidence`, `table_prevalence`,
+  `table_incidence_attrition`, `table_prevalence_attrition`,
+  `options_table_incidence`, `options_table_prevalence`
+- **4 plot functions:** `plot_incidence`, `plot_prevalence`,
+  `plot_incidence_population`, `plot_prevalence_population`
+- **2 grouping helpers:** `available_incidence_grouping`, `available_prevalence_grouping`
+- **2 utilities:** `mock_incidence_prevalence`, `benchmark_incidence_prevalence`
+
+### Internal algorithms
+
+**Denominator generation** (`_denominator.py`):
+
+- Starts from `observation_period` table, clips to study window
+- Applies sex filter, prior observation requirement
+- Age restriction: clips cohort entry to when person enters age range,
+  exits when person leaves age range (date arithmetic on year_of_birth)
+- Generates one cohort definition per age/sex stratum combination
+- Full attrition tracking: records persons excluded at each step
+
+**Calendar interval engine** (`_estimate.py`):
+
+- Generates intervals for weeks/months/quarters/years/overall
+- Complete database intervals: only includes intervals where the earliest
+  denominator start <= interval start AND latest denominator end >= interval end
+- Intersects person-time with intervals to compute days at risk
+
+**Incidence estimation:**
+
+- Person-years = days at risk / 365.25
+- Poisson exact CI: `lower = chi2.ppf(alpha/2, 2*events) / (2*person_years)`
+- Rate per 100,000 person-years
+
+**Prevalence estimation:**
+
+- Point prevalence: proportion with active outcome at a specific time point
+- Period prevalence: proportion with any active outcome during interval
+- Wilson score CI: `centre = (x + z^2/2) / (n + z^2)`, interval uses
+  `z * sqrt(p(1-p)/n + z^2/4n^2) / (1 + z^2/n)`
+
+**Outcome washout:** If `outcome_washout == inf` and `repeating_events == False`,
+only the first event per person counts. With finite washout, a person can
+re-enter the at-risk pool after the washout period elapses.
+
+### Tests: 86 passing (79 unit + 7 integration)
+
+- Unit tests use mock `CdmReference` objects with in-memory tables
+- Integration tests generate denominator cohorts and estimate incidence/prevalence
+  from the Synthea database
+
+### Key design decisions
+
+1. **scipy for CIs.** `scipy.stats.chi2` for Poisson exact CIs (incidence),
+   `scipy.stats.norm` for Wilson score CIs (prevalence). Added `scipy>=1.15.0`
+   to `pyproject.toml` dependencies.
+
+2. **Calendar interval engine shared.** All three estimation functions share
+   the same interval generation and person-time calculation code.
+
+3. **Delegate to `omopy.vis` for presentation.** Table and plot functions are
+   thin wrappers with epidemiological defaults.
+
+4. **Attrition as first-class output.** The denominator CohortTable carries
+   full attrition metadata showing persons excluded at each filtering step.
+
+### Problems encountered
+
+1. **Wilson CI floating point precision.** `_wilson_ci(0, 100)` returns a
+   lower bound of ~3.5e-18, not exactly 0.0. Tests use
+   `assert lower < 1e-10` instead of `assert lower == 0.0`.
+
+2. **Polars `dt.month()` returns i8.** When computing age-based date
+   offsets, month arithmetic overflows int8. Fixed by casting to Int64
+   before multiplication.
+
+---
+
 ## Codebase Statistics
 
 ### Source code
@@ -455,8 +559,9 @@ The core of the module is an internal aggregation engine in `_summarise.py`:
 | `omopy.codelist` | 8 | 1,400 |
 | `omopy.vis` | 6 | 1,200 |
 | `omopy.characteristics` | 4 | 2,450 |
+| `omopy.incidence` | 6 | 2,200 |
 | `omopy.__init__` | 1 | 46 |
-| **Total** | **60** | **~18,400** |
+| **Total** | **66** | **~20,600** |
 
 ### Tests
 
@@ -468,10 +573,11 @@ The core of the module is an internal aggregation engine in `_summarise.py`:
 | `tests/codelist/` | 7 | 1,200 | 122 |
 | `tests/vis/` | 5 | 900 | 115 |
 | `tests/characteristics/` | 1 | ~1,200 | 73 |
+| `tests/incidence/` | 1 | ~1,400 | 86 |
 | `tests/conftest.py` | 1 | 41 | — |
-| **Total** | **45** | **~11,000** | **963** |
+| **Total** | **46** | **~12,400** | **1046** |
 
-### Public API: 148 exports total
+### Public API: 169 exports total
 
 - `omopy.generics`: 39 (10 classes, 5 enums, 1 type alias, 8 constants, 15 functions)
 - `omopy.connector`: 23 (2 classes, 1 type alias, 20 functions)
@@ -479,6 +585,7 @@ The core of the module is an internal aggregation engine in `_summarise.py`:
 - `omopy.codelist`: 14 (14 functions)
 - `omopy.vis`: 19 (2 classes, 15 functions, 2 factory functions)
 - `omopy.characteristics`: 23 (23 functions)
+- `omopy.incidence`: 21 (21 functions)
 
 ### Dependencies
 
@@ -495,6 +602,7 @@ Core runtime dependencies:
 | `pyarrow` | >= 23.0.1 | Arrow interchange format |
 | `great-tables` | >= 0.21.0 | Table rendering |
 | `plotly` | >= 6.6.0 | Plot rendering |
+| `scipy` | >= 1.15.0 | Statistical confidence intervals |
 
 ---
 
@@ -522,5 +630,5 @@ uv run mypy src/omopy
 ## What Comes Next
 
 See [Roadmap](roadmap.md) for the detailed plan covering the remaining
-7 DARWIN-EU packages to be implemented as OMOPy modules.
-Next up: Phase 4B (`omopy.incidence` — IncidencePrevalence).
+6 DARWIN-EU packages to be implemented as OMOPy modules.
+Next up: Phase 5A (`omopy.drug` — DrugUtilisation).

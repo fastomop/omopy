@@ -17,7 +17,7 @@ classifies each one, and lays out a phased plan for incorporating them into the
 | 4 | **CodelistGenerator** | Core R package | ~14 | **Done** | `omopy.codelist` |
 | 5 | **visOmopResults** | Core R package | ~19 | **Done** | `omopy.vis` |
 | 6 | **CohortCharacteristics** | Analytics R package | ~36 | **Done** | `omopy.characteristics` |
-| 7 | **IncidencePrevalence** | Analytics R package | ~29 | Planned | `omopy.incidence` |
+| 7 | **IncidencePrevalence** | Analytics R package | ~29 | **Done** | `omopy.incidence` |
 | 8 | **DrugUtilisation** | Analytics R package | ~57 | Planned | `omopy.drug` |
 | 9 | **CohortSurvival** | Analytics R package | ~21 | Planned | `omopy.survival` |
 | 10 | **TreatmentPatterns** | Analytics R package | ~10 | Planned | `omopy.treatment` |
@@ -36,8 +36,8 @@ classifies each one, and lays out a phased plan for incorporating them into the
 
 ### Classification Summary
 
-- **Already implemented (6):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics
-- **Candidates for rewrite (7):** IncidencePrevalence, DrugUtilisation, CohortSurvival, TreatmentPatterns, DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
+- **Already implemented (7):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence
+- **Candidates for rewrite (6):** DrugUtilisation, CohortSurvival, TreatmentPatterns, DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
 - **Low priority / partial (3):** DashboardExport, CdmOnboarding, DarwinBenchmark
 - **Out of scope (6):** DarwinShinyModules, ReportGenerator, execution-engine, TestReleaseGitAction, .github, EunomiaDatasets (data only, consumed directly)
 
@@ -107,7 +107,7 @@ Layer 6 (Testing / Tooling):
 
 ### Phase 0-3: COMPLETE ✅
 
-Already implemented with 890 tests:
+Already implemented with 960 tests:
 
 | Phase | Module | R Equivalent | Tests |
 |-------|--------|-------------|-------|
@@ -138,35 +138,27 @@ Already implemented with 890 tests:
 
 ---
 
-### Phase 4B: `omopy.incidence` (IncidencePrevalence) — NOT STARTED
+### Phase 4B: `omopy.incidence` — COMPLETE ✅
 
-**R package:** 29 exports (5 core estimation, 8 table/plot, 4 result handling, 12 utilities)
+**R package:** IncidencePrevalence (21 exports: 2 denominator, 3 estimation, 2 result, 6 table, 4 plot, 2 grouping, 2 utility)
 
-**Scope:**
+**Implemented:**
 
-- **Core estimation (5):**
-    - `generate_denominator_cohort_set()` — creates denominator cohorts stratified by age/sex/observation
-    - `generate_target_denominator_cohort_set()` — variant with target cohort
-    - `estimate_incidence()` — computes incidence rates with CIs
-    - `estimate_point_prevalence()` — prevalence at specific time points
-    - `estimate_period_prevalence()` — prevalence over intervals
+- 2 denominator functions: `generate_denominator_cohort_set`, `generate_target_denominator_cohort_set`
+- 3 estimation functions: `estimate_incidence`, `estimate_point_prevalence`, `estimate_period_prevalence`
+- 2 result conversion functions: `as_incidence_result`, `as_prevalence_result`
+- 6 table functions: wrappers around `vis_omop_table()` with epidemiological defaults
+- 4 plot functions: wrappers around `scatter_plot()` and `bar_plot()`
+- 2 grouping helpers: `available_incidence_grouping`, `available_prevalence_grouping`
+- 2 utility functions: `mock_incidence_prevalence`, `benchmark_incidence_prevalence`
+- Full calendar interval engine (weeks/months/quarters/years/overall)
+- Poisson exact CI for incidence, Wilson score CI for prevalence (via scipy)
+- Outcome washout logic, censoring, complete database intervals
+- Attrition tracking through denominator generation
 
-- **Result handling (4):** Validation/coercion/querying of result objects.
+**Tests: 86** (79 unit + 7 integration against Synthea database)
 
-- **Table/plot (8):** Wrappers around `omopy.vis` with epidemiological defaults.
-
-- **Utilities (12):** Mock data, benchmarks, re-exports.
-
-**Estimated effort:** Large. The denominator generation and estimation logic are
-computationally non-trivial — they involve complex date arithmetic, stratification,
-washout periods, and confidence interval computation. The epidemiological
-statistics (incidence rates, prevalence proportions) need careful implementation.
-
-**Dependencies satisfied:** All (generics, connector, profiles).
-
-**Key Python library:** May use `scipy.stats` for confidence intervals.
-
-**Estimated size:** ~3,000-4,000 lines of source, ~200-300 tests.
+**Source: ~2,200 lines** across 6 files (`_denominator.py`, `_estimate.py`, `_result.py`, `_table.py`, `_plot.py`, `_mock.py`)
 
 ---
 
@@ -346,16 +338,16 @@ These repositories are out of scope for the monorepo:
 | 3B | `omopy.codelist` | 1,400 | 122 | **Done** |
 | 3C | `omopy.vis` | 1,200 | 115 | **Done** |
 | 4A | `omopy.characteristics` | 2,450 | 73 | **Done** |
-| 4B | `omopy.incidence` | 3,000-4,000 | 200-300 | Planned |
+| 4B | `omopy.incidence` | 2,200 | 86 | **Done** |
 | 5A | `omopy.drug` | 4,000-6,000 | 250-350 | Planned |
 | 5B | `omopy.survival` | 1,500-2,500 | 100-150 | Planned |
 | 6A | `omopy.treatment` | 1,500-2,000 | 80-120 | Planned |
 | 6B | `omopy.drug_diagnostics` | 800-1,200 | 60-80 | Planned |
 | 7A | `omopy.pregnancy` | 2,000-3,000 | 120-180 | Planned |
 | 8A | `omopy.testing` | 800-1,200 | 50-80 | Planned |
-| | **Total (done)** | **~18,350** | **963** | |
-| | **Total (planned)** | **~13,600-19,900** | **~860-1,260** | |
-| | **Grand total** | **~31,950-38,250** | **~1,823-2,223** | |
+| | **Total (done)** | **~20,550** | **1046** | |
+| | **Total (planned)** | **~10,600-16,900** | **~660-960** | |
+| | **Grand total** | **~31,150-37,450** | **~1,706-2,006** | |
 
 ---
 
@@ -364,10 +356,10 @@ These repositories are out of scope for the monorepo:
 ```
 Now ─────────────────────────────────────────────────────────────────►
 
-Phase 4A: characteristics  ──┐
-                              ├──► Phase 5A: drug ──► Phase 6B: drug_diagnostics
-Phase 4B: incidence ─────────┤
-                              ├──► Phase 7A: pregnancy
+Phase 4A: characteristics ✅──┐
+                               ├──► Phase 5A: drug ──► Phase 6B: drug_diagnostics
+Phase 4B: incidence ✅────────┤
+                               ├──► Phase 7A: pregnancy
 Phase 5B: survival ──────────┘
 
 Phase 6A: treatment (independent, can start anytime after Phase 2)

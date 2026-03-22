@@ -28,6 +28,7 @@ dependencies = [
     "sqlalchemy-utils>=0.42.1",
     "great-tables>=0.21.0",
     "plotly>=6.6.0",
+    "scipy>=1.15.0",
 ]
 
 [project.optional-dependencies]

@@ -1297,6 +1297,7 @@ dependencies = [
     { name = "pyarrow" },
     { name = "pyarrow-hotfix" },
     { name = "pydantic" },
+    { name = "scipy" },
     { name = "sqlalchemy" },
     { name = "sqlalchemy-utils" },
 ]
@@ -1417,6 +1418,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "scipy", specifier = ">=1.15.0" },
     { name = "snowflake-sqlalchemy", marker = "extra == 'snowflake'", specifier = ">=1.5" },
     { name = "sqlalchemy", specifier = ">=2.0.48" },
     { name = "sqlalchemy", marker = "extra == 'bigquery'", specifier = ">=2.0" },
