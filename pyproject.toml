@@ -26,6 +26,8 @@ dependencies = [
     "pyarrow-hotfix>=0.7",
     "sqlalchemy>=2.0.48",
     "sqlalchemy-utils>=0.42.1",
+    "great-tables>=0.21.0",
+    "plotly>=6.6.0",
 ]
 
 [project.optional-dependencies]
