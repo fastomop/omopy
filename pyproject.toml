@@ -21,6 +21,7 @@ dependencies = [
     "ibis-framework>=12.0.0",
     "pandas>=2.3.3",
     "polars>=1.0",
+    "pydantic>=2.12",
     "pyarrow>=23.0.1",
     "pyarrow-hotfix>=0.7",
     "sqlalchemy>=2.0.48",
@@ -47,6 +48,17 @@ all = [
 ]
 
 # Development
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "hypothesis>=6.100",
+    "syrupy>=4.6",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "pre-commit>=3.7",
+]
+
+[dependency-groups]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
