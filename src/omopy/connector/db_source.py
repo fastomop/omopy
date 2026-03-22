@@ -45,8 +45,9 @@ class DbSource:
     >>> import ibis
     >>> con = ibis.duckdb.connect("synthea.duckdb", read_only=True)
     >>> source = DbSource(con, cdm_schema="base")
-    >>> source.list_tables()[:3]
-    ['care_site', 'cdm_source', 'concept']
+    >>> tables = source.list_tables()
+    >>> "person" in tables
+    True
     """
 
     __slots__ = (

@@ -1,0 +1,90 @@
+site_name: OMOPy
+site_description: Pythonic, type-safe interface for OMOP CDM databases
+site_url: https://omopy.readthedocs.io/
+repo_url: https://github.com/darwin-eu/omopy
+repo_name: darwin-eu/omopy
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - content.code.copy
+    - content.code.annotate
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: false
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            docstring_style: google
+            merge_init_into_class: true
+            show_signature_annotations: true
+            separate_signature: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.snippets
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: guide/installation.md
+      - Quickstart: guide/quickstart.md
+      - Architecture: guide/architecture.md
+  - User Guide:
+      - Working with CDM References: guide/cdm-reference.md
+      - Cohort Generation: guide/cohort-generation.md
+      - Patient Profiles: guide/patient-profiles.md
+      - Codelist Generation: guide/codelist-generation.md
+  - API Reference:
+      - omopy.generics: reference/generics.md
+      - omopy.connector: reference/connector.md
+      - omopy.profiles: reference/profiles.md
+      - omopy.codelist: reference/codelist.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/darwin-eu/omopy

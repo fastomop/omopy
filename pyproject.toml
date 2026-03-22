@@ -68,6 +68,11 @@ dev = [
     "mypy>=1.10",
     "pre-commit>=3.7",
 ]
+docs = [
+    "mkdocs-material>=9.7.6",
+    "mkdocstrings>=1.0.3",
+    "mkdocstrings-python>=2.0.3",
+]
 
 [build-system]
 requires = ["hatchling"]
