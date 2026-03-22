@@ -9,7 +9,7 @@ concept entries with include/exclude/descendants/mapped flags.
 
 from __future__ import annotations
 
-import dataclasses
+from pydantic import BaseModel, ConfigDict
 
 __all__ = ["Codelist", "ConceptSetExpression", "ConceptEntry"]
 
@@ -19,8 +19,7 @@ __all__ = ["Codelist", "ConceptSetExpression", "ConceptEntry"]
 # ---------------------------------------------------------------------------
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
-class ConceptEntry:
+class ConceptEntry(BaseModel):
     """A single concept within a concept set expression.
 
     Matches the ATLAS JSON format::
@@ -32,6 +31,8 @@ class ConceptEntry:
           "includeMapped": false
         }
     """
+
+    model_config = ConfigDict(frozen=True)
 
     concept_id: int
     concept_name: str = ""

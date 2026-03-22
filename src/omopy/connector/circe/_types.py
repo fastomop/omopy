@@ -1,4 +1,4 @@
-"""Dataclasses representing a parsed CIRCE cohort expression.
+"""Pydantic models representing a parsed CIRCE cohort expression.
 
 These are pure data containers — no SQL generation logic here.
 All field names are Pythonic (snake_case) regardless of the original JSON.
@@ -6,9 +6,9 @@ All field names are Pythonic (snake_case) regardless of the original JSON.
 
 from __future__ import annotations
 
-import dataclasses
-from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field
 
 __all__ = [
     "CohortExpression",
@@ -43,9 +43,10 @@ __all__ = [
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class Concept:
+class Concept(BaseModel):
     """A single OMOP concept."""
+
+    model_config = ConfigDict(frozen=True)
 
     concept_id: int
     concept_name: str = ""
@@ -57,9 +58,10 @@ class Concept:
     concept_class_id: str = ""
 
 
-@dataclass(frozen=True, slots=True)
-class ConceptItem:
+class ConceptItem(BaseModel):
     """A concept with inclusion/exclusion flags."""
+
+    model_config = ConfigDict(frozen=True)
 
     concept: Concept
     include_descendants: bool = False
@@ -67,9 +69,10 @@ class ConceptItem:
     is_excluded: bool = False
 
 
-@dataclass(frozen=True, slots=True)
-class ConceptSet:
+class ConceptSet(BaseModel):
     """A named concept set (reusable across criteria)."""
+
+    model_config = ConfigDict(frozen=True)
 
     id: int
     name: str
@@ -81,33 +84,37 @@ class ConceptSet:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class NumericRange:
+class NumericRange(BaseModel):
     """Numeric comparison filter (e.g., Age, Quantity, ValueAsNumber)."""
+
+    model_config = ConfigDict(frozen=True)
 
     value: float
     op: str  # "gt", "gte", "lt", "lte", "eq", "neq", "bt", "!bt"
     extent: float | None = None  # For "bt" (between) and "!bt" (not between)
 
 
-@dataclass(frozen=True, slots=True)
-class TextFilter:
+class TextFilter(BaseModel):
     """Text comparison filter (e.g., StopReason)."""
+
+    model_config = ConfigDict(frozen=True)
 
     text: str
     op: str  # "contains", "startsWith", "endsWith", "eq"
 
 
-@dataclass(frozen=True, slots=True)
-class ConceptFilter:
+class ConceptFilter(BaseModel):
     """Filter by a list of concept IDs."""
+
+    model_config = ConfigDict(frozen=True)
 
     concept_ids: tuple[int, ...] = ()
 
 
-@dataclass(frozen=True, slots=True)
-class DateAdjustment:
+class DateAdjustment(BaseModel):
     """Override which DB columns map to logical start/end dates."""
+
+    model_config = ConfigDict(frozen=True)
 
     start_with: str = "START_DATE"  # "START_DATE" or "END_DATE"
     end_with: str = "END_DATE"  # "START_DATE" or "END_DATE"
@@ -138,12 +145,13 @@ DomainType = Literal[
 ]
 
 
-@dataclass(frozen=True, slots=True)
-class DomainCriteria:
+class DomainCriteria(BaseModel):
     """Criteria for a specific clinical domain.
 
     This represents the contents of e.g. ``{"ConditionOccurrence": {...}}``.
     """
+
+    model_config = ConfigDict(frozen=True)
 
     domain_type: DomainType
     codeset_id: int | None = None
@@ -200,27 +208,30 @@ class DomainCriteria:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class WindowEndpoint:
+class WindowEndpoint(BaseModel):
     """One end of a temporal window (relative to index event)."""
+
+    model_config = ConfigDict(frozen=True)
 
     days: int | None = None  # None = unbounded
     coeff: int = 1  # -1 = before index, 1 = after index
 
 
-@dataclass(frozen=True, slots=True)
-class TemporalWindow:
+class TemporalWindow(BaseModel):
     """A temporal window defining when correlated events can occur."""
 
-    start: WindowEndpoint = dataclasses.field(default_factory=WindowEndpoint)
-    end: WindowEndpoint = dataclasses.field(default_factory=WindowEndpoint)
+    model_config = ConfigDict(frozen=True)
+
+    start: WindowEndpoint = Field(default_factory=WindowEndpoint)
+    end: WindowEndpoint = Field(default_factory=WindowEndpoint)
     use_index_end: bool = False  # Reference index event's end_date
     use_event_end: bool = False  # Reference correlated event's end_date
 
 
-@dataclass(frozen=True, slots=True)
-class Occurrence:
+class Occurrence(BaseModel):
     """Occurrence count requirement for correlated criteria."""
+
+    model_config = ConfigDict(frozen=True)
 
     type: int  # 0=Exactly, 1=AtMost, 2=AtLeast
     count: int = 1
@@ -232,9 +243,10 @@ class Occurrence:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class CorrelatedCriteria:
+class CorrelatedCriteria(BaseModel):
     """A single correlated criterion within an inclusion rule."""
+
+    model_config = ConfigDict(frozen=True)
 
     criteria: DomainCriteria
     start_window: TemporalWindow | None = None
@@ -249,9 +261,10 @@ class CorrelatedCriteria:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class DemographicCriteria:
+class DemographicCriteria(BaseModel):
     """Demographic filter (age, gender, race, ethnicity)."""
+
+    model_config = ConfigDict(frozen=True)
 
     age: NumericRange | None = None
     gender: ConceptFilter | None = None
@@ -266,9 +279,10 @@ class DemographicCriteria:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class CriteriaGroup:
+class CriteriaGroup(BaseModel):
     """A group of criteria with a combining type (ALL, ANY, AT_LEAST, AT_MOST)."""
+
+    model_config = ConfigDict(frozen=True)
 
     type: str = "ALL"  # "ALL", "ANY", "AT_LEAST", "AT_MOST"
     count: int = 0  # Threshold for AT_LEAST/AT_MOST
@@ -282,9 +296,10 @@ class CriteriaGroup:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class InclusionRule:
+class InclusionRule(BaseModel):
     """A named inclusion rule with a criteria group expression."""
+
+    model_config = ConfigDict(frozen=True)
 
     name: str
     expression: CriteriaGroup
@@ -295,9 +310,10 @@ class InclusionRule:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class CriteriaLimit:
+class CriteriaLimit(BaseModel):
     """Limit on qualifying events: First, Last, or All."""
+
+    model_config = ConfigDict(frozen=True)
 
     type: str = "All"  # "All", "First", "Last"
 
@@ -307,9 +323,10 @@ class CriteriaLimit:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class ObservationWindow:
+class ObservationWindow(BaseModel):
     """Required observation before/after index event."""
+
+    model_config = ConfigDict(frozen=True)
 
     prior_days: int = 0
     post_days: int = 0
@@ -320,15 +337,16 @@ class ObservationWindow:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class PrimaryCriteria:
+class PrimaryCriteria(BaseModel):
     """Primary criteria defining initial qualifying events."""
 
+    model_config = ConfigDict(frozen=True)
+
     criteria_list: tuple[DomainCriteria, ...] = ()
-    observation_window: ObservationWindow = dataclasses.field(
+    observation_window: ObservationWindow = Field(
         default_factory=ObservationWindow
     )
-    primary_limit: CriteriaLimit = dataclasses.field(
+    primary_limit: CriteriaLimit = Field(
         default_factory=CriteriaLimit
     )
 
@@ -338,17 +356,19 @@ class PrimaryCriteria:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class DateOffsetStrategy:
+class DateOffsetStrategy(BaseModel):
     """End date = event date field + offset days."""
+
+    model_config = ConfigDict(frozen=True)
 
     date_field: str = "StartDate"  # "StartDate" or "EndDate"
     offset: int = 0
 
 
-@dataclass(frozen=True, slots=True)
-class CustomEraStrategy:
+class CustomEraStrategy(BaseModel):
     """End date based on drug exposure eras."""
+
+    model_config = ConfigDict(frozen=True)
 
     drug_codeset_id: int = 0
     gap_days: int = 0
@@ -356,9 +376,10 @@ class CustomEraStrategy:
     days_supply_override: int | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class EndStrategy:
+class EndStrategy(BaseModel):
     """Cohort exit strategy. Only one of date_offset or custom_era is set."""
+
+    model_config = ConfigDict(frozen=True)
 
     date_offset: DateOffsetStrategy | None = None
     custom_era: CustomEraStrategy | None = None
@@ -369,17 +390,19 @@ class EndStrategy:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class CollapseSettings:
+class CollapseSettings(BaseModel):
     """Settings for collapsing overlapping cohort periods."""
+
+    model_config = ConfigDict(frozen=True)
 
     collapse_type: str = "ERA"
     era_pad: int = 0
 
 
-@dataclass(frozen=True, slots=True)
-class CensorWindow:
+class CensorWindow(BaseModel):
     """Hard date boundaries for the cohort."""
+
+    model_config = ConfigDict(frozen=True)
 
     start_date: str | None = None  # ISO date string "YYYY-MM-DD"
     end_date: str | None = None  # ISO date string "YYYY-MM-DD"
@@ -390,27 +413,34 @@ class CensorWindow:
 # ---------------------------------------------------------------------------
 
 
-@dataclass(frozen=True, slots=True)
-class CohortExpression:
+class CohortExpression(BaseModel):
     """A complete CIRCE cohort definition."""
 
+    model_config = ConfigDict(frozen=True)
+
     concept_sets: tuple[ConceptSet, ...] = ()
-    primary_criteria: PrimaryCriteria = dataclasses.field(
+    primary_criteria: PrimaryCriteria = Field(
         default_factory=PrimaryCriteria
     )
     additional_criteria: CriteriaGroup | None = None
-    qualified_limit: CriteriaLimit = dataclasses.field(
+    qualified_limit: CriteriaLimit = Field(
         default_factory=CriteriaLimit
     )
     inclusion_rules: tuple[InclusionRule, ...] = ()
-    expression_limit: CriteriaLimit = dataclasses.field(
+    expression_limit: CriteriaLimit = Field(
         default_factory=CriteriaLimit
     )
     end_strategy: EndStrategy | None = None
     censoring_criteria: tuple[DomainCriteria, ...] = ()
-    collapse_settings: CollapseSettings = dataclasses.field(
+    collapse_settings: CollapseSettings = Field(
         default_factory=CollapseSettings
     )
-    censor_window: CensorWindow = dataclasses.field(
+    censor_window: CensorWindow = Field(
         default_factory=CensorWindow
     )
+
+
+# Rebuild forward references for recursive models
+DomainCriteria.model_rebuild()
+CriteriaGroup.model_rebuild()
+CohortExpression.model_rebuild()

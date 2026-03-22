@@ -8,20 +8,21 @@ and CDM source information.  Equivalent to R's ``snapshot()``.
 from __future__ import annotations
 
 import datetime
-from dataclasses import dataclass
 from typing import Any
 
 import ibis
 import polars as pl
+from pydantic import BaseModel, ConfigDict
 
 from omopy.generics.cdm_reference import CdmReference
 
 __all__ = ["snapshot", "CdmSnapshot"]
 
 
-@dataclass(frozen=True, slots=True)
-class CdmSnapshot:
+class CdmSnapshot(BaseModel):
     """Immutable container for CDM snapshot metadata."""
+
+    model_config = ConfigDict(frozen=True)
 
     cdm_name: str | None
     cdm_source_name: str

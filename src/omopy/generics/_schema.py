@@ -1,20 +1,22 @@
 """CDM schema specifications loaded from CSV data files.
 
 This module provides:
-- ``FieldSpec``: Frozen dataclass for a single CDM field definition.
-- ``TableSpec``: Frozen dataclass for a CDM table-level definition.
-- ``ResultFieldSpec``: Frozen dataclass for a summarised-result field definition.
+- ``FieldSpec``: Frozen Pydantic model for a single CDM field definition.
+- ``TableSpec``: Frozen Pydantic model for a CDM table-level definition.
+- ``ResultFieldSpec``: Frozen Pydantic model for a summarised-result field definition.
 - ``CdmSchema``: Main registry that lazily loads and caches specs for v5.3 / v5.4.
 """
 
 from __future__ import annotations
 
 import csv
-import dataclasses
 import functools
 import re
+import warnings
 from collections.abc import Sequence
 from importlib import resources
+
+from pydantic import BaseModel, ConfigDict, model_validator
 
 from omopy.generics._types import (
     CdmDataType,
@@ -34,13 +36,14 @@ __all__ = [
 
 
 # ---------------------------------------------------------------------------
-# Frozen dataclasses for spec rows
+# Frozen Pydantic models for spec rows
 # ---------------------------------------------------------------------------
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
-class FieldSpec:
+class FieldSpec(BaseModel):
     """A single field in a CDM table (from ``fieldsTables``)."""
+
+    model_config = ConfigDict(frozen=True)
 
     cdm_table_name: str
     cdm_field_name: str
@@ -62,9 +65,19 @@ class FieldSpec:
         return None
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
-class TableSpec:
+# Suppress Pydantic warning about 'schema' field shadowing the deprecated
+# BaseModel.schema() classmethod — we never call it as a classmethod.
+warnings.filterwarnings(
+    "ignore",
+    message='Field name "schema" in "TableSpec"',
+    category=UserWarning,
+)
+
+
+class TableSpec(BaseModel):
     """Table-level metadata from the CDM spec CSVs."""
+
+    model_config = ConfigDict(frozen=True, protected_namespaces=())
 
     cdm_table_name: str
     schema: TableSchema
@@ -76,10 +89,12 @@ class TableSpec:
     group_derived: bool = False
     group_default: bool = False
 
-    def __post_init__(self) -> None:
+    @model_validator(mode="after")
+    def _normalise_na(self) -> TableSpec:
         # Normalise "NA" strings to None for concept_prefix
         if isinstance(self.concept_prefix, str) and self.concept_prefix.upper() == "NA":
             object.__setattr__(self, "concept_prefix", None)
+        return self
 
     def in_group(self, group: TableGroup) -> bool:
         mapping = {
@@ -92,9 +107,10 @@ class TableSpec:
         return mapping.get(group, False)
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
-class ResultFieldSpec:
+class ResultFieldSpec(BaseModel):
     """Field specification for a summarised/compared result."""
+
+    model_config = ConfigDict(frozen=True)
 
     result: str
     result_field_name: str
@@ -104,9 +120,10 @@ class ResultFieldSpec:
     pair: str | None = None
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
-class _FieldTableColumn:
+class _FieldTableColumn(BaseModel):
     """Mapping of clinical tables to their semantic column roles."""
+
+    model_config = ConfigDict(frozen=True)
 
     table_name: str
     start_date: str | None = None

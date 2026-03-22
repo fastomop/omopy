@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import hashlib
 import time
-from dataclasses import dataclass
 
 import polars as pl
+from pydantic import BaseModel, ConfigDict
 
 from omopy.generics.cdm_reference import CdmReference
 
@@ -45,9 +45,10 @@ _TABLE_KEY_COLUMNS: dict[str, str | None] = {
 }
 
 
-@dataclass(frozen=True, slots=True)
-class TableHash:
+class TableHash(BaseModel):
     """Hash result for a single CDM table."""
+
+    model_config = ConfigDict(frozen=True)
 
     cdm_name: str | None
     table_name: str
