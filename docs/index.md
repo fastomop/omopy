@@ -24,6 +24,7 @@ structures via [Pydantic](https://docs.pydantic.dev/) and
 | [`omopy.vis`](reference/vis.md) | visOmopResults | Format, tabulate, and plot summarised results |
 | [`omopy.characteristics`](reference/characteristics.md) | CohortCharacteristics | Cohort characterization: summarise, tabulate, plot |
 | [`omopy.incidence`](reference/incidence.md) | IncidencePrevalence | Incidence rates and prevalence proportions |
+| [`omopy.drug`](reference/drug.md) | DrugUtilisation | Drug cohort generation, utilisation metrics, dose analysis |
 
 ## Quick Example
 
@@ -71,5 +72,6 @@ print(df)
 | Phase 3C | `omopy.vis` | Complete (115 tests) |
 | Phase 4A | `omopy.characteristics` | Complete (73 tests) |
 | Phase 4B | `omopy.incidence` | Complete (86 tests) |
+| Phase 5A | `omopy.drug` | Complete (101 tests) |
 
-**Total: 1046 tests, all passing.**
+**Total: 1147 tests, all passing.**

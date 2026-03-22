@@ -81,6 +81,7 @@ nav:
       - Visualization: guide/visualization.md
       - Cohort Characteristics: guide/cohort-characteristics.md
       - Incidence & Prevalence: guide/incidence-prevalence.md
+      - Drug Utilisation: guide/drug-utilisation.md
   - API Reference:
       - omopy.generics: reference/generics.md
       - omopy.connector: reference/connector.md
@@ -89,6 +90,7 @@ nav:
       - omopy.vis: reference/vis.md
       - omopy.characteristics: reference/characteristics.md
       - omopy.incidence: reference/incidence.md
+      - omopy.drug: reference/drug.md
   - Project:
       - Rewrite Roadmap: roadmap.md
       - Audit Trail: audit-trail.md

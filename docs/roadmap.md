@@ -18,7 +18,7 @@ classifies each one, and lays out a phased plan for incorporating them into the
 | 5 | **visOmopResults** | Core R package | ~19 | **Done** | `omopy.vis` |
 | 6 | **CohortCharacteristics** | Analytics R package | ~36 | **Done** | `omopy.characteristics` |
 | 7 | **IncidencePrevalence** | Analytics R package | ~29 | **Done** | `omopy.incidence` |
-| 8 | **DrugUtilisation** | Analytics R package | ~57 | Planned | `omopy.drug` |
+| 8 | **DrugUtilisation** | Analytics R package | ~57 | **Done** | `omopy.drug` |
 | 9 | **CohortSurvival** | Analytics R package | ~21 | Planned | `omopy.survival` |
 | 10 | **TreatmentPatterns** | Analytics R package | ~10 | Planned | `omopy.treatment` |
 | 11 | **DrugExposureDiagnostics** | Analytics R package | ~7 | Planned | `omopy.drug_diagnostics` |
@@ -36,8 +36,8 @@ classifies each one, and lays out a phased plan for incorporating them into the
 
 ### Classification Summary
 
-- **Already implemented (7):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence
-- **Candidates for rewrite (6):** DrugUtilisation, CohortSurvival, TreatmentPatterns, DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
+- **Already implemented (8):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence, DrugUtilisation
+- **Candidates for rewrite (5):** CohortSurvival, TreatmentPatterns, DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
 - **Low priority / partial (3):** DashboardExport, CdmOnboarding, DarwinBenchmark
 - **Out of scope (6):** DarwinShinyModules, ReportGenerator, execution-engine, TestReleaseGitAction, .github, EunomiaDatasets (data only, consumed directly)
 
@@ -166,31 +166,27 @@ Already implemented with 960 tests:
 
 These packages depend on Layer 4 or are parallel to it.
 
-#### Phase 5A: `omopy.drug` (DrugUtilisation)
+#### Phase 5A: `omopy.drug` (DrugUtilisation) — COMPLETE ✅
 
 **R package:** 57 exports (the largest package in the ecosystem)
 
-**Scope:**
+**Implemented:**
 
-- **Cohort generation (4):** Generate drug cohorts by ingredient, ATC code, or general criteria. Era-fy cohorts (merge nearby records).
-- **Cohort requirements (4):** Filter cohorts by first entry, observation, washout, date range.
-- **Add columns (15):** Compute and add drug utilisation metrics: daily dose, cumulative dose/quantity, days exposed/prescribed, number of eras/exposures, time-to-exposure, indication, drug restart, treatment patterns.
-- **Summarise (6):** Aggregate drug utilisation, indication, PPC adherence, restart/switch, treatment, dose coverage.
-- **Table/plot (11):** Visualisation wrappers.
-- **Utilities (17):** Mock data, benchmarks, dose pattern tables, re-exports.
+- **Cohort generation (5):** `generate_drug_utilisation_cohort_set`, `generate_ingredient_cohort_set`, `generate_atc_cohort_set`, `erafy_cohort`, `cohort_gap_era`
+- **Daily dose (2):** `add_daily_dose`, `pattern_table`
+- **Requirement/filter (4):** `require_is_first_drug_entry`, `require_prior_drug_washout`, `require_observation_before_drug`, `require_drug_in_date_range`
+- **Add drug use metrics (12):** `add_drug_utilisation` (all-in-one), plus 11 individual metric functions for exposures, eras, days, quantities, doses, restart
+- **Add intersect (2):** `add_indication`, `add_treatment`
+- **Summarise (6):** Drug utilisation, indication, treatment, drug restart, dose coverage, proportion of patients covered
+- **Table (6):** Wrappers around `vis_omop_table()` with domain-specific defaults
+- **Plot (5):** Box plots, bar charts, stacked bars, line plots with CI ribbons
+- **Utilities (2):** `mock_drug_utilisation`, `benchmark_drug_utilisation`
+- **Drug strength pattern engine:** 41 patterns, 4 formulas, unit standardization
+- **Era collapsing:** Gaps-and-islands algorithm with configurable gap_era
 
-**Dependencies:** omopgenerics, PatientProfiles, CodelistGenerator (all done).
-CDMConnector (done, soft dep). visOmopResults (done, for table/plot). CohortSurvival (soft dep for some analyses).
+**Tests: 101** (67 unit + 34 integration against Synthea database)
 
-**Estimated effort:** Very large. This is the most complex package. Drug dose
-calculation requires pattern-matching tables and unit conversions. The 15
-"add column" functions each have non-trivial SQL/computation logic.
-
-**Key challenge:** Dose pattern tables for mapping drug_exposure records to
-standardised daily doses. These are based on OMOP vocabulary drug_strength
-lookups and unit conversions.
-
-**Estimated size:** ~4,000-6,000 lines of source, ~250-350 tests.
+**Source: ~5,900 lines** across 12 files
 
 #### Phase 5B: `omopy.survival` (CohortSurvival)
 
@@ -339,15 +335,15 @@ These repositories are out of scope for the monorepo:
 | 3C | `omopy.vis` | 1,200 | 115 | **Done** |
 | 4A | `omopy.characteristics` | 2,450 | 73 | **Done** |
 | 4B | `omopy.incidence` | 2,200 | 86 | **Done** |
-| 5A | `omopy.drug` | 4,000-6,000 | 250-350 | Planned |
+| 5A | `omopy.drug` | 5,900 | 101 | **Done** |
 | 5B | `omopy.survival` | 1,500-2,500 | 100-150 | Planned |
 | 6A | `omopy.treatment` | 1,500-2,000 | 80-120 | Planned |
 | 6B | `omopy.drug_diagnostics` | 800-1,200 | 60-80 | Planned |
 | 7A | `omopy.pregnancy` | 2,000-3,000 | 120-180 | Planned |
 | 8A | `omopy.testing` | 800-1,200 | 50-80 | Planned |
-| | **Total (done)** | **~20,550** | **1046** | |
-| | **Total (planned)** | **~10,600-16,900** | **~660-960** | |
-| | **Grand total** | **~31,150-37,450** | **~1,706-2,006** | |
+| | **Total (done)** | **~26,450** | **1147** | |
+| | **Total (planned)** | **~6,600-10,900** | **~410-610** | |
+| | **Grand total** | **~33,050-37,350** | **~1,557-1,757** | |
 
 ---
 
@@ -357,7 +353,7 @@ These repositories are out of scope for the monorepo:
 Now ─────────────────────────────────────────────────────────────────►
 
 Phase 4A: characteristics ✅──┐
-                               ├──► Phase 5A: drug ──► Phase 6B: drug_diagnostics
+                               ├──► Phase 5A: drug ✅──► Phase 6B: drug_diagnostics
 Phase 4B: incidence ✅────────┤
                                ├──► Phase 7A: pregnancy
 Phase 5B: survival ──────────┘

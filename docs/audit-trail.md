@@ -479,71 +479,132 @@ incidence and prevalence estimation — the Python equivalent of the R
 - **2 grouping helpers:** `available_incidence_grouping`, `available_prevalence_grouping`
 - **2 utilities:** `mock_incidence_prevalence`, `benchmark_incidence_prevalence`
 
-### Internal algorithms
-
-**Denominator generation** (`_denominator.py`):
-
-- Starts from `observation_period` table, clips to study window
-- Applies sex filter, prior observation requirement
-- Age restriction: clips cohort entry to when person enters age range,
-  exits when person leaves age range (date arithmetic on year_of_birth)
-- Generates one cohort definition per age/sex stratum combination
-- Full attrition tracking: records persons excluded at each step
-
-**Calendar interval engine** (`_estimate.py`):
-
-- Generates intervals for weeks/months/quarters/years/overall
-- Complete database intervals: only includes intervals where the earliest
-  denominator start <= interval start AND latest denominator end >= interval end
-- Intersects person-time with intervals to compute days at risk
-
-**Incidence estimation:**
-
-- Person-years = days at risk / 365.25
-- Poisson exact CI: `lower = chi2.ppf(alpha/2, 2*events) / (2*person_years)`
-- Rate per 100,000 person-years
-
-**Prevalence estimation:**
-
-- Point prevalence: proportion with active outcome at a specific time point
-- Period prevalence: proportion with any active outcome during interval
-- Wilson score CI: `centre = (x + z^2/2) / (n + z^2)`, interval uses
-  `z * sqrt(p(1-p)/n + z^2/4n^2) / (1 + z^2/n)`
-
-**Outcome washout:** If `outcome_washout == inf` and `repeating_events == False`,
-only the first event per person counts. With finite washout, a person can
-re-enter the at-risk pool after the washout period elapses.
-
 ### Tests: 86 passing (79 unit + 7 integration)
-
-- Unit tests use mock `CdmReference` objects with in-memory tables
-- Integration tests generate denominator cohorts and estimate incidence/prevalence
-  from the Synthea database
 
 ### Key design decisions
 
 1. **scipy for CIs.** `scipy.stats.chi2` for Poisson exact CIs (incidence),
-   `scipy.stats.norm` for Wilson score CIs (prevalence). Added `scipy>=1.15.0`
-   to `pyproject.toml` dependencies.
+   `scipy.stats.norm` for Wilson score CIs (prevalence).
 
 2. **Calendar interval engine shared.** All three estimation functions share
    the same interval generation and person-time calculation code.
 
-3. **Delegate to `omopy.vis` for presentation.** Table and plot functions are
-   thin wrappers with epidemiological defaults.
+---
 
-4. **Attrition as first-class output.** The denominator CohortTable carries
-   full attrition metadata showing persons excluded at each filtering step.
+## Phase 5A: Drug (DrugUtilisation equivalent)
+
+### What was built
+
+The `omopy.drug` module (12 source files, ~5,900 lines) provides comprehensive
+drug utilisation analysis — the Python equivalent of the R `DrugUtilisation`
+package, which is the largest package in the DARWIN-EU ecosystem with 57 exports.
+
+### Source files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `_data/patterns.py` | ~130 | 41 drug strength patterns, unit constants, formula constants, unit conversion dicts |
+| `_cohort_generation.py` | ~715 | `generate_drug_utilisation_cohort_set`, `generate_ingredient_cohort_set`, `generate_atc_cohort_set`, `erafy_cohort`, `cohort_gap_era` |
+| `_daily_dose.py` | ~470 | `add_daily_dose`, `pattern_table` — drug strength pattern matching and dose calculation |
+| `_require.py` | ~375 | 4 requirement/filter functions with attrition tracking |
+| `_add_drug_use.py` | ~1,695 | `add_drug_utilisation` (all-in-one) + 11 individual metric functions + `add_drug_restart` |
+| `_add_intersect.py` | ~510 | `add_indication`, `add_treatment` — cohort intersection analysis |
+| `_summarise.py` | ~1,240 | 6 summarise functions + internal helpers (strata resolution, numeric estimates, Wilson CI) |
+| `_table.py` | ~370 | 6 table wrapper functions |
+| `_plot.py` | ~310 | 5 plot wrapper functions |
+| `_mock.py` | ~200 | `mock_drug_utilisation`, `benchmark_drug_utilisation` |
+
+### Public API (44 exports)
+
+- **Cohort generation (5):** `generate_drug_utilisation_cohort_set`, `generate_ingredient_cohort_set`, `generate_atc_cohort_set`, `erafy_cohort`, `cohort_gap_era`
+- **Daily dose (2):** `add_daily_dose`, `pattern_table`
+- **Requirement/filter (4):** `require_is_first_drug_entry`, `require_prior_drug_washout`, `require_observation_before_drug`, `require_drug_in_date_range`
+- **Add drug use metrics (12):** `add_drug_utilisation`, `add_number_exposures`, `add_number_eras`, `add_days_exposed`, `add_days_prescribed`, `add_time_to_exposure`, `add_initial_exposure_duration`, `add_initial_quantity`, `add_cumulative_quantity`, `add_initial_daily_dose`, `add_cumulative_dose`, `add_drug_restart`
+- **Add intersect (2):** `add_indication`, `add_treatment`
+- **Summarise (6):** `summarise_drug_utilisation`, `summarise_indication`, `summarise_treatment`, `summarise_drug_restart`, `summarise_dose_coverage`, `summarise_proportion_of_patients_covered`
+- **Table (6):** `table_drug_utilisation`, `table_indication`, `table_treatment`, `table_drug_restart`, `table_dose_coverage`, `table_proportion_of_patients_covered`
+- **Plot (5):** `plot_drug_utilisation`, `plot_indication`, `plot_treatment`, `plot_drug_restart`, `plot_proportion_of_patients_covered`
+- **Mock/benchmark (2):** `mock_drug_utilisation`, `benchmark_drug_utilisation`
+
+### Internal algorithms
+
+**Drug cohort generation** (`_cohort_generation.py`):
+
+- Resolves concept sets including descendants via `concept_ancestor` table
+- Filters `drug_exposure` records by resolved concepts
+- Constrains to observation periods (start must be within observation period)
+- Applies limit strategy (first event only, or all events)
+- Collapses overlapping/nearby records into eras using gaps-and-islands algorithm
+- Stores `gap_era` setting in cohort metadata for downstream use
+
+**Drug strength pattern matching** (`_daily_dose.py`, `_data/patterns.py`):
+
+- 41 patterns defined by presence/absence of amount_numeric, numerator_numeric,
+  denominator_numeric and their unit concept IDs
+- 4 formula types: fixed_amount, concentration, time_based_with_denom, time_based_no_denom
+- Unit standardization: micrograms→mg (÷1000), mega-IU→IU (÷1M), liters→mL (×1000)
+- Output units: milligram, milliliter, international unit, milliequivalent
+
+**Drug utilisation metrics** (`_add_drug_use.py`):
+
+All 12 add functions delegate to a shared internal engine that:
+1. Joins cohort persons with `drug_exposure` records matching concept set (with descendants)
+2. Clips to configurable [indexDate, censorDate] window
+3. Computes metrics per concept set entry (exposures, eras, days, quantities, doses)
+4. Left-joins metrics back to cohort, fills nulls appropriately
+
+**Drug restart classification** (`_add_drug_use.py`):
+
+1. Computes `censor_days` (future observation from cohort_end_date)
+2. Computes `restart_days` (days to next entry of same drug)
+3. Computes `switch_days` (days to earliest entry of a different drug)
+4. Classifies per follow-up window: "restart", "switch", "restart and switch", "untreated"
+
+**Proportion of patients covered** (`_summarise.py`):
+
+- Day-by-day calculation of the proportion with active drug exposure
+- Wilson score confidence intervals via `scipy.stats.norm`
+
+### Tests: 101 passing (67 unit + 34 integration)
+
+- Unit tests cover imports, patterns, constants, mock data, table/plot wrappers,
+  summarise helpers, format utilities, era collapsing, gap_era retrieval, requirement
+  functions
+- Integration tests generate real drug cohorts from the Synthea database,
+  apply requirements, compute utilisation metrics, run all summarise functions,
+  and validate PPC and pattern table output
+
+### Key design decisions
+
+1. **Deferred temp table cleanup.** Ibis expressions are lazy — registering a
+   temp table for pattern data, building an expression referencing it, then
+   unregistering in a `finally` block causes errors when the expression is
+   later materialized. Solution: track temp table names and defer cleanup
+   until after `.to_pyarrow()` materialization completes.
+
+2. **Dose metrics disabled by default in Synthea tests.** The Synthea test
+   database has an empty `drug_strength` table and NULL quantities, so
+   `initial_daily_dose` and `cumulative_dose` are disabled in integration
+   tests. Pattern matching and dose calculation are tested via unit tests
+   with mock data.
+
+3. **cohort_gap_era() returns dict, not list.** The mapping is
+   `{cohort_definition_id: gap_era}`, making lookups O(1).
+
+4. **Individual metric functions have minimal parameters.** Only
+   `add_number_eras` and `add_days_exposed` accept `gap_era` (they need
+   era collapsing); `add_number_exposures` and `add_days_prescribed` do not.
 
 ### Problems encountered
 
-1. **Wilson CI floating point precision.** `_wilson_ci(0, 100)` returns a
-   lower bound of ~3.5e-18, not exactly 0.0. Tests use
-   `assert lower < 1e-10` instead of `assert lower == 0.0`.
+1. **Ibis temp table lifecycle bug.** Fixed by deferring `con.con.unregister()`
+   calls until after lazy expressions are materialized.
 
-2. **Polars `dt.month()` returns i8.** When computing age-based date
-   offsets, month arithmetic overflows int8. Fixed by casting to Int64
-   before multiplication.
+2. **List ATC name handling.** `get_atc_codes()` accepts only `str | None`.
+   `generate_atc_cohort_set()` iterates over the list and merges codelists.
+
+3. **pattern_table(None) raised AttributeError instead of TypeError.** Added
+   explicit type guard at the top of the function.
 
 ---
 
@@ -560,8 +621,9 @@ re-enter the at-risk pool after the washout period elapses.
 | `omopy.vis` | 6 | 1,200 |
 | `omopy.characteristics` | 4 | 2,450 |
 | `omopy.incidence` | 6 | 2,200 |
+| `omopy.drug` | 12 | 5,900 |
 | `omopy.__init__` | 1 | 46 |
-| **Total** | **66** | **~20,600** |
+| **Total** | **78** | **~26,450** |
 
 ### Tests
 
@@ -574,10 +636,11 @@ re-enter the at-risk pool after the washout period elapses.
 | `tests/vis/` | 5 | 900 | 115 |
 | `tests/characteristics/` | 1 | ~1,200 | 73 |
 | `tests/incidence/` | 1 | ~1,400 | 86 |
+| `tests/drug/` | 1 | ~1,460 | 101 |
 | `tests/conftest.py` | 1 | 41 | — |
-| **Total** | **46** | **~12,400** | **1046** |
+| **Total** | **48** | **~14,660** | **1147** |
 
-### Public API: 169 exports total
+### Public API: 213 exports total
 
 - `omopy.generics`: 39 (10 classes, 5 enums, 1 type alias, 8 constants, 15 functions)
 - `omopy.connector`: 23 (2 classes, 1 type alias, 20 functions)
@@ -586,6 +649,7 @@ re-enter the at-risk pool after the washout period elapses.
 - `omopy.vis`: 19 (2 classes, 15 functions, 2 factory functions)
 - `omopy.characteristics`: 23 (23 functions)
 - `omopy.incidence`: 21 (21 functions)
+- `omopy.drug`: 44 (44 functions)
 
 ### Dependencies
 
@@ -630,5 +694,5 @@ uv run mypy src/omopy
 ## What Comes Next
 
 See [Roadmap](roadmap.md) for the detailed plan covering the remaining
-6 DARWIN-EU packages to be implemented as OMOPy modules.
-Next up: Phase 5A (`omopy.drug` — DrugUtilisation).
+5 DARWIN-EU packages to be implemented as OMOPy modules.
+Next up: Phase 5B (`omopy.survival` — CohortSurvival).
