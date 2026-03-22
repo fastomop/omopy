@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import omopy  # noqa: F401 — triggers CPython 3.14 typing compat shim before Pydantic loads
 from pathlib import Path
 
 import ibis
