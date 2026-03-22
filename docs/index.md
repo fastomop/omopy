@@ -21,6 +21,7 @@ structures via [Pydantic](https://docs.pydantic.dev/) and
 | [`omopy.connector`](reference/connector.md) | CDMConnector | Database connections, CDM loading, cohort generation, CIRCE engine |
 | [`omopy.profiles`](reference/profiles.md) | PatientProfiles | Patient-level enrichment: demographics, intersections, death |
 | [`omopy.codelist`](reference/codelist.md) | CodelistGenerator | Vocabulary search, hierarchy traversal, codelist operations |
+| [`omopy.vis`](reference/vis.md) | visOmopResults | Format, tabulate, and plot summarised results |
 
 ## Quick Example
 
@@ -65,6 +66,6 @@ print(df)
 | Phase 1+2 | `omopy.connector` | Complete (310 tests) |
 | Phase 3A | `omopy.profiles` | Complete (107 tests) |
 | Phase 3B | `omopy.codelist` | Complete (122 tests) |
-| Phase 3C | `omopy.vis` | Planned |
+| Phase 3C | `omopy.vis` | Complete (115 tests) |
 
-**Total: 772 tests, all passing.**
+**Total: 890 tests, all passing.**
