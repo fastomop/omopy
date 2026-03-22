@@ -1,8 +1,7 @@
 """Tests for omopy.generics._schema — FieldSpec, TableSpec, ResultFieldSpec, CdmSchema."""
 
-import dataclasses
-
 import pytest
+from pydantic import ValidationError
 
 from omopy.generics._schema import (
     FIELD_TABLE_COLUMNS,
@@ -42,37 +41,46 @@ class TestFieldSpec:
         assert fs.type is TableType.CDM_TABLE
 
     def test_frozen(self):
-        fs = FieldSpec("person", "person_id", True, "integer", TableType.CDM_TABLE)
-        with pytest.raises(dataclasses.FrozenInstanceError):
+        fs = FieldSpec(cdm_table_name="person", cdm_field_name="person_id",
+                       is_required=True, cdm_datatype="integer", type=TableType.CDM_TABLE)
+        with pytest.raises(ValidationError, match="frozen_instance"):
             fs.cdm_table_name = "other"  # type: ignore[misc]
 
     def test_datatype_enum_integer(self):
-        fs = FieldSpec("t", "f", True, "integer", TableType.CDM_TABLE)
+        fs = FieldSpec(cdm_table_name="t", cdm_field_name="f",
+                       is_required=True, cdm_datatype="integer", type=TableType.CDM_TABLE)
         assert fs.datatype_enum is CdmDataType.INTEGER
 
     def test_datatype_enum_varchar(self):
-        fs = FieldSpec("t", "f", True, "varchar(50)", TableType.CDM_TABLE)
+        fs = FieldSpec(cdm_table_name="t", cdm_field_name="f",
+                       is_required=True, cdm_datatype="varchar(50)", type=TableType.CDM_TABLE)
         assert fs.datatype_enum is CdmDataType.VARCHAR
 
     def test_varchar_length(self):
-        fs = FieldSpec("t", "f", True, "varchar(255)", TableType.CDM_TABLE)
+        fs = FieldSpec(cdm_table_name="t", cdm_field_name="f",
+                       is_required=True, cdm_datatype="varchar(255)", type=TableType.CDM_TABLE)
         assert fs.varchar_length == 255
 
     def test_varchar_max(self):
-        fs = FieldSpec("t", "f", True, "varchar(max)", TableType.CDM_TABLE)
+        fs = FieldSpec(cdm_table_name="t", cdm_field_name="f",
+                       is_required=True, cdm_datatype="varchar(max)", type=TableType.CDM_TABLE)
         assert fs.varchar_length is None
 
     def test_varchar_length_non_varchar(self):
-        fs = FieldSpec("t", "f", True, "integer", TableType.CDM_TABLE)
+        fs = FieldSpec(cdm_table_name="t", cdm_field_name="f",
+                       is_required=True, cdm_datatype="integer", type=TableType.CDM_TABLE)
         assert fs.varchar_length is None
 
     def test_equality(self):
-        a = FieldSpec("t", "f", True, "integer", TableType.CDM_TABLE)
-        b = FieldSpec("t", "f", True, "integer", TableType.CDM_TABLE)
+        a = FieldSpec(cdm_table_name="t", cdm_field_name="f",
+                      is_required=True, cdm_datatype="integer", type=TableType.CDM_TABLE)
+        b = FieldSpec(cdm_table_name="t", cdm_field_name="f",
+                      is_required=True, cdm_datatype="integer", type=TableType.CDM_TABLE)
         assert a == b
 
     def test_hashable(self):
-        fs = FieldSpec("t", "f", True, "integer", TableType.CDM_TABLE)
+        fs = FieldSpec(cdm_table_name="t", cdm_field_name="f",
+                       is_required=True, cdm_datatype="integer", type=TableType.CDM_TABLE)
         assert hash(fs) is not None
         # Can be used in sets
         s = {fs}
@@ -97,31 +105,35 @@ class TestTableSpec:
         assert ts.concept_prefix is None
 
     def test_frozen(self):
-        ts = TableSpec("person", TableSchema.CDM, True)
-        with pytest.raises(dataclasses.FrozenInstanceError):
+        ts = TableSpec(cdm_table_name="person", schema=TableSchema.CDM, is_required=True)
+        with pytest.raises(ValidationError, match="frozen_instance"):
             ts.cdm_table_name = "other"  # type: ignore[misc]
 
     def test_na_to_none(self):
-        ts = TableSpec("t", TableSchema.CDM, True, concept_prefix="NA")
+        ts = TableSpec(cdm_table_name="t", schema=TableSchema.CDM,
+                       is_required=True, concept_prefix="NA")
         assert ts.concept_prefix is None
 
     def test_na_case_insensitive(self):
-        ts = TableSpec("t", TableSchema.CDM, True, concept_prefix="na")
+        ts = TableSpec(cdm_table_name="t", schema=TableSchema.CDM,
+                       is_required=True, concept_prefix="na")
         assert ts.concept_prefix is None
 
     def test_non_na_preserved(self):
-        ts = TableSpec("t", TableSchema.CDM, True, concept_prefix="condition")
+        ts = TableSpec(cdm_table_name="t", schema=TableSchema.CDM,
+                       is_required=True, concept_prefix="condition")
         assert ts.concept_prefix == "condition"
 
     def test_in_group(self):
-        ts = TableSpec("t", TableSchema.CDM, True, group_clinical=True, group_all=True)
+        ts = TableSpec(cdm_table_name="t", schema=TableSchema.CDM,
+                       is_required=True, group_clinical=True, group_all=True)
         assert ts.in_group(TableGroup.CLINICAL) is True
         assert ts.in_group(TableGroup.ALL) is True
         assert ts.in_group(TableGroup.VOCAB) is False
         assert ts.in_group(TableGroup.DERIVED) is False
 
     def test_defaults(self):
-        ts = TableSpec("t", TableSchema.CDM, True)
+        ts = TableSpec(cdm_table_name="t", schema=TableSchema.CDM, is_required=True)
         assert ts.group_vocab is False
         assert ts.group_all is False
         assert ts.group_clinical is False
@@ -148,12 +160,15 @@ class TestResultFieldSpec:
         assert rfs.pair is None
 
     def test_with_pair(self):
-        rfs = ResultFieldSpec("summarised_result", "group_name", True, "character", False, "name1")
+        rfs = ResultFieldSpec(result="summarised_result", result_field_name="group_name",
+                              is_required=True, datatype="character", na_allowed=False,
+                              pair="name1")
         assert rfs.pair == "name1"
 
     def test_frozen(self):
-        rfs = ResultFieldSpec("r", "f", True, "integer", False)
-        with pytest.raises(dataclasses.FrozenInstanceError):
+        rfs = ResultFieldSpec(result="r", result_field_name="f",
+                              is_required=True, datatype="integer", na_allowed=False)
+        with pytest.raises(ValidationError, match="frozen_instance"):
             rfs.result = "other"  # type: ignore[misc]
 
 

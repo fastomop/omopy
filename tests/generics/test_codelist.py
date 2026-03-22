@@ -1,8 +1,7 @@
 """Tests for omopy.generics.codelist — Codelist, ConceptEntry, ConceptSetExpression."""
 
-import dataclasses
-
 import pytest
+from pydantic import ValidationError
 
 from omopy.generics.codelist import Codelist, ConceptEntry, ConceptSetExpression
 
@@ -23,7 +22,7 @@ class TestConceptEntry:
 
     def test_frozen(self):
         ce = ConceptEntry(concept_id=1)
-        with pytest.raises(dataclasses.FrozenInstanceError):
+        with pytest.raises(ValidationError, match="frozen_instance"):
             ce.concept_id = 2  # type: ignore[misc]
 
     def test_defaults(self):
