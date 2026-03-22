@@ -22,6 +22,7 @@ structures via [Pydantic](https://docs.pydantic.dev/) and
 | [`omopy.profiles`](reference/profiles.md) | PatientProfiles | Patient-level enrichment: demographics, intersections, death |
 | [`omopy.codelist`](reference/codelist.md) | CodelistGenerator | Vocabulary search, hierarchy traversal, codelist operations |
 | [`omopy.vis`](reference/vis.md) | visOmopResults | Format, tabulate, and plot summarised results |
+| [`omopy.characteristics`](reference/characteristics.md) | CohortCharacteristics | Cohort characterization: summarise, tabulate, plot |
 
 ## Quick Example
 
@@ -67,5 +68,6 @@ print(df)
 | Phase 3A | `omopy.profiles` | Complete (107 tests) |
 | Phase 3B | `omopy.codelist` | Complete (122 tests) |
 | Phase 3C | `omopy.vis` | Complete (115 tests) |
+| Phase 4A | `omopy.characteristics` | Complete (73 tests) |
 
-**Total: 890 tests, all passing.**
+**Total: 963 tests, all passing.**

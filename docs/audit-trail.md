@@ -32,6 +32,7 @@ All commits are on the `main` branch, in chronological order:
 | `cc05d34` | 2026-03-22 01:37 | docs: add mkdocs-material documentation site with API reference |
 | `0aaec1a` | 2026-03-22 01:49 | feat: add omopy.vis module (Phase 3C — visOmopResults equivalent) |
 | `78eaf52` | 2026-03-22 01:53 | docs: complete documentation with vis module reference and user guide |
+| `9bdc436` | 2026-03-22 02:05 | docs: add rewrite roadmap and audit trail |
 
 ---
 
@@ -357,6 +358,91 @@ importing mkdocs CLI, since `mkdocstrings-python` uses Pydantic internally.
 
 ---
 
+## Phase 4A: Characteristics (CohortCharacteristics equivalent)
+
+### What was built
+
+The `omopy.characteristics` module (4 source files, ~2,450 lines) provides
+cohort characterization analytics — the Python equivalent of the R
+`CohortCharacteristics` package.
+
+### Source files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `_summarise.py` | ~1,580 | 7 summarise functions + internal aggregation engine |
+| `_table.py` | ~370 | 8 table functions (wrappers around `vis_omop_table()`) |
+| `_plot.py` | ~350 | 7 plot functions (bar, scatter, box, custom attrition flowchart) |
+| `_mock.py` | ~160 | `mock_cohort_characteristics()` |
+
+### Public API (23 exports)
+
+- **7 summarise functions:** `summarise_characteristics`, `summarise_cohort_count`,
+  `summarise_cohort_attrition`, `summarise_cohort_timing`, `summarise_cohort_overlap`,
+  `summarise_large_scale_characteristics`, `summarise_cohort_codelist`
+- **8 table functions:** `table_characteristics`, `table_cohort_count`, `table_cohort_attrition`,
+  `table_cohort_timing`, `table_cohort_overlap`, `table_large_scale_characteristics`,
+  `table_cohort_codelist`, `available_table_columns`
+- **7 plot functions:** `plot_characteristics`, `plot_cohort_count`, `plot_cohort_attrition`,
+  `plot_cohort_timing`, `plot_cohort_overlap`, `plot_large_scale_characteristics`,
+  `plot_compared_large_scale_characteristics`
+- **1 mock:** `mock_cohort_characteristics`
+
+### Internal aggregation engine
+
+The core of the module is an internal aggregation engine in `_summarise.py`:
+
+- `_classify_variable()` — classify columns as numeric/categorical/date/binary
+- `_compute_estimates()` — compute requested statistics (count, mean, sd, quantiles, etc.)
+- `_compute_categorical_estimates()` — count + percentage per category level
+- `_summarise_variables()` — aggregate variables into SummarisedResult rows
+- `_add_count_rows()` — add subject/record count rows
+- `_resolve_strata()` — generate (strata_name, strata_level, filtered_df) tuples
+- `_filter_settings_by_cohort_id()` — filter settings metadata when cohort_id is specified
+- `_make_settings()` — create settings DataFrame for SummarisedResult
+- `_empty_result()` — create empty result with correct schema
+- `_window_name()` — format time windows as human-readable strings
+
+### Tests: 73 passing (61 unit + 12 integration)
+
+- Unit tests use mock `CohortTable` objects (no database)
+- Integration tests generate real cohorts from the Synthea database via CIRCE engine,
+  then run all summarise functions and validate results
+
+### Key design decisions
+
+1. **Delegate to `omopy.profiles`** for demographics and intersections. The
+   `summarise_characteristics()` function calls `add_demographics()`,
+   `add_table_intersect_*()`, etc. before aggregation.
+
+2. **Detect existing columns** before adding demographics. If a strata column
+   (e.g., `sex`) was pre-added before calling `summarise_characteristics()`,
+   the function skips re-adding it to avoid Ibis duplicate column errors.
+
+3. **`filter_cohort_id` bug fix.** The `filter_cohort_id()` utility from
+   `omopy.profiles` filters the Ibis data but does NOT filter the `.settings`
+   metadata. All 7 summarise functions now use `_filter_settings_by_cohort_id()`
+   to ensure settings are consistent with the filtered data.
+
+4. **Table/plot wrappers are thin.** They delegate to `omopy.vis` functions
+   with domain-specific defaults for estimate formatting, headers, and grouping.
+   The custom attrition flowchart uses Plotly shapes and annotations directly.
+
+### Problems encountered
+
+1. **Duplicate column error.** When users add a column (e.g., `sex`) for
+   stratification and then call `summarise_characteristics(demographics=True)`,
+   Ibis raised `IbisInputError: Duplicate column name 'sex'`. Fixed by
+   detecting existing columns and skipping re-addition.
+
+2. **`filter_cohort_id` settings inconsistency.** Initially only applied the
+   fix in `summarise_characteristics()`. The remaining 5 functions
+   (`summarise_cohort_attrition`, `summarise_cohort_timing`,
+   `summarise_cohort_overlap`, `summarise_large_scale_characteristics`,
+   `summarise_cohort_codelist`) still used unfiltered settings. Fixed all 5.
+
+---
+
 ## Codebase Statistics
 
 ### Source code
@@ -368,8 +454,9 @@ importing mkdocs CLI, since `mkdocstrings-python` uses Pydantic internally.
 | `omopy.profiles` | 11 | 3,700 |
 | `omopy.codelist` | 8 | 1,400 |
 | `omopy.vis` | 6 | 1,200 |
+| `omopy.characteristics` | 4 | 2,450 |
 | `omopy.__init__` | 1 | 46 |
-| **Total** | **56** | **~16,000** |
+| **Total** | **60** | **~18,400** |
 
 ### Tests
 
@@ -380,16 +467,18 @@ importing mkdocs CLI, since `mkdocstrings-python` uses Pydantic internally.
 | `tests/profiles/` | 9 | 1,300 | 107 |
 | `tests/codelist/` | 7 | 1,200 | 122 |
 | `tests/vis/` | 5 | 900 | 115 |
+| `tests/characteristics/` | 1 | ~1,200 | 73 |
 | `tests/conftest.py` | 1 | 41 | — |
-| **Total** | **44** | **~9,800** | **890** |
+| **Total** | **45** | **~11,000** | **963** |
 
-### Public API: 125 exports total
+### Public API: 148 exports total
 
 - `omopy.generics`: 39 (10 classes, 5 enums, 1 type alias, 8 constants, 15 functions)
 - `omopy.connector`: 23 (2 classes, 1 type alias, 20 functions)
 - `omopy.profiles`: 30 (1 type alias, 29 functions)
 - `omopy.codelist`: 14 (14 functions)
 - `omopy.vis`: 19 (2 classes, 15 functions, 2 factory functions)
+- `omopy.characteristics`: 23 (23 functions)
 
 ### Dependencies
 
@@ -433,4 +522,5 @@ uv run mypy src/omopy
 ## What Comes Next
 
 See [Roadmap](roadmap.md) for the detailed plan covering the remaining
-8 DARWIN-EU packages to be implemented as OMOPy modules.
+7 DARWIN-EU packages to be implemented as OMOPy modules.
+Next up: Phase 4B (`omopy.incidence` — IncidencePrevalence).

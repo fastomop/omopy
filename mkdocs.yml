@@ -79,12 +79,14 @@ nav:
       - Patient Profiles: guide/patient-profiles.md
       - Codelist Generation: guide/codelist-generation.md
       - Visualization: guide/visualization.md
+      - Cohort Characteristics: guide/cohort-characteristics.md
   - API Reference:
       - omopy.generics: reference/generics.md
       - omopy.connector: reference/connector.md
       - omopy.profiles: reference/profiles.md
       - omopy.codelist: reference/codelist.md
       - omopy.vis: reference/vis.md
+      - omopy.characteristics: reference/characteristics.md
   - Project:
       - Rewrite Roadmap: roadmap.md
       - Audit Trail: audit-trail.md

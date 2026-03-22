@@ -16,7 +16,7 @@ classifies each one, and lays out a phased plan for incorporating them into the
 | 3 | **PatientProfiles** | Core R package | ~30 | **Done** | `omopy.profiles` |
 | 4 | **CodelistGenerator** | Core R package | ~14 | **Done** | `omopy.codelist` |
 | 5 | **visOmopResults** | Core R package | ~19 | **Done** | `omopy.vis` |
-| 6 | **CohortCharacteristics** | Analytics R package | ~36 | Planned | `omopy.characteristics` |
+| 6 | **CohortCharacteristics** | Analytics R package | ~36 | **Done** | `omopy.characteristics` |
 | 7 | **IncidencePrevalence** | Analytics R package | ~29 | Planned | `omopy.incidence` |
 | 8 | **DrugUtilisation** | Analytics R package | ~57 | Planned | `omopy.drug` |
 | 9 | **CohortSurvival** | Analytics R package | ~21 | Planned | `omopy.survival` |
@@ -36,8 +36,8 @@ classifies each one, and lays out a phased plan for incorporating them into the
 
 ### Classification Summary
 
-- **Already implemented (5):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults
-- **Candidates for rewrite (8):** CohortCharacteristics, IncidencePrevalence, DrugUtilisation, CohortSurvival, TreatmentPatterns, DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
+- **Already implemented (6):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics
+- **Candidates for rewrite (7):** IncidencePrevalence, DrugUtilisation, CohortSurvival, TreatmentPatterns, DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
 - **Low priority / partial (3):** DashboardExport, CdmOnboarding, DarwinBenchmark
 - **Out of scope (6):** DarwinShinyModules, ReportGenerator, execution-engine, TestReleaseGitAction, .github, EunomiaDatasets (data only, consumed directly)
 
@@ -119,45 +119,26 @@ Already implemented with 890 tests:
 
 ---
 
-### Phase 4: Cohort Characterization & Incidence/Prevalence
+### Phase 4A: `omopy.characteristics` — COMPLETE ✅
 
-These two packages form the primary analytical layer. They depend only on
-packages we have already implemented (Layers 0-3). They can be worked on
-in parallel since they do not depend on each other.
+**R package:** CohortCharacteristics (23 exports: 7 summarise, 8 table, 7 plot, 1 mock)
 
-#### Phase 4A: `omopy.characteristics` (CohortCharacteristics)
+**Implemented:**
 
-**R package:** 36 exports (7 summarise, 8 table, 7 plot, 14 utilities/re-exports)
+- 7 summarise functions: `summarise_characteristics`, `summarise_cohort_count`, `summarise_cohort_attrition`, `summarise_cohort_timing`, `summarise_cohort_overlap`, `summarise_large_scale_characteristics`, `summarise_cohort_codelist`
+- 8 table functions: wrappers around `vis_omop_table()` with domain-specific defaults
+- 7 plot functions: wrappers around `bar_plot()`, `scatter_plot()`, `box_plot()`, plus custom Plotly attrition flowchart
+- 1 mock function: `mock_cohort_characteristics()`
+- Internal aggregation engine with variable classification, estimate computation, strata resolution
+- Duplicate column detection in `summarise_characteristics()` (avoids Ibis errors when strata columns already exist)
 
-**Scope:**
+**Tests: 73** (61 unit + 12 integration against Synthea database)
 
-- **Summarise functions (7):** These are the core analytical functions. Each queries the CDM
-  and produces a `SummarisedResult`:
-    - `summarise_characteristics()` — demographics, counts, clinical variables
-    - `summarise_cohort_count()` — record and subject counts per cohort
-    - `summarise_cohort_attrition()` — step-by-step filtering flow
-    - `summarise_cohort_timing()` — time intervals between cohort entries
-    - `summarise_cohort_overlap()` — subject overlap across cohorts
-    - `summarise_large_scale_characteristics()` — prevalence of conditions/drugs/etc. in time windows
-    - `summarise_cohort_codelist()` — codelist usage within cohorts
+**Source: ~2,450 lines** across 4 files (`_summarise.py`, `_table.py`, `_plot.py`, `_mock.py`)
 
-- **Table/plot wrappers (15):** These delegate to `omopy.vis` for rendering.
-  Each takes a `SummarisedResult` and produces a formatted table or plotly figure.
-  These are thin wrappers that configure `vis_omop_table()` / plotly with
-  domain-specific defaults.
+---
 
-- **Utilities (14):** Most are re-exports from `omopy.generics` that we already
-  have. Mock data generator and benchmark utility are new.
-
-**Estimated effort:** Medium-large. The summarise functions contain the real logic,
-using `omopy.profiles` for demographics and intersections. Table/plot wrappers are
-straightforward delegations to `omopy.vis`.
-
-**Dependencies satisfied:** All (generics, connector, profiles, codelist, vis).
-
-**Estimated size:** ~2,000-3,000 lines of source, ~150-200 tests.
-
-#### Phase 4B: `omopy.incidence` (IncidencePrevalence)
+### Phase 4B: `omopy.incidence` (IncidencePrevalence) — NOT STARTED
 
 **R package:** 29 exports (5 core estimation, 8 table/plot, 4 result handling, 12 utilities)
 
@@ -364,7 +345,7 @@ These repositories are out of scope for the monorepo:
 | 3A | `omopy.profiles` | 3,700 | 107 | **Done** |
 | 3B | `omopy.codelist` | 1,400 | 122 | **Done** |
 | 3C | `omopy.vis` | 1,200 | 115 | **Done** |
-| 4A | `omopy.characteristics` | 2,000-3,000 | 150-200 | Planned |
+| 4A | `omopy.characteristics` | 2,450 | 73 | **Done** |
 | 4B | `omopy.incidence` | 3,000-4,000 | 200-300 | Planned |
 | 5A | `omopy.drug` | 4,000-6,000 | 250-350 | Planned |
 | 5B | `omopy.survival` | 1,500-2,500 | 100-150 | Planned |
@@ -372,9 +353,9 @@ These repositories are out of scope for the monorepo:
 | 6B | `omopy.drug_diagnostics` | 800-1,200 | 60-80 | Planned |
 | 7A | `omopy.pregnancy` | 2,000-3,000 | 120-180 | Planned |
 | 8A | `omopy.testing` | 800-1,200 | 50-80 | Planned |
-| | **Total (done)** | **~16,000** | **890** | |
-| | **Total (planned)** | **~15,600-22,900** | **~1,010-1,460** | |
-| | **Grand total** | **~31,600-38,900** | **~1,900-2,350** | |
+| | **Total (done)** | **~18,350** | **963** | |
+| | **Total (planned)** | **~13,600-19,900** | **~860-1,260** | |
+| | **Grand total** | **~31,950-38,250** | **~1,823-2,223** | |
 
 ---
 
