@@ -85,6 +85,9 @@ nav:
       - omopy.profiles: reference/profiles.md
       - omopy.codelist: reference/codelist.md
       - omopy.vis: reference/vis.md
+  - Project:
+      - Rewrite Roadmap: roadmap.md
+      - Audit Trail: audit-trail.md
 
 extra:
   social:
