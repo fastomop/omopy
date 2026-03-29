@@ -35,6 +35,7 @@ All commits are on the `main` branch, in chronological order:
 | `9bdc436` | 2026-03-22 02:05 | docs: add rewrite roadmap and audit trail |
 | `249744e` | 2026-03-22 | feat: add omopy.characteristics module (Phase 4A — CohortCharacteristics equivalent) |
 | `5cc4faf` | 2026-03-22 | feat: add omopy.incidence module (Phase 4B — IncidencePrevalence equivalent) |
+| `65ff1b7` | 2026-03-22 | feat: add omopy.drug module (Phase 5A — DrugUtilisation equivalent) |
 
 ---
 
@@ -608,6 +609,103 @@ All 12 add functions delegate to a shared internal engine that:
 
 ---
 
+## Phase 5B: Survival (CohortSurvival equivalent)
+
+### What was built
+
+The `omopy.survival` module (7 source files, ~2,548 lines) provides cohort
+survival analysis — the Python equivalent of the R `CohortSurvival` package.
+It implements Kaplan-Meier estimation via lifelines and a custom
+Aalen-Johansen estimator for competing risk cumulative incidence.
+
+### Source files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `__init__.py` | 78 | 11 exports |
+| `_add_survival.py` | 272 | `add_cohort_survival()` — enrich cohort with time/status columns |
+| `_estimate.py` | 1,186 | `estimate_single_event_survival()`, `estimate_competing_risk_survival()`, internal KM/AJ engine, risk table, summary stats |
+| `_result.py` | 104 | `as_survival_result()` — wide-format conversion |
+| `_table.py` | 320 | `table_survival()`, `table_survival_events()`, `table_survival_attrition()`, `options_table_survival()` |
+| `_plot.py` | 344 | `plot_survival()`, `available_survival_grouping()` |
+| `_mock.py` | 244 | `mock_survival()` — synthetic CDM with target/outcome/competing cohorts |
+
+### Public API (11 exports)
+
+- **2 estimation functions:** `estimate_single_event_survival` (Kaplan-Meier),
+  `estimate_competing_risk_survival` (Aalen-Johansen CIF)
+- **1 add function:** `add_cohort_survival` — enrich cohort with time/status columns
+- **1 result conversion:** `as_survival_result` — wide-format DataFrames
+- **4 table functions:** `table_survival`, `table_survival_events`,
+  `table_survival_attrition`, `options_table_survival`
+- **2 plot functions:** `plot_survival` (KM/CIF curves with CI ribbons),
+  `available_survival_grouping`
+- **1 mock:** `mock_survival`
+
+### Internal algorithms
+
+**Add cohort survival** (`_add_survival.py`):
+
+1. Add `future_observation` (days to end of observation period) via profiles
+2. Check for outcome events in washout period (flag via cohort intersect)
+3. Get `days_to_event` (days from index to first outcome after index)
+4. Apply censoring hierarchy: cohort exit → censor date → follow-up cap
+5. Compute `status`: 1 if event occurred before censoring, else 0
+6. Compute `time`: days_to_event if event, days_to_exit if censored
+7. Set time/status to NA for anyone with an event in the washout period
+
+**Kaplan-Meier estimation** (`_estimate.py`):
+
+- Uses `lifelines.KaplanMeierFitter` for survival curve estimation
+- Extracts survival function, CIs, median, quantiles, RMST
+- Computes risk table (n_risk, n_event, n_censor) per interval
+- Generates attrition tracking through the pipeline
+
+**Aalen-Johansen competing risk** (`_estimate.py`):
+
+- Custom implementation from first principles (lifelines does not include it)
+- CIF_k(t) = sum h_k(t_j) * S(t_{j-1}) where h_k is cause-specific hazard
+- Produces cumulative incidence curves with CIs via Greenwood variance
+
+### Tests: 80 passing (unit + integration against Synthea database)
+
+### Key design decisions
+
+1. **lifelines for KM, custom AJ for competing risks.** lifelines 0.30.3
+   provides robust KM estimation but has no built-in Aalen-Johansen.
+   The custom implementation computes CIF from cause-specific hazards
+   and the overall Kaplan-Meier survival, following the standard
+   textbook formula.
+
+2. **Four result types in one SummarisedResult.** The estimation functions
+   pack `survival_estimates`, `survival_events`, `survival_summary`, and
+   `survival_attrition` into a single SummarisedResult using different
+   `result_type` values in settings. The `as_survival_result()` function
+   unpacks them into separate wide-format DataFrames.
+
+3. **Censoring hierarchy matches R.** The censoring logic follows the same
+   hierarchy as the R CohortSurvival package: event → cohort exit → censor
+   date → follow-up cap → observation end.
+
+4. **Mock data uses synthetic generation.** Rather than porting the R
+   package's `mockMGUS2cdm()` (which uses the mgus2 dataset), the Python
+   `mock_survival()` generates fully synthetic data with configurable
+   event rates and competing risk rates.
+
+### Problems encountered
+
+1. **NumPy 2.0 API change.** `np.trapz` was removed in NumPy 2.0 — replaced
+   with `np.trapezoid`. Two occurrences in `_estimate.py` (RMST computation)
+   were fixed.
+
+2. **Ibis IntegrityError with dead code.** An initial broken attempt at a
+   washout join in `_add_survival.py` used expressions from a different
+   relation in a join predicate. Even though it was dead code (followed by
+   the working implementation), it executed first and threw
+   `ibis.common.exceptions.IntegrityError`. Fixed by removing the dead code.
+
+---
+
 ## Codebase Statistics
 
 ### Source code
@@ -622,8 +720,9 @@ All 12 add functions delegate to a shared internal engine that:
 | `omopy.characteristics` | 4 | 2,450 |
 | `omopy.incidence` | 6 | 2,200 |
 | `omopy.drug` | 12 | 5,900 |
+| `omopy.survival` | 7 | 2,548 |
 | `omopy.__init__` | 1 | 46 |
-| **Total** | **78** | **~26,450** |
+| **Total** | **86** | **~29,000** |
 
 ### Tests
 
@@ -637,10 +736,11 @@ All 12 add functions delegate to a shared internal engine that:
 | `tests/characteristics/` | 1 | ~1,200 | 73 |
 | `tests/incidence/` | 1 | ~1,400 | 86 |
 | `tests/drug/` | 1 | ~1,460 | 101 |
+| `tests/survival/` | 1 | ~1,200 | 80 |
 | `tests/conftest.py` | 1 | 41 | — |
-| **Total** | **48** | **~14,660** | **1147** |
+| **Total** | **50** | **~15,860** | **1227** |
 
-### Public API: 213 exports total
+### Public API: 224 exports total
 
 - `omopy.generics`: 39 (10 classes, 5 enums, 1 type alias, 8 constants, 15 functions)
 - `omopy.connector`: 23 (2 classes, 1 type alias, 20 functions)
@@ -650,6 +750,7 @@ All 12 add functions delegate to a shared internal engine that:
 - `omopy.characteristics`: 23 (23 functions)
 - `omopy.incidence`: 21 (21 functions)
 - `omopy.drug`: 44 (44 functions)
+- `omopy.survival`: 11 (11 functions)
 
 ### Dependencies
 
@@ -667,6 +768,7 @@ Core runtime dependencies:
 | `great-tables` | >= 0.21.0 | Table rendering |
 | `plotly` | >= 6.6.0 | Plot rendering |
 | `scipy` | >= 1.15.0 | Statistical confidence intervals |
+| `lifelines` | >= 0.29 | Kaplan-Meier survival analysis |
 
 ---
 
@@ -694,5 +796,5 @@ uv run mypy src/omopy
 ## What Comes Next
 
 See [Roadmap](roadmap.md) for the detailed plan covering the remaining
-5 DARWIN-EU packages to be implemented as OMOPy modules.
-Next up: Phase 5B (`omopy.survival` — CohortSurvival).
+4 DARWIN-EU packages to be implemented as OMOPy modules.
+Next up: Phase 6A (`omopy.treatment` — TreatmentPatterns).

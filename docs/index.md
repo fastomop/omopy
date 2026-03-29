@@ -25,6 +25,7 @@ structures via [Pydantic](https://docs.pydantic.dev/) and
 | [`omopy.characteristics`](reference/characteristics.md) | CohortCharacteristics | Cohort characterization: summarise, tabulate, plot |
 | [`omopy.incidence`](reference/incidence.md) | IncidencePrevalence | Incidence rates and prevalence proportions |
 | [`omopy.drug`](reference/drug.md) | DrugUtilisation | Drug cohort generation, utilisation metrics, dose analysis |
+| [`omopy.survival`](reference/survival.md) | CohortSurvival | Kaplan-Meier survival, competing risks, survival plots |
 
 ## Quick Example
 
@@ -73,5 +74,6 @@ print(df)
 | Phase 4A | `omopy.characteristics` | Complete (73 tests) |
 | Phase 4B | `omopy.incidence` | Complete (86 tests) |
 | Phase 5A | `omopy.drug` | Complete (101 tests) |
+| Phase 5B | `omopy.survival` | Complete (80 tests) |
 
-**Total: 1147 tests, all passing.**
+**Total: 1227 tests, all passing.**

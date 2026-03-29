@@ -29,6 +29,7 @@ dependencies = [
     "great-tables>=0.21.0",
     "plotly>=6.6.0",
     "scipy>=1.15.0",
+    "lifelines>=0.29",
 ]
 
 [project.optional-dependencies]

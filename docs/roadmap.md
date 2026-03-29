@@ -19,7 +19,7 @@ classifies each one, and lays out a phased plan for incorporating them into the
 | 6 | **CohortCharacteristics** | Analytics R package | ~36 | **Done** | `omopy.characteristics` |
 | 7 | **IncidencePrevalence** | Analytics R package | ~29 | **Done** | `omopy.incidence` |
 | 8 | **DrugUtilisation** | Analytics R package | ~57 | **Done** | `omopy.drug` |
-| 9 | **CohortSurvival** | Analytics R package | ~21 | Planned | `omopy.survival` |
+| 9 | **CohortSurvival** | Analytics R package | ~21 | **Done** | `omopy.survival` |
 | 10 | **TreatmentPatterns** | Analytics R package | ~10 | Planned | `omopy.treatment` |
 | 11 | **DrugExposureDiagnostics** | Analytics R package | ~7 | Planned | `omopy.drug_diagnostics` |
 | 12 | **PregnancyIdentifier** | Clinical R package | TBD | Planned | `omopy.pregnancy` |
@@ -36,7 +36,7 @@ classifies each one, and lays out a phased plan for incorporating them into the
 
 ### Classification Summary
 
-- **Already implemented (8):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence, DrugUtilisation
+- **Already implemented (9):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence, DrugUtilisation, CohortSurvival
 - **Candidates for rewrite (5):** CohortSurvival, TreatmentPatterns, DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
 - **Low priority / partial (3):** DashboardExport, CdmOnboarding, DarwinBenchmark
 - **Out of scope (6):** DarwinShinyModules, ReportGenerator, execution-engine, TestReleaseGitAction, .github, EunomiaDatasets (data only, consumed directly)
@@ -188,31 +188,24 @@ These packages depend on Layer 4 or are parallel to it.
 
 **Source: ~5,900 lines** across 12 files
 
-#### Phase 5B: `omopy.survival` (CohortSurvival)
+#### Phase 5B: `omopy.survival` (CohortSurvival) — COMPLETE ✅
 
-**R package:** 21 exports
+**R package:** 21 exports (13 unique, 8 re-exports from omopgenerics)
 
-**Scope:**
+**Implemented:**
 
-- **Core estimation (3):**
-    - `estimate_single_event_survival()` — Kaplan-Meier survival from target/outcome cohorts
-    - `estimate_competing_risk_survival()` — cumulative incidence with competing risks
-    - `add_cohort_survival()` — add survival time/event columns to a cohort table
+- **Core estimation (2):** `estimate_single_event_survival` (Kaplan-Meier), `estimate_competing_risk_survival` (Aalen-Johansen CIF)
+- **Add columns (1):** `add_cohort_survival` — enrich cohort with time/status columns
+- **Result conversion (1):** `as_survival_result` — wide-format DataFrames
+- **Table (4):** `table_survival`, `table_survival_events`, `table_survival_attrition`, `options_table_survival`
+- **Plot (2):** `plot_survival` (KM/CIF curves with CI ribbons), `available_survival_grouping`
+- **Mock (1):** `mock_survival` — synthetic CDM with target/outcome/competing cohorts
 
-- **Visualization (5):** Survival curves, risk tables, attrition tables.
-- **Utilities (13):** Mock data, validation, re-exports.
+**Key Python library:** `lifelines` for Kaplan-Meier; custom Aalen-Johansen for competing risks.
 
-**Dependencies:** omopgenerics, CDMConnector, PatientProfiles (all done).
-R's `survival` package → Python's `lifelines` library.
+**Tests: 80** (unit + integration against Synthea database)
 
-**Estimated effort:** Medium. The Kaplan-Meier logic is well-defined and
-`lifelines` provides the statistical foundation. The main work is in
-building the cohort-to-survival-data pipeline and the visualization
-wrappers.
-
-**Key Python library:** `lifelines` for Kaplan-Meier, cumulative incidence.
-
-**Estimated size:** ~1,500-2,500 lines of source, ~100-150 tests.
+**Source: ~2,548 lines** across 7 files (`_add_survival.py`, `_estimate.py`, `_result.py`, `_table.py`, `_plot.py`, `_mock.py`, `__init__.py`)
 
 ---
 
@@ -336,14 +329,14 @@ These repositories are out of scope for the monorepo:
 | 4A | `omopy.characteristics` | 2,450 | 73 | **Done** |
 | 4B | `omopy.incidence` | 2,200 | 86 | **Done** |
 | 5A | `omopy.drug` | 5,900 | 101 | **Done** |
-| 5B | `omopy.survival` | 1,500-2,500 | 100-150 | Planned |
+| 5B | `omopy.survival` | 2,548 | 80 | **Done** |
 | 6A | `omopy.treatment` | 1,500-2,000 | 80-120 | Planned |
 | 6B | `omopy.drug_diagnostics` | 800-1,200 | 60-80 | Planned |
 | 7A | `omopy.pregnancy` | 2,000-3,000 | 120-180 | Planned |
 | 8A | `omopy.testing` | 800-1,200 | 50-80 | Planned |
-| | **Total (done)** | **~26,450** | **1147** | |
-| | **Total (planned)** | **~6,600-10,900** | **~410-610** | |
-| | **Grand total** | **~33,050-37,350** | **~1,557-1,757** | |
+| | **Total (done)** | **~29,000** | **1227** | |
+| | **Total (planned)** | **~5,100-7,400** | **~310-460** | |
+| | **Grand total** | **~34,100-36,400** | **~1,537-1,687** | |
 
 ---
 
@@ -356,7 +349,7 @@ Phase 4A: characteristics ✅──┐
                                ├──► Phase 5A: drug ✅──► Phase 6B: drug_diagnostics
 Phase 4B: incidence ✅────────┤
                                ├──► Phase 7A: pregnancy
-Phase 5B: survival ──────────┘
+Phase 5B: survival ✅─────────┘
 
 Phase 6A: treatment (independent, can start anytime after Phase 2)
 
