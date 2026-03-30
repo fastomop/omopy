@@ -83,6 +83,7 @@ nav:
       - Incidence & Prevalence: guide/incidence-prevalence.md
       - Drug Utilisation: guide/drug-utilisation.md
       - Cohort Survival: guide/cohort-survival.md
+      - Treatment Patterns: guide/treatment-patterns.md
   - API Reference:
       - omopy.generics: reference/generics.md
       - omopy.connector: reference/connector.md
@@ -93,6 +94,7 @@ nav:
       - omopy.incidence: reference/incidence.md
       - omopy.drug: reference/drug.md
       - omopy.survival: reference/survival.md
+      - omopy.treatment: reference/treatment.md
   - Project:
       - Rewrite Roadmap: roadmap.md
       - Audit Trail: audit-trail.md

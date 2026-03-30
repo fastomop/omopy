@@ -16,7 +16,8 @@ omopy/
 ├── omopy.characteristics  ← Cohort characterisation (Phase 4A)
 ├── omopy.incidence        ← Incidence & prevalence (Phase 4B)
 ├── omopy.drug             ← Drug utilisation (Phase 5A)
-└── omopy.survival         ← Cohort survival analysis (Phase 5B)
+├── omopy.survival         ← Cohort survival analysis (Phase 5B)
+└── omopy.treatment        ← Treatment pathway analysis (Phase 6A)
 ```
 
 ## Layer Dependencies
@@ -31,6 +32,7 @@ Layer 2:  omopy.profiles ──── omopy.codelist ──── omopy.vis
 Layer 3:  omopy.characteristics    │
           omopy.incidence ─────────┘
           omopy.survival
+          omopy.treatment
               ▲
 Layer 4:  omopy.drug
 ```

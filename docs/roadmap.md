@@ -20,7 +20,7 @@ classifies each one, and lays out a phased plan for incorporating them into the
 | 7 | **IncidencePrevalence** | Analytics R package | ~29 | **Done** | `omopy.incidence` |
 | 8 | **DrugUtilisation** | Analytics R package | ~57 | **Done** | `omopy.drug` |
 | 9 | **CohortSurvival** | Analytics R package | ~21 | **Done** | `omopy.survival` |
-| 10 | **TreatmentPatterns** | Analytics R package | ~10 | Planned | `omopy.treatment` |
+| 10 | **TreatmentPatterns** | Analytics R package | ~10 | **Done** | `omopy.treatment` |
 | 11 | **DrugExposureDiagnostics** | Analytics R package | ~7 | Planned | `omopy.drug_diagnostics` |
 | 12 | **PregnancyIdentifier** | Clinical R package | TBD | Planned | `omopy.pregnancy` |
 | 13 | **TestGenerator** | Testing R package | TBD | Planned | `omopy.testing` |
@@ -36,8 +36,8 @@ classifies each one, and lays out a phased plan for incorporating them into the
 
 ### Classification Summary
 
-- **Already implemented (9):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence, DrugUtilisation, CohortSurvival
-- **Candidates for rewrite (4):** TreatmentPatterns, DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
+- **Already implemented (10):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence, DrugUtilisation, CohortSurvival, TreatmentPatterns
+- **Candidates for rewrite (3):** DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
 - **Low priority / partial (3):** DashboardExport, CdmOnboarding, DarwinBenchmark
 - **Out of scope (6):** DarwinShinyModules, ReportGenerator, execution-engine, TestReleaseGitAction, .github, EunomiaDatasets (data only, consumed directly)
 
@@ -84,7 +84,7 @@ Layer 4 (Domain Analytics):
     └── depends on: survival (R package → lifelines in Python)
     └── suggests: visOmopResults, CodelistGenerator
 
-  TreatmentPatterns               → omopy.treatment
+  TreatmentPatterns               → omopy.treatment ✅
     └── depends on: CDMConnector
     └── suggests: visOmopResults
 
@@ -211,27 +211,37 @@ These packages depend on Layer 4 or are parallel to it.
 
 ### Phase 6: Treatment Patterns & Drug Diagnostics
 
-#### Phase 6A: `omopy.treatment` (TreatmentPatterns)
+#### Phase 6A: `omopy.treatment` (TreatmentPatterns) — COMPLETE ✅
 
 **R package:** 10 exports
 
-**Scope:**
+**Implemented:**
 
-- **Core (2):** `compute_pathways()` and `execute_treatment_patterns()` — compute sequential treatment pathways from cohort data.
-- **Export (2):** Export aggregate and patient-level results.
-- **Visualization (4):** Sankey diagrams, sunburst plots, event duration plots.
-- **Utilities (2):** Results constructor, data model specs.
+- **Core types (2):** `CohortSpec` (Pydantic model for cohort role definition),
+  `PathwayResult` (Pydantic model for pipeline output)
+- **Computation (1):** `compute_pathways()` — 6-step pipeline: ingest, treatment
+  history, split events, era collapse, combination window, filter treatments
+- **Summarise (2):** `summarise_treatment_pathways()` (path frequencies),
+  `summarise_event_duration()` (duration statistics)
+- **Table (2):** `table_treatment_pathways()`, `table_event_duration()` — wrappers
+  around `vis_omop_table()`
+- **Plot (3):** `plot_sankey()` (Sankey diagram), `plot_sunburst()` (sunburst chart),
+  `plot_event_duration()` (box plot)
+- **Mock (1):** `mock_treatment_pathways()` — synthetic SummarisedResult for testing
 
-**Dependencies:** CDMConnector (done). Does not depend on PatientProfiles,
-CodelistGenerator, or other analytics packages directly.
+**Key algorithms:**
 
-**Estimated effort:** Medium. The pathway computation algorithm (determining
-treatment sequences, handling overlaps and gaps) is the core complexity.
-Sankey/sunburst visualizations can use plotly's Sankey trace.
+- **Era collapse** — Iterative merge of same-drug eras separated by ≤ N days
+- **Combination window** — FRFS/LRFS overlap detection creating "A+B" combinations
+- **Treatment filtering** — "first" (first per drug), "changes" (remove consecutive
+  duplicates), or "all"
 
-**Key Python library:** `plotly` (Sankey diagram support built-in).
+**Tests: 127** (109 unit + 18 integration against Synthea database)
 
-**Estimated size:** ~1,500-2,000 lines of source, ~80-120 tests.
+**Source: ~2,596 lines** across 6 files (`_pathway.py`, `_summarise.py`, `_table.py`,
+`_plot.py`, `_mock.py`, `__init__.py`)
+
+---
 
 #### Phase 6B: `omopy.drug_diagnostics` (DrugExposureDiagnostics)
 
@@ -330,13 +340,13 @@ These repositories are out of scope for the monorepo:
 | 4B | `omopy.incidence` | 3,315 | 86 | **Done** |
 | 5A | `omopy.drug` | 6,297 | 101 | **Done** |
 | 5B | `omopy.survival` | 2,548 | 80 | **Done** |
-| 6A | `omopy.treatment` | 1,500-2,000 | 80-120 | Planned |
+| 6A | `omopy.treatment` | 2,596 | 127 | **Done** |
 | 6B | `omopy.drug_diagnostics` | 800-1,200 | 60-80 | Planned |
 | 7A | `omopy.pregnancy` | 2,000-3,000 | 120-180 | Planned |
 | 8A | `omopy.testing` | 800-1,200 | 50-80 | Planned |
-| | **Total (done)** | **~31,724** | **1,227** | |
-| | **Total (planned)** | **~5,100-7,400** | **~310-460** | |
-| | **Grand total** | **~36,824-39,124** | **~1,537-1,687** | |
+| | **Total (done)** | **~34,274** | **1,354** | |
+| | **Total (planned)** | **~3,600-5,400** | **~230-340** | |
+| | **Grand total** | **~37,874-39,674** | **~1,584-1,694** | |
 
 ---
 
@@ -351,7 +361,7 @@ Phase 4B: incidence ✅────────┤
                                ├──► Phase 7A: pregnancy
 Phase 5B: survival ✅─────────┘
 
-Phase 6A: treatment (independent, can start anytime after Phase 2)
+Phase 6A: treatment ✅ (independent, completed)
 
 Phase 8A: testing (independent, can start anytime after Phase 2)
 ```

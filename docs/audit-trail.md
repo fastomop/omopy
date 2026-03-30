@@ -37,6 +37,8 @@ All commits are on the `main` branch, in chronological order:
 | `079fbbc` | 2026-03-22 | feat: add omopy.incidence module (Phase 4B — IncidencePrevalence equivalent) |
 | `65ff1b7` | 2026-03-22 | feat: add omopy.drug module (Phase 5A — DrugUtilisation equivalent) |
 | `31e63f1` | 2026-03-22 | feat: add omopy.survival module (Phase 5B — CohortSurvival equivalent) |
+| `fca5c83` | 2026-03-22 | docs: fix documentation errors found during comprehensive audit |
+| TBD | 2026-03-30 | feat: add omopy.treatment module (Phase 6A — TreatmentPatterns equivalent) |
 
 ---
 
@@ -318,10 +320,12 @@ importing mkdocs CLI, since `mkdocstrings-python` uses Pydantic internally.
 | `docs/reference/incidence.md` | API ref | mkdocstrings autodoc for 21 exports |
 | `docs/reference/drug.md` | API ref | mkdocstrings autodoc for 44 exports |
 | `docs/reference/survival.md` | API ref | mkdocstrings autodoc for 11 exports |
+| `docs/reference/treatment.md` | API ref | mkdocstrings autodoc for 11 exports |
 | `docs/guide/cohort-characteristics.md` | Guide | Cohort characteristics module guide |
 | `docs/guide/incidence-prevalence.md` | Guide | Incidence & prevalence module guide |
 | `docs/guide/drug-utilisation.md` | Guide | Drug utilisation module guide |
 | `docs/guide/cohort-survival.md` | Guide | Cohort survival module guide |
+| `docs/guide/treatment-patterns.md` | Guide | Treatment patterns module guide |
 | `docs/roadmap.md` | Project | Rewrite roadmap and repository inventory |
 | `docs/audit-trail.md` | Project | This audit trail |
 
@@ -717,6 +721,146 @@ Aalen-Johansen estimator for competing risk cumulative incidence.
 
 ---
 
+## Phase 6A: Treatment (TreatmentPatterns equivalent)
+
+### What was built
+
+The `omopy.treatment` module (6 source files, ~2,634 lines) provides
+treatment pathway analysis — the Python equivalent of the R
+`TreatmentPatterns` package. It computes sequential treatment pathways
+from OMOP CDM cohort data, summarises frequencies and durations, and
+visualises results as Sankey diagrams, sunburst charts, and box plots.
+
+### Source files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `__init__.py` | 81 | 11 exports |
+| `_pathway.py` | 1,141 | `compute_pathways()`, `CohortSpec`, `PathwayResult`, 6-step pipeline engine |
+| `_summarise.py` | 527 | `summarise_treatment_pathways()`, `summarise_event_duration()` |
+| `_table.py` | 167 | `table_treatment_pathways()`, `table_event_duration()` |
+| `_plot.py` | 481 | `plot_sankey()`, `plot_sunburst()`, `plot_event_duration()` |
+| `_mock.py` | 237 | `mock_treatment_pathways()` |
+
+### Public API (11 exports)
+
+- **2 core types:** `CohortSpec` (Pydantic model for cohort role definition),
+  `PathwayResult` (Pydantic model for pipeline output)
+- **1 computation:** `compute_pathways` — 6-step pipeline
+- **2 summarise:** `summarise_treatment_pathways`, `summarise_event_duration`
+- **2 table:** `table_treatment_pathways`, `table_event_duration`
+- **3 plot:** `plot_sankey`, `plot_sunburst`, `plot_event_duration`
+- **1 mock:** `mock_treatment_pathways`
+
+### Internal algorithms
+
+**`compute_pathways()` 6-step pipeline** (`_pathway.py`):
+
+1. **Ingest** — Collect CohortTable to Polars, join with `person` table for
+   demographics (age, sex), filter by `min_era_duration`
+2. **Treatment history** — Match event cohorts to target observation windows,
+   clip events to window boundaries, assign `n_target`
+3. **Split event cohorts** (optional) — Split specified cohorts into
+   acute/therapy sub-cohorts based on duration cutoff
+4. **Era collapse** — Iteratively merge consecutive same-drug eras separated
+   by ≤ `era_collapse_size` days (loops until convergence)
+5. **Combination window** — Iteratively detect overlaps ≥ `combination_window`
+   days, create "A+B" combination IDs using FRFS/LRFS logic
+6. **Filter treatments** — "first" (first occurrence per drug), "changes"
+   (remove consecutive duplicates), or "all"
+7. **Finalize** — Assign `event_seq`, truncate to `max_path_length`, resolve
+   cohort names, append exit cohorts
+
+**Era collapse** groups by `(person_id, event_cohort_id, n_target)`, checks
+the gap between consecutive same-drug eras, and merges if gap ≤ threshold.
+Iterates until no more merges occur.
+
+**Combination window** handles three overlap cases:
+- **Switch** (overlap < combinationWindow): truncate or keep
+- **FRFS** (First Received First Stopped): creates 3 segments
+  (pre-overlap, overlap, post-overlap)
+- **LRFS** (Last Received First Stopped): current era entirely within previous
+
+Combination IDs use `+`-joined sorted cohort IDs (e.g., `"1+3"`), resolved
+to sorted names (`"DrugA+DrugC"`).
+
+**Summarise functions** (`_summarise.py`):
+
+- `summarise_treatment_pathways()` — Build dash-separated path strings per
+  person, compute frequencies by path × age group × sex × index year,
+  apply minimum cell count suppression
+- `summarise_event_duration()` — Compute min/q1/median/q3/max/mean/sd
+  per event cohort, both overall and by position in the pathway
+
+**Plot functions** (`_plot.py`):
+
+- `plot_sankey()` — Parse dash-separated paths into step transitions,
+  build Plotly Sankey trace with source/target/value arrays
+- `plot_sunburst()` — Parse paths into hierarchical parent-child labels,
+  build Plotly sunburst trace
+- `plot_event_duration()` — Build Plotly box trace per event cohort
+
+### Tests: 127 passing (109 unit + 18 integration)
+
+- Unit tests use synthetic Polars DataFrames (no database)
+- Integration tests build CohortTable from Synthea drug and condition
+  cohorts, run full pipeline, validate PathwayResult structure, test
+  summarise → table/plot end-to-end
+
+### Key design decisions
+
+1. **Polars-only internal processing.** Unlike other modules that use Ibis
+   for lazy computation, the treatment module collects cohort data upfront
+   and processes entirely in Polars. The pathway algorithm requires iterative
+   row-level operations (era collapse, combination detection) that don't
+   map well to SQL.
+
+2. **CohortSpec as Pydantic model.** Instead of passing dicts or positional
+   arguments, cohort roles are defined via typed `CohortSpec` objects that
+   validate at construction time.
+
+3. **PathwayResult bundles everything.** The result object carries the
+   treatment history, attrition, cohort specs, CDM name, and arguments.
+   This makes the summarise/table/plot functions self-contained — they
+   don't need the CDM or CohortTable again.
+
+4. **Path encoding as dash-separated strings.** Steps separated by `-`,
+   combinations by `+` (alphabetically sorted). Example:
+   `"lisinopril-amlodipine+lisinopril-amlodipine"`.
+
+5. **Mock function returns SummarisedResult directly.** Unlike
+   `compute_pathways()` which returns `PathwayResult`, the mock function
+   returns a `SummarisedResult` for direct use with table/plot functions,
+   matching the pattern established by other modules.
+
+### Problems encountered
+
+1. **`CohortTable._tbl` does not exist.** The initial implementation
+   accessed `cohort._tbl` and `cdm["person"]._tbl`, but CohortTable uses
+   `.data` (property) and `.collect()` (method). Fixed by using
+   `cohort.collect()` and `cdm["person"].collect()` to get Polars
+   DataFrames directly.
+
+2. **`_filter_treatments` on empty DF.** `map_elements` on an empty column
+   with no `event_cohort_id` raises `ColumnNotFoundError`. Fixed by
+   returning early when `df.height == 0`.
+
+3. **`_finalize_pathways` on empty DF.** `with_columns(pl.lit(...))` on an
+   empty DataFrame creates a phantom row. Fixed by building a schema-only
+   DataFrame instead.
+
+4. **`_filter_result_type` type mismatch.** `result_id` can be Utf8 in data
+   but Int64 in settings (or vice versa). Fixed by casting `matching_ids`
+   to match each column's dtype independently.
+
+5. **`str.concat` deprecation.** Polars deprecated `str.concat` in favor of
+   `str.join`. Fixed in `_summarise.py`.
+
+6. **Plotly title assertion.** `fig.layout.title` returns a `Title` object,
+   not a string. Must use `fig.layout.title.text` for assertion in tests.
+
+---
+
 ## Codebase Statistics
 
 ### Source code
@@ -732,8 +876,9 @@ Aalen-Johansen estimator for competing risk cumulative incidence.
 | `omopy.incidence` | 7 | 3,315 |
 | `omopy.drug` | 12 | 6,297 |
 | `omopy.survival` | 7 | 2,548 |
+| `omopy.treatment` | 6 | 2,634 |
 | `omopy.__init__` | 1 | 46 |
-| **Total** | **91** | **~31,724** |
+| **Total** | **97** | **~34,358** |
 
 ### Tests
 
@@ -748,10 +893,11 @@ Aalen-Johansen estimator for competing risk cumulative incidence.
 | `tests/incidence/` | 2 | 1,146 | 86 |
 | `tests/drug/` | 2 | 1,469 | 101 |
 | `tests/survival/` | 2 | 851 | 80 |
+| `tests/treatment/` | 2 | 1,560 | 127 |
 | `tests/conftest.py` | 1 | 41 | — |
-| **Total** | **60** | **~13,615** | **1,227** |
+| **Total** | **62** | **~15,175** | **1,354** |
 
-### Public API: 238 exports total
+### Public API: 249 exports total
 
 - `omopy.generics`: 38 (10 classes, 5 enums, 1 type alias, 8 constants, 14 functions)
 - `omopy.connector`: 26 (2 classes, 1 type alias, 23 functions)
@@ -762,6 +908,7 @@ Aalen-Johansen estimator for competing risk cumulative incidence.
 - `omopy.incidence`: 21 (21 functions)
 - `omopy.drug`: 44 (44 functions)
 - `omopy.survival`: 11 (11 functions)
+- `omopy.treatment`: 11 (2 classes, 9 functions)
 
 ### Dependencies
 
@@ -807,5 +954,5 @@ uv run mypy src/omopy
 ## What Comes Next
 
 See [Roadmap](roadmap.md) for the detailed plan covering the remaining
-4 DARWIN-EU packages to be implemented as OMOPy modules.
-Next up: Phase 6A (`omopy.treatment` — TreatmentPatterns).
+3 DARWIN-EU packages to be implemented as OMOPy modules.
+Next up: Phase 6B (`omopy.drug_diagnostics` — DrugExposureDiagnostics).
