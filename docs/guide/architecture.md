@@ -17,7 +17,8 @@ omopy/
 ├── omopy.incidence        ← Incidence & prevalence (Phase 4B)
 ├── omopy.drug             ← Drug utilisation (Phase 5A)
 ├── omopy.survival         ← Cohort survival analysis (Phase 5B)
-└── omopy.treatment        ← Treatment pathway analysis (Phase 6A)
+├── omopy.treatment        ← Treatment pathway analysis (Phase 6A)
+└── omopy.drug_diagnostics ← Drug exposure diagnostics (Phase 6B)
 ```
 
 ## Layer Dependencies
@@ -35,6 +36,7 @@ Layer 3:  omopy.characteristics    │
           omopy.treatment
               ▲
 Layer 4:  omopy.drug
+          omopy.drug_diagnostics
 ```
 
 Each higher-level module depends only on modules below it. `omopy.generics` has

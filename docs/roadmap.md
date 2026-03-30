@@ -21,7 +21,7 @@ classifies each one, and lays out a phased plan for incorporating them into the
 | 8 | **DrugUtilisation** | Analytics R package | ~57 | **Done** | `omopy.drug` |
 | 9 | **CohortSurvival** | Analytics R package | ~21 | **Done** | `omopy.survival` |
 | 10 | **TreatmentPatterns** | Analytics R package | ~10 | **Done** | `omopy.treatment` |
-| 11 | **DrugExposureDiagnostics** | Analytics R package | ~7 | Planned | `omopy.drug_diagnostics` |
+| 11 | **DrugExposureDiagnostics** | Analytics R package | ~7 | **Done** | `omopy.drug_diagnostics` |
 | 12 | **PregnancyIdentifier** | Clinical R package | TBD | Planned | `omopy.pregnancy` |
 | 13 | **TestGenerator** | Testing R package | TBD | Planned | `omopy.testing` |
 | 14 | **DashboardExport** | Tooling (data export) | ~3 | Low priority | `omopy.export` (maybe) |
@@ -36,8 +36,8 @@ classifies each one, and lays out a phased plan for incorporating them into the
 
 ### Classification Summary
 
-- **Already implemented (10):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence, DrugUtilisation, CohortSurvival, TreatmentPatterns
-- **Candidates for rewrite (3):** DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
+- **Already implemented (11):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence, DrugUtilisation, CohortSurvival, TreatmentPatterns, DrugExposureDiagnostics
+- **Candidates for rewrite (2):** PregnancyIdentifier, TestGenerator
 - **Low priority / partial (3):** DashboardExport, CdmOnboarding, DarwinBenchmark
 - **Out of scope (6):** DarwinShinyModules, ReportGenerator, execution-engine, TestReleaseGitAction, .github, EunomiaDatasets (data only, consumed directly)
 
@@ -89,7 +89,7 @@ Layer 4 (Domain Analytics):
     └── suggests: visOmopResults
 
 Layer 5 (Specialized / Downstream):
-  DrugExposureDiagnostics         → omopy.drug_diagnostics
+  DrugExposureDiagnostics         → omopy.drug_diagnostics ✅
     └── depends on: CDMConnector, omopgenerics, DrugUtilisation
 
   PregnancyIdentifier             → omopy.pregnancy
@@ -243,23 +243,34 @@ These packages depend on Layer 4 or are parallel to it.
 
 ---
 
-#### Phase 6B: `omopy.drug_diagnostics` (DrugExposureDiagnostics)
+#### Phase 6B: `omopy.drug_diagnostics` (DrugExposureDiagnostics) — COMPLETE ✅
 
 **R package:** 7 exports
 
-**Scope:**
+**Implemented:**
 
-- **Core (1):** `execute_checks()` — runs ~12 diagnostic checks on drug_exposure records for specified ingredients.
-- **Utilities (3):** Mock data, write results to disk, benchmarking.
-- **Interactive (2):** Shiny-based result viewer (will NOT be ported — use notebook/HTML output instead).
+- **Core (3):** `AVAILABLE_CHECKS` constant (12 check names), `DiagnosticsResult`
+  Pydantic model, `execute_checks()` — runs configurable diagnostic checks on
+  drug_exposure records for specified ingredient concept IDs
+- **Checks (12):** missing values, exposure duration, type, route, source concept,
+  days supply, verbatim end date, dose coverage, sig, quantity, days between
+  consecutive records, diagnostics summary
+- **Summarise (1):** `summarise_drug_diagnostics()` — convert to SummarisedResult
+- **Table (1):** `table_drug_diagnostics()` — wrapper around `vis_omop_table()`
+- **Plot (1):** `plot_drug_diagnostics()` — bar charts and box plots per check type
+- **Mock/benchmark (2):** `mock_drug_exposure()`, `benchmark_drug_diagnostics()`
 
-**Dependencies:** CDMConnector, omopgenerics (done). DrugUtilisation
-(Phase 5A, for dose calculations). This is why it's in Phase 6.
+**Key features:**
 
-**Estimated effort:** Small-medium. The diagnostic checks are mostly SQL
-aggregations. The main dependency on DrugUtilisation is for dose-related checks.
+- Configurable sampling (random N records per ingredient, or all)
+- Min cell count obscuring across all checks
+- Descendant concept resolution via `concept_ancestor` table
+- Dose check delegates to `omopy.drug.add_daily_dose()` pattern engine
 
-**Estimated size:** ~800-1,200 lines of source, ~60-80 tests.
+**Tests: 80** (55 unit + 25 integration against Synthea database)
+
+**Source: ~1,830 lines** across 5 files (`_checks.py`, `_summarise.py`,
+`_table.py`, `_plot.py`, `_mock.py`)
 
 ---
 
@@ -341,12 +352,12 @@ These repositories are out of scope for the monorepo:
 | 5A | `omopy.drug` | 6,297 | 101 | **Done** |
 | 5B | `omopy.survival` | 2,548 | 80 | **Done** |
 | 6A | `omopy.treatment` | 2,596 | 127 | **Done** |
-| 6B | `omopy.drug_diagnostics` | 800-1,200 | 60-80 | Planned |
+| 6B | `omopy.drug_diagnostics` | 1,830 | 80 | **Done** |
 | 7A | `omopy.pregnancy` | 2,000-3,000 | 120-180 | Planned |
 | 8A | `omopy.testing` | 800-1,200 | 50-80 | Planned |
-| | **Total (done)** | **~34,274** | **1,354** | |
-| | **Total (planned)** | **~3,600-5,400** | **~230-340** | |
-| | **Grand total** | **~37,874-39,674** | **~1,584-1,694** | |
+| | **Total (done)** | **~36,104** | **1,434** | |
+| | **Total (planned)** | **~2,800-4,200** | **~170-260** | |
+| | **Grand total** | **~38,904-40,304** | **~1,604-1,694** | |
 
 ---
 
@@ -356,7 +367,7 @@ These repositories are out of scope for the monorepo:
 Now ─────────────────────────────────────────────────────────────────►
 
 Phase 4A: characteristics ✅──┐
-                               ├──► Phase 5A: drug ✅──► Phase 6B: drug_diagnostics
+                               ├──► Phase 5A: drug ✅──► Phase 6B: drug_diagnostics ✅
 Phase 4B: incidence ✅────────┤
                                ├──► Phase 7A: pregnancy
 Phase 5B: survival ✅─────────┘

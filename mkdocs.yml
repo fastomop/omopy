@@ -84,6 +84,7 @@ nav:
       - Drug Utilisation: guide/drug-utilisation.md
       - Cohort Survival: guide/cohort-survival.md
       - Treatment Patterns: guide/treatment-patterns.md
+      - Drug Diagnostics: guide/drug-diagnostics.md
   - API Reference:
       - omopy.generics: reference/generics.md
       - omopy.connector: reference/connector.md
@@ -95,6 +96,7 @@ nav:
       - omopy.drug: reference/drug.md
       - omopy.survival: reference/survival.md
       - omopy.treatment: reference/treatment.md
+      - omopy.drug_diagnostics: reference/drug_diagnostics.md
   - Project:
       - Rewrite Roadmap: roadmap.md
       - Audit Trail: audit-trail.md

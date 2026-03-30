@@ -39,6 +39,7 @@ All commits are on the `main` branch, in chronological order:
 | `31e63f1` | 2026-03-22 | feat: add omopy.survival module (Phase 5B — CohortSurvival equivalent) |
 | `fca5c83` | 2026-03-22 | docs: fix documentation errors found during comprehensive audit |
 | TBD | 2026-03-30 | feat: add omopy.treatment module (Phase 6A — TreatmentPatterns equivalent) |
+| TBD | 2026-03-30 | feat: add omopy.drug_diagnostics module (Phase 6B — DrugExposureDiagnostics equivalent) |
 
 ---
 
@@ -861,6 +862,94 @@ to sorted names (`"DrugA+DrugC"`).
 
 ---
 
+## Phase 6B: Drug Diagnostics (DrugExposureDiagnostics equivalent)
+
+### What was built
+
+The `omopy.drug_diagnostics` module (6 source files, ~1,830 lines) provides
+comprehensive diagnostic checks on drug exposure records — the Python
+equivalent of the R `DrugExposureDiagnostics` package.
+
+### Source files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `__init__.py` | 73 | 8 exports, module docstring with usage example |
+| `_checks.py` | ~780 | `execute_checks()`, `DiagnosticsResult`, 12 check implementations, `_resolve_descendants()`, `_fetch_drug_records()`, `_quantile_stats()`, `_obscure_df()` |
+| `_summarise.py` | ~370 | `summarise_drug_diagnostics()`, converters for each check type |
+| `_table.py` | ~110 | `table_drug_diagnostics()` thin wrapper |
+| `_plot.py` | ~260 | `plot_drug_diagnostics()`, `_plot_categorical()`, `_plot_quantile()`, `_plot_missing()` |
+| `_mock.py` | ~310 | `mock_drug_exposure()`, `benchmark_drug_diagnostics()` |
+
+### Public API (8 exports)
+
+- **1 constant:** `AVAILABLE_CHECKS` (list of 12 check names)
+- **1 model:** `DiagnosticsResult` (Pydantic, dict-like access to check DataFrames)
+- **1 computation:** `execute_checks` — runs selected checks on drug_exposure records
+- **1 summarise:** `summarise_drug_diagnostics` — convert to SummarisedResult
+- **1 table:** `table_drug_diagnostics` — wrapper around `vis_omop_table()`
+- **1 plot:** `plot_drug_diagnostics` — bar/box plots per check type
+- **2 mock/benchmark:** `mock_drug_exposure`, `benchmark_drug_diagnostics`
+
+### 12 diagnostic checks
+
+1. **missing** — Count missing values for 15 drug_exposure columns
+2. **exposure_duration** — Quantile distribution of exposure duration in days
+3. **type** — Frequency of drug_type_concept_id values
+4. **route** — Frequency of route_concept_id values
+5. **source_concept** — Source concept mapping analysis (source → standard)
+6. **days_supply** — Quantile distribution + comparison with date-derived duration
+7. **verbatim_end_date** — Comparison of verbatim_end_date vs drug_exposure_end_date
+8. **dose** — Daily dose coverage via drug_strength pattern matching
+9. **sig** — Frequency of sig values
+10. **quantity** — Quantile distribution of quantity field
+11. **days_between** — Time between consecutive drug records per patient
+12. **diagnostics_summary** — Aggregated summary across all other checks
+
+### Tests: 80 passing (55 unit + 25 integration)
+
+- Unit tests cover AVAILABLE_CHECKS, DiagnosticsResult, _quantile_stats,
+  _obscure_df, all 12 check functions, mock_drug_exposure,
+  summarise_drug_diagnostics, table_drug_diagnostics, plot_drug_diagnostics
+- Integration tests run execute_checks against Synthea database, validate
+  sampling, min_cell_count, full pipeline end-to-end
+
+### Key design decisions
+
+1. **DiagnosticsResult as Pydantic model with dict-like access.** `result["missing"]`
+   returns the Polars DataFrame for the missing check. Iterable over check names.
+   Metadata (ingredient IDs, CDM name, checks run, sample size) stored as fields.
+
+2. **Configurable sampling.** `sample_size` parameter limits records per ingredient
+   for performance. Set to `None` to use all records.
+
+3. **Min cell count obscuring.** Applied consistently across all checks — counts
+   below threshold are replaced with `f"<{min_cell_count}"` and associated
+   statistics are nullified. Uses the `_obscure_df()` helper pattern.
+
+4. **Dose check delegates to drug module.** Rather than reimplementing drug
+   strength pattern matching, the dose check calls `omopy.drug.add_daily_dose()`
+   and `omopy.drug.pattern_table()` internally.
+
+5. **Summary check is meta.** The `diagnostics_summary` check aggregates results
+   from all other enabled checks into a single overview DataFrame.
+
+### Problems encountered
+
+1. **Synthea drug_strength table is empty.** The dose check always returns 0%
+   coverage in integration tests. Validated that the check logic works correctly
+   with mock data in unit tests.
+
+2. **Synthea quantity/sig always NULL.** Quantity quantile check returns all-null
+   quantiles. Sig check shows only `<missing>`. Both are expected for synthetic
+   data — unit tests validate correct behavior with non-null mock data.
+
+3. **`rng.randint(1, remaining)` fails when `remaining == 0`.** In mock data
+   generation, the loop that distributes records across ingredients could
+   exhaust the remaining count. Fixed with `if remaining <= 0: break` guard.
+
+---
+
 ## Codebase Statistics
 
 ### Source code
@@ -877,8 +966,9 @@ to sorted names (`"DrugA+DrugC"`).
 | `omopy.drug` | 12 | 6,297 |
 | `omopy.survival` | 7 | 2,548 |
 | `omopy.treatment` | 6 | 2,634 |
+| `omopy.drug_diagnostics` | 6 | 1,830 |
 | `omopy.__init__` | 1 | 46 |
-| **Total** | **97** | **~34,358** |
+| **Total** | **103** | **~36,188** |
 
 ### Tests
 
@@ -894,10 +984,11 @@ to sorted names (`"DrugA+DrugC"`).
 | `tests/drug/` | 2 | 1,469 | 101 |
 | `tests/survival/` | 2 | 851 | 80 |
 | `tests/treatment/` | 2 | 1,560 | 127 |
+| `tests/drug_diagnostics/` | 3 | 1,250 | 80 |
 | `tests/conftest.py` | 1 | 41 | — |
-| **Total** | **62** | **~15,175** | **1,354** |
+| **Total** | **65** | **~16,425** | **1,434** |
 
-### Public API: 249 exports total
+### Public API: 257 exports total
 
 - `omopy.generics`: 38 (10 classes, 5 enums, 1 type alias, 8 constants, 14 functions)
 - `omopy.connector`: 26 (2 classes, 1 type alias, 23 functions)
@@ -909,6 +1000,7 @@ to sorted names (`"DrugA+DrugC"`).
 - `omopy.drug`: 44 (44 functions)
 - `omopy.survival`: 11 (11 functions)
 - `omopy.treatment`: 11 (2 classes, 9 functions)
+- `omopy.drug_diagnostics`: 8 (1 constant, 1 class, 6 functions)
 
 ### Dependencies
 
@@ -954,5 +1046,5 @@ uv run mypy src/omopy
 ## What Comes Next
 
 See [Roadmap](roadmap.md) for the detailed plan covering the remaining
-3 DARWIN-EU packages to be implemented as OMOPy modules.
-Next up: Phase 6B (`omopy.drug_diagnostics` — DrugExposureDiagnostics).
+2 DARWIN-EU packages to be implemented as OMOPy modules.
+Next up: Phase 7A (`omopy.pregnancy` — PregnancyIdentifier).

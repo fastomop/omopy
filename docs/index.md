@@ -26,6 +26,8 @@ structures via [Pydantic](https://docs.pydantic.dev/) and
 | [`omopy.incidence`](reference/incidence.md) | IncidencePrevalence | Incidence rates and prevalence proportions |
 | [`omopy.drug`](reference/drug.md) | DrugUtilisation | Drug cohort generation, utilisation metrics, dose analysis |
 | [`omopy.survival`](reference/survival.md) | CohortSurvival | Kaplan-Meier survival, competing risks, survival plots |
+| [`omopy.treatment`](reference/treatment.md) | TreatmentPatterns | Treatment pathway analysis, Sankey and sunburst plots |
+| [`omopy.drug_diagnostics`](reference/drug_diagnostics.md) | DrugExposureDiagnostics | Drug exposure quality checks and diagnostics |
 
 ## Quick Example
 
@@ -75,5 +77,7 @@ print(df)
 | Phase 4B | `omopy.incidence` | Complete (86 tests) |
 | Phase 5A | `omopy.drug` | Complete (101 tests) |
 | Phase 5B | `omopy.survival` | Complete (80 tests) |
+| Phase 6A | `omopy.treatment` | Complete (127 tests) |
+| Phase 6B | `omopy.drug_diagnostics` | Complete (80 tests) |
 
-**Total: 1227 tests, all passing.**
+**Total: 1434 tests, all passing.**
