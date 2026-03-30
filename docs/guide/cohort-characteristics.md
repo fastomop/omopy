@@ -19,7 +19,7 @@ counts, and clinical variable distributions:
 
 ```python
 from omopy.connector import cdm_from_con
-from omopy.connector.cohort_generation import generate_concept_cohort_set
+from omopy.connector import generate_concept_cohort_set
 from omopy.generics import Codelist
 from omopy.characteristics import summarise_characteristics
 
@@ -202,7 +202,7 @@ Available table functions:
 | `table_cohort_timing` | `summarise_cohort_timing` |
 | `table_cohort_overlap` | `summarise_cohort_overlap` |
 | `table_large_scale_characteristics` | `summarise_large_scale_characteristics` |
-| `table_cohort_codelist` | `summarise_cohort_codelist` |
+| `table_top_large_scale_characteristics` | `summarise_large_scale_characteristics` |
 
 ## Plots
 

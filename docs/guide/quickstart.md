@@ -25,7 +25,7 @@ and returns a `CdmReference` — a dict-like container of lazy `CdmTable` object
 ```python
 # List available tables
 print(cdm.table_names)
-# ('person', 'observation_period', 'condition_occurrence', ...)
+# ['person', 'observation_period', 'condition_occurrence', ...]
 
 # Access a table (returns a CdmTable wrapping an Ibis expression)
 person = cdm["person"]
@@ -44,7 +44,8 @@ from omopy.connector import snapshot
 snap = snapshot(cdm)
 print(snap.person_count)
 print(snap.vocabulary_version)
-print(snap.observation_period_range)
+print(snap.earliest_observation_period_start_date)
+print(snap.latest_observation_period_end_date)
 ```
 
 ## Generate a Cohort

@@ -34,8 +34,9 @@ All commits are on the `main` branch, in chronological order:
 | `78eaf52` | 2026-03-22 01:53 | docs: complete documentation with vis module reference and user guide |
 | `9bdc436` | 2026-03-22 02:05 | docs: add rewrite roadmap and audit trail |
 | `249744e` | 2026-03-22 | feat: add omopy.characteristics module (Phase 4A — CohortCharacteristics equivalent) |
-| `5cc4faf` | 2026-03-22 | feat: add omopy.incidence module (Phase 4B — IncidencePrevalence equivalent) |
+| `079fbbc` | 2026-03-22 | feat: add omopy.incidence module (Phase 4B — IncidencePrevalence equivalent) |
 | `65ff1b7` | 2026-03-22 | feat: add omopy.drug module (Phase 5A — DrugUtilisation equivalent) |
+| `31e63f1` | 2026-03-22 | feat: add omopy.survival module (Phase 5B — CohortSurvival equivalent) |
 
 ---
 
@@ -43,7 +44,7 @@ All commits are on the `main` branch, in chronological order:
 
 ### What was built
 
-The `omopy.generics` module (10 source files, 3,400 lines) provides the
+The `omopy.generics` module (10 source files, 2,511 lines) provides the
 foundational type system for the entire OMOPy package. It defines the core
 data structures that all other modules depend on.
 
@@ -62,7 +63,7 @@ data structures that all other modules depend on.
 | `cohort_table.py` | 204 | `CohortTable` — specialized CdmTable with attrition tracking |
 | `summarised_result.py` | 428 | `SummarisedResult` — standardized 13-column result format |
 
-### Public API (39 exports)
+### Public API (38 exports)
 
 - 10 classes: `CdmTable`, `CdmReference`, `CdmSchema`, `FieldSpec`, `TableSpec`, `ResultFieldSpec`, `Codelist`, `ConceptEntry`, `ConceptSetExpression`, `CohortTable`, `SummarisedResult`
 - 5 enums: `CdmVersion`, `CdmDataType`, `TableType`, `TableGroup`, `TableSchema`
@@ -160,7 +161,7 @@ implementation** against the CIRCE JSON specification only. No R source code
 was consulted. This avoids any copyright concerns and ensures the Python
 implementation is idiomatic.
 
-### Tests: 310 passing (12 test files)
+### Tests: 292 passing (17 test files)
 
 ---
 
@@ -187,7 +188,7 @@ columns.
 | `_windows.py` | 153 | Time window parsing and validation |
 | `_utilities.py` | 221 | `summarise_table_counts()` |
 
-### Tests: 107 passing (9 test files)
+### Tests: 122 passing (10 test files)
 
 ---
 
@@ -209,7 +210,7 @@ Vocabulary-based code list generation and analysis.
 | `_stratify.py` | 125 | `stratify_by_domain()`, `stratify_by_vocabulary()`, `stratify_by_concept_class()` |
 | `_diagnostics.py` | 335 | `summarise_code_use()`, `summarise_orphan_codes()` |
 
-### Tests: 122 passing (7 test files)
+### Tests: 122 passing (8 test files)
 
 ---
 
@@ -219,7 +220,7 @@ Vocabulary-based code list generation and analysis.
 
 Formatting, tabulation, and plotting for `SummarisedResult` objects.
 
-### Source files (6 files, ~1,200 lines)
+### Source files (6 files, ~1,767 lines)
 
 | File | Lines | Purpose |
 |------|-------|---------|
@@ -229,7 +230,7 @@ Formatting, tabulation, and plotting for `SummarisedResult` objects.
 | `_table.py` | 454 | `vis_omop_table()`, `vis_table()`, `format_table()` |
 | `_plot.py` | 443 | `scatter_plot()`, `bar_plot()`, `box_plot()` |
 
-### Tests: 115 passing (5 test files)
+### Tests: 115 passing (6 test files)
 
 ### Key design decisions
 
@@ -308,11 +309,21 @@ importing mkdocs CLI, since `mkdocstrings-python` uses Pydantic internally.
 | `docs/guide/patient-profiles.md` | Guide | Patient profiles module guide |
 | `docs/guide/codelist-generation.md` | Guide | Codelist module guide |
 | `docs/guide/visualization.md` | Guide | Visualization module guide |
-| `docs/reference/generics.md` | API ref | mkdocstrings autodoc for 39 exports |
-| `docs/reference/connector.md` | API ref | mkdocstrings autodoc for 23 exports |
-| `docs/reference/profiles.md` | API ref | mkdocstrings autodoc for 30 exports |
-| `docs/reference/codelist.md` | API ref | mkdocstrings autodoc for 14 exports |
-| `docs/reference/vis.md` | API ref | mkdocstrings autodoc for 19 exports |
+| `docs/reference/generics.md` | API ref | mkdocstrings autodoc for 38 exports |
+| `docs/reference/connector.md` | API ref | mkdocstrings autodoc for 26 exports |
+| `docs/reference/profiles.md` | API ref | mkdocstrings autodoc for 40 exports |
+| `docs/reference/codelist.md` | API ref | mkdocstrings autodoc for 17 exports |
+| `docs/reference/vis.md` | API ref | mkdocstrings autodoc for 18 exports |
+| `docs/reference/characteristics.md` | API ref | mkdocstrings autodoc for 23 exports |
+| `docs/reference/incidence.md` | API ref | mkdocstrings autodoc for 21 exports |
+| `docs/reference/drug.md` | API ref | mkdocstrings autodoc for 44 exports |
+| `docs/reference/survival.md` | API ref | mkdocstrings autodoc for 11 exports |
+| `docs/guide/cohort-characteristics.md` | Guide | Cohort characteristics module guide |
+| `docs/guide/incidence-prevalence.md` | Guide | Incidence & prevalence module guide |
+| `docs/guide/drug-utilisation.md` | Guide | Drug utilisation module guide |
+| `docs/guide/cohort-survival.md` | Guide | Cohort survival module guide |
+| `docs/roadmap.md` | Project | Rewrite roadmap and repository inventory |
+| `docs/audit-trail.md` | Project | This audit trail |
 
 ---
 
@@ -365,7 +376,7 @@ importing mkdocs CLI, since `mkdocstrings-python` uses Pydantic internally.
 
 ### What was built
 
-The `omopy.characteristics` module (4 source files, ~2,450 lines) provides
+The `omopy.characteristics` module (5 source files, ~3,007 lines) provides
 cohort characterization analytics — the Python equivalent of the R
 `CohortCharacteristics` package.
 
@@ -384,8 +395,8 @@ cohort characterization analytics — the Python equivalent of the R
   `summarise_cohort_attrition`, `summarise_cohort_timing`, `summarise_cohort_overlap`,
   `summarise_large_scale_characteristics`, `summarise_cohort_codelist`
 - **8 table functions:** `table_characteristics`, `table_cohort_count`, `table_cohort_attrition`,
-  `table_cohort_timing`, `table_cohort_overlap`, `table_large_scale_characteristics`,
-  `table_cohort_codelist`, `available_table_columns`
+  `table_cohort_timing`, `table_cohort_overlap`, `table_top_large_scale_characteristics`,
+  `table_large_scale_characteristics`, `available_table_columns`
 - **7 plot functions:** `plot_characteristics`, `plot_cohort_count`, `plot_cohort_attrition`,
   `plot_cohort_timing`, `plot_cohort_overlap`, `plot_large_scale_characteristics`,
   `plot_compared_large_scale_characteristics`
@@ -450,7 +461,7 @@ The core of the module is an internal aggregation engine in `_summarise.py`:
 
 ### What was built
 
-The `omopy.incidence` module (6 source files, ~2,200 lines) provides
+The `omopy.incidence` module (7 source files, ~3,315 lines) provides
 incidence and prevalence estimation — the Python equivalent of the R
 `IncidencePrevalence` package.
 
@@ -496,7 +507,7 @@ incidence and prevalence estimation — the Python equivalent of the R
 
 ### What was built
 
-The `omopy.drug` module (12 source files, ~5,900 lines) provides comprehensive
+The `omopy.drug` module (12 source files, ~6,297 lines) provides comprehensive
 drug utilisation analysis — the Python equivalent of the R `DrugUtilisation`
 package, which is the largest package in the DARWIN-EU ecosystem with 57 exports.
 
@@ -712,41 +723,41 @@ Aalen-Johansen estimator for competing risk cumulative incidence.
 
 | Module | Files | Lines |
 |--------|-------|-------|
-| `omopy.generics` | 10 | 3,400 |
-| `omopy.connector` | 20 (incl. circe/) | 6,200 |
-| `omopy.profiles` | 11 | 3,700 |
-| `omopy.codelist` | 8 | 1,400 |
-| `omopy.vis` | 6 | 1,200 |
-| `omopy.characteristics` | 4 | 2,450 |
-| `omopy.incidence` | 6 | 2,200 |
-| `omopy.drug` | 12 | 5,900 |
+| `omopy.generics` | 10 | 2,511 |
+| `omopy.connector` | 24 (incl. circe/) | 7,072 |
+| `omopy.profiles` | 11 | 3,737 |
+| `omopy.codelist` | 8 | 1,424 |
+| `omopy.vis` | 6 | 1,767 |
+| `omopy.characteristics` | 5 | 3,007 |
+| `omopy.incidence` | 7 | 3,315 |
+| `omopy.drug` | 12 | 6,297 |
 | `omopy.survival` | 7 | 2,548 |
 | `omopy.__init__` | 1 | 46 |
-| **Total** | **86** | **~29,000** |
+| **Total** | **91** | **~31,724** |
 
 ### Tests
 
 | Module | Files | Lines | Tests |
 |--------|-------|-------|-------|
-| `tests/generics/` | 10 | 2,500 | 236 |
-| `tests/connector/` | 12 | 3,900 | 310 |
-| `tests/profiles/` | 9 | 1,300 | 107 |
-| `tests/codelist/` | 7 | 1,200 | 122 |
-| `tests/vis/` | 5 | 900 | 115 |
-| `tests/characteristics/` | 1 | ~1,200 | 73 |
-| `tests/incidence/` | 1 | ~1,400 | 86 |
-| `tests/drug/` | 1 | ~1,460 | 101 |
-| `tests/survival/` | 1 | ~1,200 | 80 |
+| `tests/generics/` | 10 | 2,007 | 236 |
+| `tests/connector/` | 17 | 3,509 | 292 |
+| `tests/profiles/` | 10 | 1,313 | 122 |
+| `tests/codelist/` | 8 | 1,190 | 122 |
+| `tests/vis/` | 6 | 878 | 115 |
+| `tests/characteristics/` | 2 | 1,211 | 73 |
+| `tests/incidence/` | 2 | 1,146 | 86 |
+| `tests/drug/` | 2 | 1,469 | 101 |
+| `tests/survival/` | 2 | 851 | 80 |
 | `tests/conftest.py` | 1 | 41 | — |
-| **Total** | **50** | **~15,860** | **1227** |
+| **Total** | **60** | **~13,615** | **1,227** |
 
-### Public API: 224 exports total
+### Public API: 238 exports total
 
-- `omopy.generics`: 39 (10 classes, 5 enums, 1 type alias, 8 constants, 15 functions)
-- `omopy.connector`: 23 (2 classes, 1 type alias, 20 functions)
-- `omopy.profiles`: 30 (1 type alias, 29 functions)
-- `omopy.codelist`: 14 (14 functions)
-- `omopy.vis`: 19 (2 classes, 15 functions, 2 factory functions)
+- `omopy.generics`: 38 (10 classes, 5 enums, 1 type alias, 8 constants, 14 functions)
+- `omopy.connector`: 26 (2 classes, 1 type alias, 23 functions)
+- `omopy.profiles`: 40 (1 type alias, 39 functions)
+- `omopy.codelist`: 17 (17 functions)
+- `omopy.vis`: 18 (2 classes, 14 functions, 2 factory functions)
 - `omopy.characteristics`: 23 (23 functions)
 - `omopy.incidence`: 21 (21 functions)
 - `omopy.drug`: 44 (44 functions)

@@ -37,7 +37,7 @@ classifies each one, and lays out a phased plan for incorporating them into the
 ### Classification Summary
 
 - **Already implemented (9):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence, DrugUtilisation, CohortSurvival
-- **Candidates for rewrite (5):** CohortSurvival, TreatmentPatterns, DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
+- **Candidates for rewrite (4):** TreatmentPatterns, DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
 - **Low priority / partial (3):** DashboardExport, CdmOnboarding, DarwinBenchmark
 - **Out of scope (6):** DarwinShinyModules, ReportGenerator, execution-engine, TestReleaseGitAction, .github, EunomiaDatasets (data only, consumed directly)
 
@@ -67,19 +67,19 @@ Layer 3 (Visualization):
     └── depends on: omopgenerics
 
 Layer 4 (Domain Analytics):
-  CohortCharacteristics           → omopy.characteristics
+  CohortCharacteristics           → omopy.characteristics ✅
     └── depends on: omopgenerics, CDMConnector, PatientProfiles
     └── suggests: visOmopResults, CodelistGenerator
 
-  IncidencePrevalence             → omopy.incidence
+  IncidencePrevalence             → omopy.incidence ✅
     └── depends on: omopgenerics, CDMConnector, PatientProfiles
     └── suggests: visOmopResults
 
-  DrugUtilisation                 → omopy.drug
+  DrugUtilisation                 → omopy.drug ✅
     └── depends on: omopgenerics, PatientProfiles, CodelistGenerator
     └── suggests: CDMConnector, visOmopResults, CohortSurvival
 
-  CohortSurvival                  → omopy.survival
+  CohortSurvival                  → omopy.survival ✅
     └── depends on: omopgenerics, CDMConnector, PatientProfiles
     └── depends on: survival (R package → lifelines in Python)
     └── suggests: visOmopResults, CodelistGenerator
@@ -107,13 +107,13 @@ Layer 6 (Testing / Tooling):
 
 ### Phase 0-3: COMPLETE ✅
 
-Already implemented with 960 tests:
+Already implemented with 887 tests:
 
 | Phase | Module | R Equivalent | Tests |
 |-------|--------|-------------|-------|
 | 0 | `omopy.generics` | omopgenerics | 236 |
-| 1+2 | `omopy.connector` | CDMConnector | 310 |
-| 3A | `omopy.profiles` | PatientProfiles | 107 |
+| 1+2 | `omopy.connector` | CDMConnector | 292 |
+| 3A | `omopy.profiles` | PatientProfiles | 122 |
 | 3B | `omopy.codelist` | CodelistGenerator | 122 |
 | 3C | `omopy.vis` | visOmopResults | 115 |
 
@@ -321,22 +321,22 @@ These repositories are out of scope for the monorepo:
 
 | Phase | Module | Est. Lines | Est. Tests | Status |
 |-------|--------|-----------|-----------|--------|
-| 0 | `omopy.generics` | 3,400 | 236 | **Done** |
-| 1+2 | `omopy.connector` | 6,200 | 310 | **Done** |
-| 3A | `omopy.profiles` | 3,700 | 107 | **Done** |
-| 3B | `omopy.codelist` | 1,400 | 122 | **Done** |
-| 3C | `omopy.vis` | 1,200 | 115 | **Done** |
-| 4A | `omopy.characteristics` | 2,450 | 73 | **Done** |
-| 4B | `omopy.incidence` | 2,200 | 86 | **Done** |
-| 5A | `omopy.drug` | 5,900 | 101 | **Done** |
+| 0 | `omopy.generics` | 2,511 | 236 | **Done** |
+| 1+2 | `omopy.connector` | 7,072 | 292 | **Done** |
+| 3A | `omopy.profiles` | 3,737 | 122 | **Done** |
+| 3B | `omopy.codelist` | 1,424 | 122 | **Done** |
+| 3C | `omopy.vis` | 1,767 | 115 | **Done** |
+| 4A | `omopy.characteristics` | 3,007 | 73 | **Done** |
+| 4B | `omopy.incidence` | 3,315 | 86 | **Done** |
+| 5A | `omopy.drug` | 6,297 | 101 | **Done** |
 | 5B | `omopy.survival` | 2,548 | 80 | **Done** |
 | 6A | `omopy.treatment` | 1,500-2,000 | 80-120 | Planned |
 | 6B | `omopy.drug_diagnostics` | 800-1,200 | 60-80 | Planned |
 | 7A | `omopy.pregnancy` | 2,000-3,000 | 120-180 | Planned |
 | 8A | `omopy.testing` | 800-1,200 | 50-80 | Planned |
-| | **Total (done)** | **~29,000** | **1227** | |
+| | **Total (done)** | **~31,724** | **1,227** | |
 | | **Total (planned)** | **~5,100-7,400** | **~310-460** | |
-| | **Grand total** | **~34,100-36,400** | **~1,537-1,687** | |
+| | **Grand total** | **~36,824-39,124** | **~1,537-1,687** | |
 
 ---
 

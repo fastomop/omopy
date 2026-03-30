@@ -75,7 +75,7 @@ df = person.head(100).collect()
 ```python
 print(cdm.cdm_version)    # "5.4"
 print(cdm.cdm_name)       # "my_cdm"
-print(cdm.cdm_source)     # DbSource object
+print(cdm.cdm_source)     # CdmSource | None
 ```
 
 ## Subsetting
@@ -105,5 +105,6 @@ snap = snapshot(cdm)
 print(snap.person_count)
 print(snap.cdm_source_name)
 print(snap.vocabulary_version)
-print(snap.observation_period_range)
+print(snap.earliest_observation_period_start_date)
+print(snap.latest_observation_period_end_date)
 ```

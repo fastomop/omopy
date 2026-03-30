@@ -67,8 +67,8 @@ print(df)
 | Phase | Module | Status |
 |-------|--------|--------|
 | Phase 0 | `omopy.generics` | Complete (236 tests) |
-| Phase 1+2 | `omopy.connector` | Complete (310 tests) |
-| Phase 3A | `omopy.profiles` | Complete (107 tests) |
+| Phase 1+2 | `omopy.connector` | Complete (292 tests) |
+| Phase 3A | `omopy.profiles` | Complete (122 tests) |
 | Phase 3B | `omopy.codelist` | Complete (122 tests) |
 | Phase 3C | `omopy.vis` | Complete (115 tests) |
 | Phase 4A | `omopy.characteristics` | Complete (73 tests) |

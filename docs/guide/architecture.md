@@ -7,21 +7,32 @@ the DARWIN-EU ecosystem into a layered monorepo architecture.
 
 ```
 omopy/
-├── omopy.generics     ← Core type system (Phase 0)
-├── omopy.connector    ← Database CDM access (Phase 1+2)
-│   └── circe/         ← CIRCE cohort engine
-├── omopy.profiles     ← Patient-level enrichment (Phase 3A)
-├── omopy.codelist     ← Vocabulary codelist tools (Phase 3B)
-└── omopy.vis          ← Visualisation (Phase 3C, planned)
+├── omopy.generics         ← Core type system (Phase 0)
+├── omopy.connector        ← Database CDM access (Phase 1+2)
+│   └── circe/             ← CIRCE cohort engine
+├── omopy.profiles         ← Patient-level enrichment (Phase 3A)
+├── omopy.codelist         ← Vocabulary codelist tools (Phase 3B)
+├── omopy.vis              ← Visualisation (Phase 3C)
+├── omopy.characteristics  ← Cohort characterisation (Phase 4A)
+├── omopy.incidence        ← Incidence & prevalence (Phase 4B)
+├── omopy.drug             ← Drug utilisation (Phase 5A)
+└── omopy.survival         ← Cohort survival analysis (Phase 5B)
 ```
 
 ## Layer Dependencies
 
 ```
-omopy.vis ──────────┐
-omopy.codelist ─────┤
-omopy.profiles ─────┼──▶ omopy.connector ──▶ omopy.generics
-                    │
+Layer 0:  omopy.generics
+              ▲
+Layer 1:  omopy.connector
+              ▲
+Layer 2:  omopy.profiles ──── omopy.codelist ──── omopy.vis
+              ▲                    ▲
+Layer 3:  omopy.characteristics    │
+          omopy.incidence ─────────┘
+          omopy.survival
+              ▲
+Layer 4:  omopy.drug
 ```
 
 Each higher-level module depends only on modules below it. `omopy.generics` has
@@ -38,6 +49,10 @@ no internal dependencies and can be used standalone.
 | Compatibility | [Pandas](https://pandas.pydata.org/) | Interop with Ibis `.execute()` |
 | Data models | [Pydantic v2](https://docs.pydantic.dev/) | Frozen, validated data classes |
 | Arrow interchange | [PyArrow](https://arrow.apache.org/docs/python/) | Zero-copy data transfer |
+| Table rendering | [great-tables](https://posit-dev.github.io/great-tables/) | Publication-ready tables |
+| Plot rendering | [plotly](https://plotly.com/python/) | Interactive visualisations |
+| Statistics | [scipy](https://scipy.org/) | Confidence intervals |
+| Survival analysis | [lifelines](https://lifelines.readthedocs.io/) | Kaplan-Meier estimation |
 
 ## Design Decisions
 

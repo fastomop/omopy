@@ -50,10 +50,9 @@ cdm = generate_concept_cohort_set(
     cdm,
     codelist,
     name="conditions",
-    include_descendants=True,   # expand to descendant concepts
-    domains=["Condition"],       # restrict to specific domains
-    observation_filter=True,     # require observation period overlap
-    gap_days=0,                  # days allowed between eras for collapsing
+    limit="first",                          # "first" (default) or "all"
+    required_observation=(0, 0),            # (days_before, days_after) in observation period
+    end="observation_period_end_date",      # cohort end date strategy
 )
 ```
 
@@ -119,7 +118,7 @@ cl = Codelist({
 })
 
 # Access
-print(cl.names)            # ('aspirin', 'ibuprofen')
+print(cl.names)            # ['aspirin', 'ibuprofen']
 print(cl.all_concept_ids)  # {1112807, 1177480}
 print(cl["aspirin"])       # [1112807]
 ```
@@ -138,6 +137,6 @@ cse = ConceptSetExpression({
     ]
 })
 
-# Convert to a flat Codelist (requires CDM for descendant resolution)
+# Convert to a flat Codelist
 codelist = cse.to_codelist()
 ```
