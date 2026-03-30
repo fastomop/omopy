@@ -13,12 +13,14 @@ from omopy.generics.cohort_table import COHORT_REQUIRED_COLUMNS, CohortTable
 
 
 def _cohort_df() -> pl.DataFrame:
-    return pl.DataFrame({
-        "cohort_definition_id": [1, 1, 2, 2, 2],
-        "subject_id": [101, 102, 101, 103, 104],
-        "cohort_start_date": ["2020-01-01"] * 5,
-        "cohort_end_date": ["2020-12-31"] * 5,
-    })
+    return pl.DataFrame(
+        {
+            "cohort_definition_id": [1, 1, 2, 2, 2],
+            "subject_id": [101, 102, 101, 103, 104],
+            "cohort_start_date": ["2020-01-01"] * 5,
+            "cohort_end_date": ["2020-12-31"] * 5,
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -37,11 +39,13 @@ class TestCohortTableBasics:
             assert col in CohortTable(_cohort_df()).columns
 
     def test_missing_required_column_raises(self):
-        df = pl.DataFrame({
-            "cohort_definition_id": [1],
-            "subject_id": [101],
-            # missing start_date and end_date
-        })
+        df = pl.DataFrame(
+            {
+                "cohort_definition_id": [1],
+                "subject_id": [101],
+                # missing start_date and end_date
+            }
+        )
         with pytest.raises(ValueError, match="missing required columns"):
             CohortTable(df)
 
@@ -76,10 +80,12 @@ class TestCohortTableBasics:
         assert all(isinstance(n, str) for n in names)
 
     def test_custom_settings(self):
-        settings = pl.DataFrame({
-            "cohort_definition_id": [1, 2],
-            "cohort_name": ["Diabetes", "Hypertension"],
-        })
+        settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 2],
+                "cohort_name": ["Diabetes", "Hypertension"],
+            }
+        )
         ct = CohortTable(_cohort_df(), settings=settings)
         assert ct.cohort_names == ["Diabetes", "Hypertension"]
 
@@ -115,10 +121,12 @@ class TestCohortCount:
 class TestCohortTableSettingsSetter:
     def test_valid_settings(self):
         ct = CohortTable(_cohort_df())
-        new_settings = pl.DataFrame({
-            "cohort_definition_id": [1, 2],
-            "cohort_name": ["A", "B"],
-        })
+        new_settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 2],
+                "cohort_name": ["A", "B"],
+            }
+        )
         ct.settings = new_settings
         assert ct.cohort_names == ["A", "B"]
 
@@ -140,10 +148,12 @@ class TestCohortTableSettingsSetter:
 
 class TestCohortTableTransformations:
     def test_filter_preserves_cohort_metadata(self):
-        settings = pl.DataFrame({
-            "cohort_definition_id": [1, 2],
-            "cohort_name": ["A", "B"],
-        })
+        settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 2],
+                "cohort_name": ["A", "B"],
+            }
+        )
         ct = CohortTable(_cohort_df(), settings=settings)
         filtered = ct.filter(pl.col("cohort_definition_id") == 1)
         assert isinstance(filtered, CohortTable)

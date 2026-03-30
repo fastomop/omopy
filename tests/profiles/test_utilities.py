@@ -27,7 +27,8 @@ class TestAddConceptName:
     def test_custom_name_style(self, synthea_cdm):
         cond = synthea_cdm["condition_occurrence"]
         result = add_concept_name(
-            cond, synthea_cdm,
+            cond,
+            synthea_cdm,
             column="condition_concept_id",
             name_style="{column}_label",
         )
@@ -51,7 +52,8 @@ class TestFilterInObservation:
         """Observation periods should all pass since they define observation."""
         obs = synthea_cdm["observation_period"]
         result = filter_in_observation(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         # Should keep all rows (obs start is always in its own obs period)
@@ -60,7 +62,8 @@ class TestFilterInObservation:
     def test_preserves_columns(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = filter_in_observation(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         df = result.collect()

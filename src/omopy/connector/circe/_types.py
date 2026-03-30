@@ -343,12 +343,8 @@ class PrimaryCriteria(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     criteria_list: tuple[DomainCriteria, ...] = ()
-    observation_window: ObservationWindow = Field(
-        default_factory=ObservationWindow
-    )
-    primary_limit: CriteriaLimit = Field(
-        default_factory=CriteriaLimit
-    )
+    observation_window: ObservationWindow = Field(default_factory=ObservationWindow)
+    primary_limit: CriteriaLimit = Field(default_factory=CriteriaLimit)
 
 
 # ---------------------------------------------------------------------------
@@ -419,25 +415,15 @@ class CohortExpression(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     concept_sets: tuple[ConceptSet, ...] = ()
-    primary_criteria: PrimaryCriteria = Field(
-        default_factory=PrimaryCriteria
-    )
+    primary_criteria: PrimaryCriteria = Field(default_factory=PrimaryCriteria)
     additional_criteria: CriteriaGroup | None = None
-    qualified_limit: CriteriaLimit = Field(
-        default_factory=CriteriaLimit
-    )
+    qualified_limit: CriteriaLimit = Field(default_factory=CriteriaLimit)
     inclusion_rules: tuple[InclusionRule, ...] = ()
-    expression_limit: CriteriaLimit = Field(
-        default_factory=CriteriaLimit
-    )
+    expression_limit: CriteriaLimit = Field(default_factory=CriteriaLimit)
     end_strategy: EndStrategy | None = None
     censoring_criteria: tuple[DomainCriteria, ...] = ()
-    collapse_settings: CollapseSettings = Field(
-        default_factory=CollapseSettings
-    )
-    censor_window: CensorWindow = Field(
-        default_factory=CensorWindow
-    )
+    collapse_settings: CollapseSettings = Field(default_factory=CollapseSettings)
+    censor_window: CensorWindow = Field(default_factory=CensorWindow)
 
 
 # Rebuild forward references for recursive models

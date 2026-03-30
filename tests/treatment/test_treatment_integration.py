@@ -82,9 +82,7 @@ def treatment_cohort(drug_cdm, condition_cdm):
     # Reassign target to cohort_id 100
     if "subject_id" in target_df.columns and "person_id" not in target_df.columns:
         target_df = target_df.rename({"subject_id": "person_id"})
-    target_df = target_df.with_columns(
-        pl.lit(100).cast(pl.Int64).alias("cohort_definition_id")
-    )
+    target_df = target_df.with_columns(pl.lit(100).cast(pl.Int64).alias("cohort_definition_id"))
     # Ensure standard column names
     target_df = target_df.select(
         "cohort_definition_id",
@@ -131,10 +129,12 @@ def treatment_cohort(drug_cdm, condition_cdm):
     combined = pl.concat([target_df, drug_df], how="diagonal_relaxed")
 
     # Build settings
-    settings = pl.DataFrame({
-        "cohort_definition_id": [100, 1, 2],
-        "cohort_name": ["hypertension", "lisinopril", "amlodipine"],
-    })
+    settings = pl.DataFrame(
+        {
+            "cohort_definition_id": [100, 1, 2],
+            "cohort_name": ["hypertension", "lisinopril", "amlodipine"],
+        }
+    )
 
     ct = CohortTable(combined, settings=settings)
     ct.cdm = drug_cdm

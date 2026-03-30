@@ -161,16 +161,12 @@ def _ingest_cohort_data(
         df = df.rename({"subject_id": "person_id"})
 
     # Join with person table for demographics
-    person_df = cdm["person"].collect().select(
-        "person_id", "year_of_birth", "gender_concept_id"
-    )
+    person_df = cdm["person"].collect().select("person_id", "year_of_birth", "gender_concept_id")
 
     # Map gender concept to sex label
     gender_map = {8507: "Male", 8532: "Female"}
     person_df = person_df.with_columns(
-        pl.col("gender_concept_id")
-        .replace_strict(gender_map, default="Unknown")
-        .alias("sex")
+        pl.col("gender_concept_id").replace_strict(gender_map, default="Unknown").alias("sex")
     )
 
     df = df.join(person_df, on="person_id", how="left")
@@ -182,10 +178,9 @@ def _ingest_cohort_data(
 
     # Compute duration in days
     df = df.with_columns(
-        (
-            (pl.col("cohort_end_date") - pl.col("cohort_start_date"))
-            .dt.total_days()
-        ).alias("duration_era")
+        ((pl.col("cohort_end_date") - pl.col("cohort_start_date")).dt.total_days()).alias(
+            "duration_era"
+        )
     )
 
     # Build attrition: initial counts per target cohort
@@ -204,9 +199,11 @@ def _ingest_cohort_data(
             target_df = df.filter(pl.col("cohort_definition_id") == ts.cohort_id)
             attrition_rows.append(
                 _attrition_row(
-                    target_df, 2,
+                    target_df,
+                    2,
                     f"Removing records < {min_era_duration} days",
-                    ts.cohort_id, ts.cohort_name,
+                    ts.cohort_id,
+                    ts.cohort_name,
                 )
             )
 
@@ -241,9 +238,7 @@ def _create_treatment_history(
 
     # Split into target and event data
     targets = df.filter(pl.col("cohort_definition_id").is_in(target_ids))
-    events = df.filter(
-        pl.col("cohort_definition_id").is_in(event_ids | exit_ids)
-    )
+    events = df.filter(pl.col("cohort_definition_id").is_in(event_ids | exit_ids))
 
     if targets.height == 0 or events.height == 0:
         return pl.DataFrame(
@@ -264,12 +259,8 @@ def _create_treatment_history(
         )
 
     # Compute observation window for each target entry
-    start_col = (
-        "cohort_start_date" if start_anchor == "start_date" else "cohort_end_date"
-    )
-    end_col = (
-        "cohort_end_date" if end_anchor == "end_date" else "cohort_start_date"
-    )
+    start_col = "cohort_start_date" if start_anchor == "start_date" else "cohort_end_date"
+    end_col = "cohort_end_date" if end_anchor == "end_date" else "cohort_start_date"
 
     targets = targets.with_columns(
         (pl.col(start_col) + pl.duration(days=window_start)).alias("index_date"),
@@ -333,10 +324,9 @@ def _create_treatment_history(
 
     # Recompute duration after clipping
     joined = joined.with_columns(
-        (
-            (pl.col("event_end_date") - pl.col("event_start_date"))
-            .dt.total_days()
-        ).alias("duration_era")
+        ((pl.col("event_end_date") - pl.col("event_start_date")).dt.total_days()).alias(
+            "duration_era"
+        )
     )
 
     # Build result
@@ -354,9 +344,7 @@ def _create_treatment_history(
         "n_target",
     ).with_columns(
         # Assign type: event or exit
-        pl.when(
-            pl.col("event_cohort_id").cast(pl.Int64).is_in(list(exit_ids))
-        )
+        pl.when(pl.col("event_cohort_id").cast(pl.Int64).is_in(list(exit_ids)))
         .then(pl.lit("exit"))
         .otherwise(pl.lit("event"))
         .alias("type"),
@@ -443,10 +431,7 @@ def _era_collapse(
 
         # Compute gap to previous row of same drug for same person/target
         events = events.with_columns(
-            (
-                pl.col("event_start_date")
-                - pl.col("event_end_date").shift(1)
-            )
+            (pl.col("event_start_date") - pl.col("event_end_date").shift(1))
             .dt.total_days()
             .over("person_id", "event_cohort_id", "n_target")
             .alias("_gap_to_prev")
@@ -478,25 +463,26 @@ def _era_collapse(
         )
 
         # Collapse: take min start, max end per group
-        events = events.group_by(
-            "person_id", "event_cohort_id", "n_target", "_era_group"
-        ).agg(
-            pl.col("event_start_date").min(),
-            pl.col("event_end_date").max(),
-            pl.col("index_year").first(),
-            pl.col("age").first(),
-            pl.col("sex").first(),
-            pl.col("target_cohort_id").first(),
-            pl.col("target_cohort_name").first(),
-            pl.col("type").first(),
-        ).drop("_era_group")
+        events = (
+            events.group_by("person_id", "event_cohort_id", "n_target", "_era_group")
+            .agg(
+                pl.col("event_start_date").min(),
+                pl.col("event_end_date").max(),
+                pl.col("index_year").first(),
+                pl.col("age").first(),
+                pl.col("sex").first(),
+                pl.col("target_cohort_id").first(),
+                pl.col("target_cohort_name").first(),
+                pl.col("type").first(),
+            )
+            .drop("_era_group")
+        )
 
         # Recompute duration
         events = events.with_columns(
-            (
-                (pl.col("event_end_date") - pl.col("event_start_date"))
-                .dt.total_days()
-            ).alias("duration_era")
+            ((pl.col("event_end_date") - pl.col("event_start_date")).dt.total_days()).alias(
+                "duration_era"
+            )
         )
     else:
         # Remove temp columns if we hit max iterations
@@ -539,14 +525,8 @@ def _combination_window(
         # Check for overlaps: within same person/target, does any row overlap
         # with the previous row?
         events = events.with_columns(
-            pl.col("event_end_date")
-            .shift(1)
-            .over("person_id", "n_target")
-            .alias("_prev_end"),
-            pl.col("event_start_date")
-            .shift(1)
-            .over("person_id", "n_target")
-            .alias("_prev_start"),
+            pl.col("event_end_date").shift(1).over("person_id", "n_target").alias("_prev_end"),
+            pl.col("event_start_date").shift(1).over("person_id", "n_target").alias("_prev_start"),
             pl.col("event_cohort_id")
             .shift(1)
             .over("person_id", "n_target")
@@ -565,9 +545,7 @@ def _combination_window(
         )
 
         if not events["_has_overlap"].any():
-            events = events.drop(
-                "_prev_end", "_prev_start", "_prev_cohort_id", "_has_overlap"
-            )
+            events = events.drop("_prev_end", "_prev_start", "_prev_cohort_id", "_has_overlap")
             break
 
         # Process overlaps one at a time per person/target
@@ -655,20 +633,22 @@ def _combination_window(
 
                 # New combination row
                 base = events.filter(pl.col("_row_idx") == curr_idx).row(0, named=True)
-                new_rows.append({
-                    "person_id": pid,
-                    "index_year": base["index_year"],
-                    "event_cohort_id": combo_id,
-                    "event_start_date": curr_start,
-                    "event_end_date": prev_end,
-                    "duration_era": (prev_end - curr_start).days,
-                    "age": base["age"],
-                    "sex": base["sex"],
-                    "target_cohort_id": base["target_cohort_id"],
-                    "target_cohort_name": base.get("target_cohort_name", ""),
-                    "n_target": nt,
-                    "type": "event",
-                })
+                new_rows.append(
+                    {
+                        "person_id": pid,
+                        "index_year": base["index_year"],
+                        "event_cohort_id": combo_id,
+                        "event_start_date": curr_start,
+                        "event_end_date": prev_end,
+                        "duration_era": (prev_end - curr_start).days,
+                        "age": base["age"],
+                        "sex": base["sex"],
+                        "target_cohort_id": base["target_cohort_id"],
+                        "target_cohort_name": base.get("target_cohort_name", ""),
+                        "n_target": nt,
+                        "type": "event",
+                    }
+                )
             else:
                 # LRFS: Last Received, First Stopped
                 # Current is entirely within previous
@@ -687,20 +667,22 @@ def _combination_window(
                 # New row for remainder of previous after current ends
                 base = events.filter(pl.col("_row_idx") == prev_idx).row(0, named=True)
                 if curr_end < prev_end:
-                    new_rows.append({
-                        "person_id": pid,
-                        "index_year": base["index_year"],
-                        "event_cohort_id": prev_cohort,
-                        "event_start_date": curr_end,
-                        "event_end_date": prev_end,
-                        "duration_era": (prev_end - curr_end).days,
-                        "age": base["age"],
-                        "sex": base["sex"],
-                        "target_cohort_id": base["target_cohort_id"],
-                        "target_cohort_name": base.get("target_cohort_name", ""),
-                        "n_target": nt,
-                        "type": "event",
-                    })
+                    new_rows.append(
+                        {
+                            "person_id": pid,
+                            "index_year": base["index_year"],
+                            "event_cohort_id": prev_cohort,
+                            "event_start_date": curr_end,
+                            "event_end_date": prev_end,
+                            "duration_era": (prev_end - curr_end).days,
+                            "age": base["age"],
+                            "sex": base["sex"],
+                            "target_cohort_id": base["target_cohort_id"],
+                            "target_cohort_name": base.get("target_cohort_name", ""),
+                            "n_target": nt,
+                            "type": "event",
+                        }
+                    )
 
         # Apply updates
         if rows_to_update:
@@ -714,24 +696,28 @@ def _combination_window(
                     )
 
         # Remove temp columns
-        events = events.drop("_row_idx", "_prev_end", "_prev_start", "_prev_cohort_id", "_has_overlap")
+        events = events.drop(
+            "_row_idx", "_prev_end", "_prev_start", "_prev_cohort_id", "_has_overlap"
+        )
 
         # Add new rows
         if new_rows:
-            new_df = pl.DataFrame(new_rows, schema_overrides={
-                "person_id": events["person_id"].dtype,
-                "event_start_date": pl.Date,
-                "event_end_date": pl.Date,
-                "target_cohort_id": events["target_cohort_id"].dtype,
-            })
+            new_df = pl.DataFrame(
+                new_rows,
+                schema_overrides={
+                    "person_id": events["person_id"].dtype,
+                    "event_start_date": pl.Date,
+                    "event_end_date": pl.Date,
+                    "target_cohort_id": events["target_cohort_id"].dtype,
+                },
+            )
             events = pl.concat([events, new_df], how="diagonal_relaxed")
 
         # Recompute duration
         events = events.with_columns(
-            (
-                (pl.col("event_end_date") - pl.col("event_start_date"))
-                .dt.total_days()
-            ).alias("duration_era")
+            ((pl.col("event_end_date") - pl.col("event_start_date")).dt.total_days()).alias(
+                "duration_era"
+            )
         )
 
         # Filter by min_post_combination_duration
@@ -801,9 +787,7 @@ def _filter_treatments(
     )
 
     # Sort by person, target, date
-    events = events.sort(
-        "person_id", "n_target", "event_start_date", "event_end_date"
-    )
+    events = events.sort("person_id", "n_target", "event_start_date", "event_end_date")
 
     if filter_treatments == "first":
         # Keep only the first occurrence of each drug per person/target
@@ -814,14 +798,10 @@ def _filter_treatments(
     elif filter_treatments == "changes":
         # Remove consecutive duplicates of the same drug
         events = events.with_columns(
-            pl.col("event_cohort_id")
-            .shift(1)
-            .over("person_id", "n_target")
-            .alias("_prev_drug")
+            pl.col("event_cohort_id").shift(1).over("person_id", "n_target").alias("_prev_drug")
         )
         events = events.filter(
-            pl.col("_prev_drug").is_null()
-            | (pl.col("event_cohort_id") != pl.col("_prev_drug"))
+            pl.col("_prev_drug").is_null() | (pl.col("event_cohort_id") != pl.col("_prev_drug"))
         ).drop("_prev_drug")
 
     return pl.concat([events, exits], how="diagonal_relaxed")
@@ -845,9 +825,7 @@ def _finalize_pathways(
         return pl.DataFrame(schema=schema)
 
     # Sort and assign event_seq
-    df = df.sort(
-        "person_id", "n_target", "event_start_date", "event_end_date"
-    )
+    df = df.sort("person_id", "n_target", "event_start_date", "event_end_date")
 
     df = df.with_columns(
         pl.col("event_start_date")
@@ -984,14 +962,10 @@ def compute_pathways(
     cdm_name = cdm.cdm_name or ""
 
     # Build name mapping
-    cohort_names: dict[str | int, str] = {
-        c.cohort_id: c.cohort_name for c in cohorts
-    }
+    cohort_names: dict[str | int, str] = {c.cohort_id: c.cohort_name for c in cohorts}
 
     # Step 0: Ingest data
-    raw_df, attrition_rows = _ingest_cohort_data(
-        cohort, cdm, cohorts, min_era_duration
-    )
+    raw_df, attrition_rows = _ingest_cohort_data(cohort, cdm, cohorts, min_era_duration)
 
     # Step 1: Create treatment history
     history = _create_treatment_history(
@@ -1006,31 +980,29 @@ def compute_pathways(
 
     # Attrition: after event matching
     for ts in target_specs:
-        target_history = history.filter(
-            pl.col("target_cohort_id") == ts.cohort_id
-        )
+        target_history = history.filter(pl.col("target_cohort_id") == ts.cohort_id)
         attrition_rows.append(
             _attrition_row(
-                target_history, 3,
+                target_history,
+                3,
                 "Events within observation window",
-                ts.cohort_id, ts.cohort_name,
+                ts.cohort_id,
+                ts.cohort_name,
             )
         )
 
     # Step 2: Split event cohorts (optional)
-    history = _split_event_cohorts(
-        history, split_event_cohorts, split_time, cohort_names
-    )
+    history = _split_event_cohorts(history, split_event_cohorts, split_time, cohort_names)
 
     for ts in target_specs:
-        target_history = history.filter(
-            pl.col("target_cohort_id") == ts.cohort_id
-        )
+        target_history = history.filter(pl.col("target_cohort_id") == ts.cohort_id)
         attrition_rows.append(
             _attrition_row(
-                target_history, 4,
+                target_history,
+                4,
                 "After split event cohorts",
-                ts.cohort_id, ts.cohort_name,
+                ts.cohort_id,
+                ts.cohort_name,
             )
         )
 
@@ -1038,14 +1010,14 @@ def compute_pathways(
     history = _era_collapse(history, era_collapse_size)
 
     for ts in target_specs:
-        target_history = history.filter(
-            pl.col("target_cohort_id") == ts.cohort_id
-        )
+        target_history = history.filter(pl.col("target_cohort_id") == ts.cohort_id)
         attrition_rows.append(
             _attrition_row(
-                target_history, 5,
+                target_history,
+                5,
                 "After era collapse",
-                ts.cohort_id, ts.cohort_name,
+                ts.cohort_id,
+                ts.cohort_name,
             )
         )
 
@@ -1055,14 +1027,14 @@ def compute_pathways(
     )
 
     for ts in target_specs:
-        target_history = history.filter(
-            pl.col("target_cohort_id") == ts.cohort_id
-        )
+        target_history = history.filter(pl.col("target_cohort_id") == ts.cohort_id)
         attrition_rows.append(
             _attrition_row(
-                target_history, 6,
+                target_history,
+                6,
                 "After combination window",
-                ts.cohort_id, ts.cohort_name,
+                ts.cohort_id,
+                ts.cohort_name,
             )
         )
 
@@ -1070,14 +1042,14 @@ def compute_pathways(
     history = _filter_treatments(history, filter_treatments)
 
     for ts in target_specs:
-        target_history = history.filter(
-            pl.col("target_cohort_id") == ts.cohort_id
-        )
+        target_history = history.filter(pl.col("target_cohort_id") == ts.cohort_id)
         attrition_rows.append(
             _attrition_row(
-                target_history, 7,
+                target_history,
+                7,
                 f"After filter treatments ({filter_treatments})",
-                ts.cohort_id, ts.cohort_name,
+                ts.cohort_id,
+                ts.cohort_name,
             )
         )
 
@@ -1085,34 +1057,47 @@ def compute_pathways(
     history = _finalize_pathways(history, max_path_length, cohort_names)
 
     for ts in target_specs:
-        target_history = history.filter(
-            pl.col("target_cohort_id") == ts.cohort_id
-        )
+        target_history = history.filter(pl.col("target_cohort_id") == ts.cohort_id)
         attrition_rows.append(
             _attrition_row(
-                target_history, 8,
+                target_history,
+                8,
                 f"After max path length ({max_path_length})",
-                ts.cohort_id, ts.cohort_name,
+                ts.cohort_id,
+                ts.cohort_name,
             )
         )
 
     # Build attrition DataFrame
-    attrition_df = pl.DataFrame(attrition_rows) if attrition_rows else pl.DataFrame(
-        schema={
-            "number_records": pl.Int64,
-            "number_subjects": pl.Int64,
-            "reason_id": pl.Int32,
-            "reason": pl.Utf8,
-            "target_cohort_id": pl.Int64,
-            "target_cohort_name": pl.Utf8,
-        }
+    attrition_df = (
+        pl.DataFrame(attrition_rows)
+        if attrition_rows
+        else pl.DataFrame(
+            schema={
+                "number_records": pl.Int64,
+                "number_subjects": pl.Int64,
+                "reason_id": pl.Int32,
+                "reason": pl.Utf8,
+                "target_cohort_id": pl.Int64,
+                "target_cohort_name": pl.Utf8,
+            }
+        )
     )
 
     # Select final columns for treatment_history
     final_cols = [
-        "person_id", "index_year", "event_cohort_id", "event_cohort_name",
-        "event_start_date", "event_end_date", "duration_era", "event_seq",
-        "age", "sex", "target_cohort_id", "target_cohort_name",
+        "person_id",
+        "index_year",
+        "event_cohort_id",
+        "event_cohort_name",
+        "event_start_date",
+        "event_end_date",
+        "duration_era",
+        "event_seq",
+        "age",
+        "sex",
+        "target_cohort_id",
+        "target_cohort_name",
     ]
     available_cols = [c for c in final_cols if c in history.columns]
     history = history.select(available_cols)

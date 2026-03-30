@@ -69,8 +69,12 @@ PATTERNS: tuple[_Pattern, ...] = (
     _Pattern(10, 1, MILLILITER, 0, None, 0, None, FIXED_AMOUNT, "milliliter"),
     _Pattern(11, 1, UNIT, 0, None, 0, None, FIXED_AMOUNT, "international unit"),
     # Concentration with denominator value (12-25)
-    _Pattern(12, 0, None, 1, INTERNATIONAL_UNIT, 1, MILLIGRAM, CONCENTRATION, "international unit"),
-    _Pattern(13, 0, None, 1, INTERNATIONAL_UNIT, 1, MILLILITER, CONCENTRATION, "international unit"),
+    _Pattern(
+        12, 0, None, 1, INTERNATIONAL_UNIT, 1, MILLIGRAM, CONCENTRATION, "international unit"
+    ),
+    _Pattern(
+        13, 0, None, 1, INTERNATIONAL_UNIT, 1, MILLILITER, CONCENTRATION, "international unit"
+    ),
     _Pattern(14, 0, None, 1, MILLIEQUIVALENT, 1, MILLILITER, CONCENTRATION, "milliequivalent"),
     _Pattern(15, 0, None, 1, MILLIGRAM, 1, ACTUATION, CONCENTRATION, "milligram"),
     _Pattern(16, 0, None, 1, MILLIGRAM, 1, LITER, CONCENTRATION, "milligram"),
@@ -84,9 +88,15 @@ PATTERNS: tuple[_Pattern, ...] = (
     _Pattern(24, 0, None, 1, UNIT, 1, MILLILITER, CONCENTRATION, "international unit"),
     _Pattern(25, 0, None, 1, UNIT, 1, SQUARE_CENTIMETER, CONCENTRATION, "international unit"),
     # Concentration without denominator value (26-41)
-    _Pattern(26, 0, None, 1, INTERNATIONAL_UNIT, 0, MILLIGRAM, CONCENTRATION, "international unit"),
-    _Pattern(27, 0, None, 1, INTERNATIONAL_UNIT, 0, MILLILITER, CONCENTRATION, "international unit"),
-    _Pattern(28, 0, None, 1, MEGA_INTERNATIONAL_UNIT, 0, MILLILITER, CONCENTRATION, "international unit"),
+    _Pattern(
+        26, 0, None, 1, INTERNATIONAL_UNIT, 0, MILLIGRAM, CONCENTRATION, "international unit"
+    ),
+    _Pattern(
+        27, 0, None, 1, INTERNATIONAL_UNIT, 0, MILLILITER, CONCENTRATION, "international unit"
+    ),
+    _Pattern(
+        28, 0, None, 1, MEGA_INTERNATIONAL_UNIT, 0, MILLILITER, CONCENTRATION, "international unit"
+    ),
     _Pattern(29, 0, None, 1, MILLIEQUIVALENT, 0, MILLIGRAM, CONCENTRATION, "milliequivalent"),
     _Pattern(30, 0, None, 1, MILLIEQUIVALENT, 0, MILLILITER, CONCENTRATION, "milliequivalent"),
     _Pattern(31, 0, None, 1, MILLIGRAM, 0, ACTUATION, CONCENTRATION, "milligram"),

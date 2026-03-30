@@ -204,8 +204,7 @@ def pattern_table(cdm: CdmReference) -> pl.DataFrame:
 
         # Aggregate
         summary = (
-            matched
-            .group_by("pattern_id", "formula_name", "unit")
+            matched.group_by("pattern_id", "formula_name", "unit")
             .agg(n=matched.count())
             .order_by("pattern_id")
         )
@@ -268,17 +267,25 @@ def _patterns_to_arrow() -> Any:
         rows["formula_name"].append(p.formula_name)
         rows["unit"].append(p.unit)
 
-    return pa.table({
-        "pattern_id": pa.array(rows["pattern_id"], type=pa.int32()),
-        "p_amount_numeric": pa.array(rows["p_amount_numeric"], type=pa.int32()),
-        "p_amount_unit_concept_id": pa.array(rows["p_amount_unit_concept_id"], type=pa.int64()),
-        "p_numerator_numeric": pa.array(rows["p_numerator_numeric"], type=pa.int32()),
-        "p_numerator_unit_concept_id": pa.array(rows["p_numerator_unit_concept_id"], type=pa.int64()),
-        "p_denominator_numeric": pa.array(rows["p_denominator_numeric"], type=pa.int32()),
-        "p_denominator_unit_concept_id": pa.array(rows["p_denominator_unit_concept_id"], type=pa.int64()),
-        "formula_name": rows["formula_name"],
-        "unit": rows["unit"],
-    })
+    return pa.table(
+        {
+            "pattern_id": pa.array(rows["pattern_id"], type=pa.int32()),
+            "p_amount_numeric": pa.array(rows["p_amount_numeric"], type=pa.int32()),
+            "p_amount_unit_concept_id": pa.array(
+                rows["p_amount_unit_concept_id"], type=pa.int64()
+            ),
+            "p_numerator_numeric": pa.array(rows["p_numerator_numeric"], type=pa.int32()),
+            "p_numerator_unit_concept_id": pa.array(
+                rows["p_numerator_unit_concept_id"], type=pa.int64()
+            ),
+            "p_denominator_numeric": pa.array(rows["p_denominator_numeric"], type=pa.int32()),
+            "p_denominator_unit_concept_id": pa.array(
+                rows["p_denominator_unit_concept_id"], type=pa.int64()
+            ),
+            "formula_name": rows["formula_name"],
+            "unit": rows["unit"],
+        }
+    )
 
 
 def _join_with_patterns(ds: ir.Table, patterns_tbl: ir.Table) -> ir.Table:
@@ -306,8 +313,14 @@ def _join_with_patterns(ds: ir.Table, patterns_tbl: ir.Table) -> ir.Table:
         | (ds.numerator_unit_concept_id.cast("int64") == patterns_tbl.p_numerator_unit_concept_id)
     )
     predicates.append(
-        (ds.denominator_unit_concept_id.isnull() & patterns_tbl.p_denominator_unit_concept_id.isnull())
-        | (ds.denominator_unit_concept_id.cast("int64") == patterns_tbl.p_denominator_unit_concept_id)
+        (
+            ds.denominator_unit_concept_id.isnull()
+            & patterns_tbl.p_denominator_unit_concept_id.isnull()
+        )
+        | (
+            ds.denominator_unit_concept_id.cast("int64")
+            == patterns_tbl.p_denominator_unit_concept_id
+        )
     )
 
     combined = ibis.literal(True)

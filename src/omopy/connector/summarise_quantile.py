@@ -101,10 +101,10 @@ def _quantile_ibis_single(
 
     with_cum = grouped.mutate(
         accumulated=grouped["n__"].sum().over(window),
-        total=grouped["n__"].sum().over(
-            ibis.window(group_by=[grouped[g] for g in group_cols])
-            if group_cols
-            else ibis.window()
+        total=grouped["n__"]
+        .sum()
+        .over(
+            ibis.window(group_by=[grouped[g] for g in group_cols]) if group_cols else ibis.window()
         ),
     )
 
@@ -114,13 +114,10 @@ def _quantile_ibis_single(
         pct = int(p * 100)
         col_name = f"q{pct:02d}_{col}"
         # min(case when accumulated >= p*total then value else null end)
-        quant_exprs[col_name] = (
-            ibis.cases(
-                (with_cum["accumulated"] >= p * with_cum["total"], with_cum[col]),
-                else_=ibis.null(),
-            )
-            .min()
-        )
+        quant_exprs[col_name] = ibis.cases(
+            (with_cum["accumulated"] >= p * with_cum["total"], with_cum[col]),
+            else_=ibis.null(),
+        ).min()
 
     if group_cols:
         result = with_cum.group_by(group_cols).agg(**quant_exprs)
@@ -178,10 +175,7 @@ def _quantile_polars_single(
     if group_cols:
         counted = counted.sort(col)
         counted = counted.with_columns(
-            pl.col("n__")
-            .cum_sum()
-            .over(group_cols)
-            .alias("accumulated"),
+            pl.col("n__").cum_sum().over(group_cols).alias("accumulated"),
             pl.col("n__").sum().over(group_cols).alias("total"),
         )
     else:

@@ -15,7 +15,8 @@ class TestAddDeathFlag:
     def test_adds_death_flag(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_death_flag(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         df = result.collect()
@@ -28,7 +29,8 @@ class TestAddDeathFlag:
         obs = synthea_cdm["observation_period"]
         orig = obs.count()
         result = add_death_flag(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         assert result.count() == orig
@@ -36,7 +38,8 @@ class TestAddDeathFlag:
     def test_custom_name(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_death_flag(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             death_flag_name="is_dead",
         )
@@ -48,7 +51,8 @@ class TestAddDeathDate:
     def test_adds_death_date(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_death_date(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         df = result.collect()
@@ -57,7 +61,8 @@ class TestAddDeathDate:
     def test_custom_name(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_death_date(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             death_date_name="death_dt",
         )
@@ -69,7 +74,8 @@ class TestAddDeathDays:
     def test_adds_death_days(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_death_days(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         df = result.collect()
@@ -78,7 +84,8 @@ class TestAddDeathDays:
     def test_custom_name(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_death_days(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             death_days_name="days_until_death",
         )

@@ -68,8 +68,16 @@ def mock_treatment_pathways(
     drug_names = [
         name
         for name, _ in zip(
-            ["Aspirin", "Metformin", "Lisinopril", "Atorvastatin",
-             "Omeprazole", "Amlodipine", "Metoprolol", "Simvastatin"],
+            [
+                "Aspirin",
+                "Metformin",
+                "Lisinopril",
+                "Atorvastatin",
+                "Omeprazole",
+                "Amlodipine",
+                "Metoprolol",
+                "Simvastatin",
+            ],
             range(n_drugs),
         )
     ]
@@ -130,50 +138,58 @@ def mock_treatment_pathways(
                 "additional_name": OVERALL,
                 "additional_level": OVERALL,
             }
-            rows.append({
-                **base,
-                "estimate_name": "count",
-                "estimate_type": "integer",
-                "estimate_value": str(freq),
-            })
-            rows.append({
-                **base,
-                "estimate_name": "percentage",
-                "estimate_type": "percentage",
-                "estimate_value": f"{pct:.2f}",
-            })
+            rows.append(
+                {
+                    **base,
+                    "estimate_name": "count",
+                    "estimate_type": "integer",
+                    "estimate_value": str(freq),
+                }
+            )
+            rows.append(
+                {
+                    **base,
+                    "estimate_name": "percentage",
+                    "estimate_type": "percentage",
+                    "estimate_value": f"{pct:.2f}",
+                }
+            )
 
         # Count rows
-        rows.append({
-            "result_id": rid_pathway,
-            "cdm_name": "mock_cdm",
-            "group_name": "target_cohort_name",
-            "group_level": target,
-            "strata_name": OVERALL,
-            "strata_level": OVERALL,
-            "variable_name": "Number records",
-            "variable_level": "",
-            "estimate_name": "count",
-            "estimate_type": "integer",
-            "estimate_value": str(total_subjects + rng.randint(0, 200)),
-            "additional_name": OVERALL,
-            "additional_level": OVERALL,
-        })
-        rows.append({
-            "result_id": rid_pathway,
-            "cdm_name": "mock_cdm",
-            "group_name": "target_cohort_name",
-            "group_level": target,
-            "strata_name": OVERALL,
-            "strata_level": OVERALL,
-            "variable_name": "Number subjects",
-            "variable_level": "",
-            "estimate_name": "count",
-            "estimate_type": "integer",
-            "estimate_value": str(total_subjects),
-            "additional_name": OVERALL,
-            "additional_level": OVERALL,
-        })
+        rows.append(
+            {
+                "result_id": rid_pathway,
+                "cdm_name": "mock_cdm",
+                "group_name": "target_cohort_name",
+                "group_level": target,
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Number records",
+                "variable_level": "",
+                "estimate_name": "count",
+                "estimate_type": "integer",
+                "estimate_value": str(total_subjects + rng.randint(0, 200)),
+                "additional_name": OVERALL,
+                "additional_level": OVERALL,
+            }
+        )
+        rows.append(
+            {
+                "result_id": rid_pathway,
+                "cdm_name": "mock_cdm",
+                "group_name": "target_cohort_name",
+                "group_level": target,
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Number subjects",
+                "variable_level": "",
+                "estimate_name": "count",
+                "estimate_type": "integer",
+                "estimate_value": str(total_subjects),
+                "additional_name": OVERALL,
+                "additional_level": OVERALL,
+            }
+        )
 
     # --- Duration rows (result_id=2) --------------------------------
     if include_duration:
@@ -208,30 +224,32 @@ def mock_treatment_pathways(
                     }
 
                     for est in estimates:
-                        rows.append({
-                            "result_id": rid_duration,
-                            "cdm_name": "mock_cdm",
-                            "group_name": "target_cohort_name",
-                            "group_level": target,
-                            "strata_name": OVERALL,
-                            "strata_level": OVERALL,
-                            "variable_name": event_name,
-                            "variable_level": "",
-                            "estimate_name": est,
-                            "estimate_type": (
-                                "integer" if est == "count" else "numeric"
-                            ),
-                            "estimate_value": stats[est],
-                            "additional_name": "line",
-                            "additional_level": line,
-                        })
+                        rows.append(
+                            {
+                                "result_id": rid_duration,
+                                "cdm_name": "mock_cdm",
+                                "group_name": "target_cohort_name",
+                                "group_level": target,
+                                "strata_name": OVERALL,
+                                "strata_level": OVERALL,
+                                "variable_name": event_name,
+                                "variable_level": "",
+                                "estimate_name": est,
+                                "estimate_type": ("integer" if est == "count" else "numeric"),
+                                "estimate_value": stats[est],
+                                "additional_name": "line",
+                                "additional_level": line,
+                            }
+                        )
 
     data = pl.DataFrame(rows)
-    settings = pl.DataFrame({
-        "result_id": result_ids,
-        "result_type": result_types,
-        "package_name": [_PACKAGE_NAME] * len(result_ids),
-        "package_version": [_PACKAGE_VERSION] * len(result_ids),
-    })
+    settings = pl.DataFrame(
+        {
+            "result_id": result_ids,
+            "result_type": result_types,
+            "package_name": [_PACKAGE_NAME] * len(result_ids),
+            "package_version": [_PACKAGE_VERSION] * len(result_ids),
+        }
+    )
 
     return SummarisedResult(data, settings=settings)

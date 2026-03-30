@@ -99,8 +99,11 @@ def estimate_incidence(
         Summarised result with incidence estimates.
     """
     denom_ct, outcome_ct = _resolve_cohorts(
-        cdm, denominator_table, outcome_table,
-        denominator_cohort_id, outcome_cohort_id,
+        cdm,
+        denominator_table,
+        outcome_table,
+        denominator_cohort_id,
+        outcome_cohort_id,
     )
     censor_df = _resolve_censor(cdm, censor_table, censor_cohort_id)
 
@@ -141,18 +144,20 @@ def estimate_incidence(
                 )
                 all_rows.append(rows)
 
-            all_settings.append({
-                "result_id": result_id,
-                "result_type": "incidence",
-                "package_name": _PACKAGE_NAME,
-                "package_version": _PACKAGE_VERSION,
-                "denominator_cohort_id": d_id,
-                "outcome_cohort_id": o_id,
-                "interval": interval,
-                "outcome_washout": str(outcome_washout),
-                "repeated_events": str(repeated_events),
-                "complete_database_intervals": str(complete_database_intervals),
-            })
+            all_settings.append(
+                {
+                    "result_id": result_id,
+                    "result_type": "incidence",
+                    "package_name": _PACKAGE_NAME,
+                    "package_version": _PACKAGE_VERSION,
+                    "denominator_cohort_id": d_id,
+                    "outcome_cohort_id": o_id,
+                    "interval": interval,
+                    "outcome_washout": str(outcome_washout),
+                    "repeated_events": str(repeated_events),
+                    "complete_database_intervals": str(complete_database_intervals),
+                }
+            )
 
     data = pl.concat(all_rows) if all_rows else _empty_summarised_result()
     settings = pl.DataFrame(all_settings).cast({"result_id": pl.Int64}) if all_settings else None
@@ -201,8 +206,11 @@ def estimate_point_prevalence(
         Summarised result with point prevalence estimates.
     """
     denom_ct, outcome_ct = _resolve_cohorts(
-        cdm, denominator_table, outcome_table,
-        denominator_cohort_id, outcome_cohort_id,
+        cdm,
+        denominator_table,
+        outcome_table,
+        denominator_cohort_id,
+        outcome_cohort_id,
     )
 
     denom_ids = _get_cohort_ids(denom_ct, denominator_cohort_id)
@@ -238,16 +246,18 @@ def estimate_point_prevalence(
                 )
                 all_rows.append(rows)
 
-            all_settings.append({
-                "result_id": result_id,
-                "result_type": "point_prevalence",
-                "package_name": _PACKAGE_NAME,
-                "package_version": _PACKAGE_VERSION,
-                "denominator_cohort_id": d_id,
-                "outcome_cohort_id": o_id,
-                "interval": interval,
-                "time_point": time_point,
-            })
+            all_settings.append(
+                {
+                    "result_id": result_id,
+                    "result_type": "point_prevalence",
+                    "package_name": _PACKAGE_NAME,
+                    "package_version": _PACKAGE_VERSION,
+                    "denominator_cohort_id": d_id,
+                    "outcome_cohort_id": o_id,
+                    "interval": interval,
+                    "time_point": time_point,
+                }
+            )
 
     data = pl.concat(all_rows) if all_rows else _empty_summarised_result()
     settings = pl.DataFrame(all_settings).cast({"result_id": pl.Int64}) if all_settings else None
@@ -299,8 +309,11 @@ def estimate_period_prevalence(
         Summarised result with period prevalence estimates.
     """
     denom_ct, outcome_ct = _resolve_cohorts(
-        cdm, denominator_table, outcome_table,
-        denominator_cohort_id, outcome_cohort_id,
+        cdm,
+        denominator_table,
+        outcome_table,
+        denominator_cohort_id,
+        outcome_cohort_id,
     )
 
     denom_ids = _get_cohort_ids(denom_ct, denominator_cohort_id)
@@ -337,17 +350,19 @@ def estimate_period_prevalence(
                 )
                 all_rows.append(rows)
 
-            all_settings.append({
-                "result_id": result_id,
-                "result_type": "period_prevalence",
-                "package_name": _PACKAGE_NAME,
-                "package_version": _PACKAGE_VERSION,
-                "denominator_cohort_id": d_id,
-                "outcome_cohort_id": o_id,
-                "interval": interval,
-                "complete_database_intervals": str(complete_database_intervals),
-                "full_contribution": str(full_contribution),
-            })
+            all_settings.append(
+                {
+                    "result_id": result_id,
+                    "result_type": "period_prevalence",
+                    "package_name": _PACKAGE_NAME,
+                    "package_version": _PACKAGE_VERSION,
+                    "denominator_cohort_id": d_id,
+                    "outcome_cohort_id": o_id,
+                    "interval": interval,
+                    "complete_database_intervals": str(complete_database_intervals),
+                    "full_contribution": str(full_contribution),
+                }
+            )
 
     data = pl.concat(all_rows) if all_rows else _empty_summarised_result()
     settings = pl.DataFrame(all_settings).cast({"result_id": pl.Int64}) if all_settings else None
@@ -397,9 +412,11 @@ def _compute_incidence(
         return _empty_summarised_result()
 
     # Prepare outcome events
-    outcome_events = outcome_df.rename({"subject_id": "person_id"}).select(
-        "person_id", "cohort_start_date"
-    ).rename({"cohort_start_date": "outcome_date"})
+    outcome_events = (
+        outcome_df.rename({"subject_id": "person_id"})
+        .select("person_id", "cohort_start_date")
+        .rename({"cohort_start_date": "outcome_date"})
+    )
 
     # Apply washout logic
     if not repeated_events or outcome_washout != float("inf"):
@@ -415,14 +432,17 @@ def _compute_incidence(
         int_label = row["interval_label"]
 
         # Person-time: overlap of denominator periods with interval
-        pt_df = denom_persons.filter(
-            (pl.col("cohort_start_date") <= int_end)
-            & (pl.col("cohort_end_date") >= int_start)
-        ).with_columns(
-            pl.col("cohort_start_date").clip(lower_bound=int_start).alias("_pt_start"),
-            pl.col("cohort_end_date").clip(upper_bound=int_end).alias("_pt_end"),
-        ).with_columns(
-            ((pl.col("_pt_end") - pl.col("_pt_start")).dt.total_days() + 1).alias("_days")
+        pt_df = (
+            denom_persons.filter(
+                (pl.col("cohort_start_date") <= int_end) & (pl.col("cohort_end_date") >= int_start)
+            )
+            .with_columns(
+                pl.col("cohort_start_date").clip(lower_bound=int_start).alias("_pt_start"),
+                pl.col("cohort_end_date").clip(upper_bound=int_end).alias("_pt_end"),
+            )
+            .with_columns(
+                ((pl.col("_pt_end") - pl.col("_pt_start")).dt.total_days() + 1).alias("_days")
+            )
         )
 
         n_persons = pt_df["person_id"].n_unique() if not pt_df.is_empty() else 0
@@ -460,21 +480,25 @@ def _compute_incidence(
         ]
 
         for est_name, est_type, est_val in estimates:
-            rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": "denominator_cohort_name" + NAME_LEVEL_SEP + "outcome_cohort_name",
-                "group_level": denom_cohort_name + NAME_LEVEL_SEP + outcome_cohort_name,
-                "strata_name": strata_name,
-                "strata_level": strata_level,
-                "variable_name": "incidence",
-                "variable_level": int_label,
-                "estimate_name": est_name,
-                "estimate_type": est_type,
-                "estimate_value": est_val,
-                "additional_name": "overall",
-                "additional_level": "overall",
-            })
+            rows.append(
+                {
+                    "result_id": result_id,
+                    "cdm_name": cdm_name,
+                    "group_name": "denominator_cohort_name"
+                    + NAME_LEVEL_SEP
+                    + "outcome_cohort_name",
+                    "group_level": denom_cohort_name + NAME_LEVEL_SEP + outcome_cohort_name,
+                    "strata_name": strata_name,
+                    "strata_level": strata_level,
+                    "variable_name": "incidence",
+                    "variable_level": int_label,
+                    "estimate_name": est_name,
+                    "estimate_type": est_type,
+                    "estimate_value": est_val,
+                    "additional_name": "overall",
+                    "additional_level": "overall",
+                }
+            )
 
     if not rows:
         return _empty_summarised_result()
@@ -523,8 +547,7 @@ def _compute_point_prevalence(
 
         # Denominator: persons observed on the point date
         denom_at_point = denom_persons.filter(
-            (pl.col("cohort_start_date") <= point_date)
-            & (pl.col("cohort_end_date") >= point_date)
+            (pl.col("cohort_start_date") <= point_date) & (pl.col("cohort_end_date") >= point_date)
         )
         n_denom = denom_at_point["person_id"].n_unique() if not denom_at_point.is_empty() else 0
 
@@ -538,7 +561,9 @@ def _compute_point_prevalence(
             & (pl.col("cohort_end_date") >= point_date)
             & pl.col("person_id").is_in(list(denom_person_ids))
         )
-        n_outcome = outcome_at_point["person_id"].n_unique() if not outcome_at_point.is_empty() else 0
+        n_outcome = (
+            outcome_at_point["person_id"].n_unique() if not outcome_at_point.is_empty() else 0
+        )
 
         # Prevalence
         prevalence = n_outcome / n_denom if n_denom > 0 else 0.0
@@ -553,21 +578,25 @@ def _compute_point_prevalence(
         ]
 
         for est_name, est_type, est_val in estimates:
-            rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": "denominator_cohort_name" + NAME_LEVEL_SEP + "outcome_cohort_name",
-                "group_level": denom_cohort_name + NAME_LEVEL_SEP + outcome_cohort_name,
-                "strata_name": strata_name,
-                "strata_level": strata_level,
-                "variable_name": "point_prevalence",
-                "variable_level": int_label,
-                "estimate_name": est_name,
-                "estimate_type": est_type,
-                "estimate_value": est_val,
-                "additional_name": "time_point",
-                "additional_level": time_point,
-            })
+            rows.append(
+                {
+                    "result_id": result_id,
+                    "cdm_name": cdm_name,
+                    "group_name": "denominator_cohort_name"
+                    + NAME_LEVEL_SEP
+                    + "outcome_cohort_name",
+                    "group_level": denom_cohort_name + NAME_LEVEL_SEP + outcome_cohort_name,
+                    "strata_name": strata_name,
+                    "strata_level": strata_level,
+                    "variable_name": "point_prevalence",
+                    "variable_level": int_label,
+                    "estimate_name": est_name,
+                    "estimate_type": est_type,
+                    "estimate_value": est_val,
+                    "additional_name": "time_point",
+                    "additional_level": time_point,
+                }
+            )
 
     if not rows:
         return _empty_summarised_result()
@@ -619,18 +648,18 @@ def _compute_period_prevalence(
 
         # Denominator: persons contributing to this interval
         denom_in_interval = denom_persons.filter(
-            (pl.col("cohort_start_date") <= int_end)
-            & (pl.col("cohort_end_date") >= int_start)
+            (pl.col("cohort_start_date") <= int_end) & (pl.col("cohort_end_date") >= int_start)
         )
 
         if full_contribution:
             # Require observation for the full interval
             denom_in_interval = denom_in_interval.filter(
-                (pl.col("cohort_start_date") <= int_start)
-                & (pl.col("cohort_end_date") >= int_end)
+                (pl.col("cohort_start_date") <= int_start) & (pl.col("cohort_end_date") >= int_end)
             )
 
-        n_denom = denom_in_interval["person_id"].n_unique() if not denom_in_interval.is_empty() else 0
+        n_denom = (
+            denom_in_interval["person_id"].n_unique() if not denom_in_interval.is_empty() else 0
+        )
 
         if n_denom == 0:
             continue
@@ -642,7 +671,11 @@ def _compute_period_prevalence(
             & (pl.col("cohort_end_date") >= int_start)
             & pl.col("person_id").is_in(list(denom_person_ids))
         )
-        n_outcome = outcome_in_interval["person_id"].n_unique() if not outcome_in_interval.is_empty() else 0
+        n_outcome = (
+            outcome_in_interval["person_id"].n_unique()
+            if not outcome_in_interval.is_empty()
+            else 0
+        )
 
         prevalence = n_outcome / n_denom if n_denom > 0 else 0.0
         prev_lower, prev_upper = _wilson_ci(n_outcome, n_denom)
@@ -656,21 +689,25 @@ def _compute_period_prevalence(
         ]
 
         for est_name, est_type, est_val in estimates:
-            rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": "denominator_cohort_name" + NAME_LEVEL_SEP + "outcome_cohort_name",
-                "group_level": denom_cohort_name + NAME_LEVEL_SEP + outcome_cohort_name,
-                "strata_name": strata_name,
-                "strata_level": strata_level,
-                "variable_name": "period_prevalence",
-                "variable_level": int_label,
-                "estimate_name": est_name,
-                "estimate_type": est_type,
-                "estimate_value": est_val,
-                "additional_name": "overall",
-                "additional_level": "overall",
-            })
+            rows.append(
+                {
+                    "result_id": result_id,
+                    "cdm_name": cdm_name,
+                    "group_name": "denominator_cohort_name"
+                    + NAME_LEVEL_SEP
+                    + "outcome_cohort_name",
+                    "group_level": denom_cohort_name + NAME_LEVEL_SEP + outcome_cohort_name,
+                    "strata_name": strata_name,
+                    "strata_level": strata_level,
+                    "variable_name": "period_prevalence",
+                    "variable_level": int_label,
+                    "estimate_name": est_name,
+                    "estimate_type": est_type,
+                    "estimate_value": est_val,
+                    "additional_name": "overall",
+                    "additional_level": "overall",
+                }
+            )
 
     if not rows:
         return _empty_summarised_result()
@@ -683,19 +720,19 @@ def _compute_period_prevalence(
 # ---------------------------------------------------------------------------
 
 
-def _generate_intervals(
-    denom_df: pl.DataFrame, interval: str
-) -> pl.DataFrame:
+def _generate_intervals(denom_df: pl.DataFrame, interval: str) -> pl.DataFrame:
     """Generate calendar intervals covering the denominator cohort span."""
     min_date = denom_df.select(pl.col("cohort_start_date").min()).item()
     max_date = denom_df.select(pl.col("cohort_end_date").max()).item()
 
     if min_date is None or max_date is None:
-        return pl.DataFrame(schema={
-            "interval_start": pl.Date,
-            "interval_end": pl.Date,
-            "interval_label": pl.Utf8,
-        })
+        return pl.DataFrame(
+            schema={
+                "interval_start": pl.Date,
+                "interval_end": pl.Date,
+                "interval_label": pl.Utf8,
+            }
+        )
 
     if isinstance(min_date, datetime.datetime):
         min_date = min_date.date()
@@ -703,11 +740,13 @@ def _generate_intervals(
         max_date = max_date.date()
 
     if interval == "overall":
-        return pl.DataFrame({
-            "interval_start": [min_date],
-            "interval_end": [max_date],
-            "interval_label": ["overall"],
-        }).cast({"interval_start": pl.Date, "interval_end": pl.Date})
+        return pl.DataFrame(
+            {
+                "interval_start": [min_date],
+                "interval_end": [max_date],
+                "interval_label": ["overall"],
+            }
+        ).cast({"interval_start": pl.Date, "interval_end": pl.Date})
 
     starts: list[datetime.date] = []
     ends: list[datetime.date] = []
@@ -723,17 +762,21 @@ def _generate_intervals(
         current = _next_interval_start(current, interval)
 
     if not starts:
-        return pl.DataFrame(schema={
-            "interval_start": pl.Date,
-            "interval_end": pl.Date,
-            "interval_label": pl.Utf8,
-        })
+        return pl.DataFrame(
+            schema={
+                "interval_start": pl.Date,
+                "interval_end": pl.Date,
+                "interval_label": pl.Utf8,
+            }
+        )
 
-    return pl.DataFrame({
-        "interval_start": starts,
-        "interval_end": ends,
-        "interval_label": labels,
-    }).cast({"interval_start": pl.Date, "interval_end": pl.Date})
+    return pl.DataFrame(
+        {
+            "interval_start": starts,
+            "interval_end": ends,
+            "interval_label": labels,
+        }
+    ).cast({"interval_start": pl.Date, "interval_end": pl.Date})
 
 
 def _interval_start(d: datetime.date, interval: str) -> datetime.date:
@@ -807,9 +850,7 @@ def _interval_label(start: datetime.date, interval: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _filter_complete_intervals(
-    intervals: pl.DataFrame, denom_df: pl.DataFrame
-) -> pl.DataFrame:
+def _filter_complete_intervals(intervals: pl.DataFrame, denom_df: pl.DataFrame) -> pl.DataFrame:
     """Keep only intervals fully captured by the database observation."""
     db_min = denom_df.select(pl.col("cohort_start_date").min()).item()
     db_max = denom_df.select(pl.col("cohort_end_date").max()).item()
@@ -820,8 +861,7 @@ def _filter_complete_intervals(
         db_max = db_max.date()
 
     return intervals.filter(
-        (pl.col("interval_start") >= db_min)
-        & (pl.col("interval_end") <= db_max)
+        (pl.col("interval_start") >= db_min) & (pl.col("interval_end") <= db_max)
     )
 
 
@@ -878,15 +918,15 @@ def _apply_washout(
     if not result_rows:
         return events.head(0)
 
-    return pl.DataFrame(result_rows).cast({
-        "person_id": events["person_id"].dtype,
-        "outcome_date": pl.Date,
-    })
+    return pl.DataFrame(result_rows).cast(
+        {
+            "person_id": events["person_id"].dtype,
+            "outcome_date": pl.Date,
+        }
+    )
 
 
-def _apply_censoring(
-    denom_df: pl.DataFrame, censor_df: pl.DataFrame
-) -> pl.DataFrame:
+def _apply_censoring(denom_df: pl.DataFrame, censor_df: pl.DataFrame) -> pl.DataFrame:
     """Truncate denominator follow-up at censor dates."""
     censor = censor_df.rename({"subject_id": "person_id"}).select(
         "person_id",
@@ -901,17 +941,19 @@ def _apply_censoring(
     )
 
     # Only censor if censor_date falls within the denominator period
-    merged = merged.with_columns(
-        pl.when(
-            pl.col("censor_date").is_not_null()
-            & (pl.col("censor_date") >= pl.col("cohort_start_date"))
-            & (pl.col("censor_date") <= pl.col("cohort_end_date"))
+    merged = (
+        merged.with_columns(
+            pl.when(
+                pl.col("censor_date").is_not_null()
+                & (pl.col("censor_date") >= pl.col("cohort_start_date"))
+                & (pl.col("censor_date") <= pl.col("cohort_end_date"))
+            )
+            .then(pl.col("censor_date") - pl.duration(days=1))
+            .otherwise(pl.col("cohort_end_date"))
+            .alias("cohort_end_date")
         )
-        .then(pl.col("censor_date") - pl.duration(days=1))
-        .otherwise(pl.col("cohort_end_date"))
-        .alias("cohort_end_date")
-    ).drop("censor_date").filter(
-        pl.col("cohort_start_date") <= pl.col("cohort_end_date")
+        .drop("censor_date")
+        .filter(pl.col("cohort_start_date") <= pl.col("cohort_end_date"))
     )
 
     return merged
@@ -940,9 +982,7 @@ def _get_time_point(
 # ---------------------------------------------------------------------------
 
 
-def _poisson_ci(
-    events: int, person_years: float, alpha: float = 0.05
-) -> tuple[float, float]:
+def _poisson_ci(events: int, person_years: float, alpha: float = 0.05) -> tuple[float, float]:
     """Exact Poisson confidence interval for incidence rate per 100,000 PY.
 
     Uses the chi-squared method:
@@ -962,9 +1002,7 @@ def _poisson_ci(
     return lower, upper
 
 
-def _wilson_ci(
-    x: int, n: int, alpha: float = 0.05
-) -> tuple[float, float]:
+def _wilson_ci(x: int, n: int, alpha: float = 0.05) -> tuple[float, float]:
     """Wilson score confidence interval for a proportion.
 
     Parameters
@@ -1053,9 +1091,7 @@ def _resolve_cohorts(
     return denom_ct, outcome_ct
 
 
-def _get_cohort_ids(
-    ct: CohortTable, cohort_id: int | list[int] | None
-) -> list[int]:
+def _get_cohort_ids(ct: CohortTable, cohort_id: int | list[int] | None) -> list[int]:
     """Get the cohort IDs to process."""
     if cohort_id is None:
         return ct.cohort_ids
@@ -1106,6 +1142,7 @@ def _resolve_censor(
 def _empty_summarised_result() -> pl.DataFrame:
     """Return an empty DataFrame with SummarisedResult columns."""
     from omopy.generics.summarised_result import SUMMARISED_RESULT_COLUMNS
+
     return pl.DataFrame(
         schema={c: pl.Utf8 if c != "result_id" else pl.Int64 for c in SUMMARISED_RESULT_COLUMNS}
     )

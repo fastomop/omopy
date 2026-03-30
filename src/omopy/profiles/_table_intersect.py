@@ -84,7 +84,8 @@ def add_table_intersect_flag(
     ns = name_style.replace("{table_name}", table_name)
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="person_id",
         target_start_date=t_start,
@@ -149,7 +150,8 @@ def add_table_intersect_count(
     ns = name_style.replace("{table_name}", table_name)
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="person_id",
         target_start_date=t_start,
@@ -213,7 +215,8 @@ def add_table_intersect_date(
     ns = name_style.replace("{table_name}", table_name)
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="person_id",
         target_start_date=t_date,
@@ -278,7 +281,8 @@ def add_table_intersect_days(
     ns = name_style.replace("{table_name}", table_name)
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="person_id",
         target_start_date=t_date,
@@ -346,7 +350,8 @@ def add_table_intersect_field(
     ns = name_style.replace("{table_name}", table_name)
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="person_id",
         target_start_date=t_date,

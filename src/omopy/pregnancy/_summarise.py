@@ -75,57 +75,61 @@ def summarise_pregnancies(
 
         # Total episode count
         n_episodes = df.height
-        rows.append({
-            **base,
-            "variable_name": "Number episodes",
-            "variable_level": "",
-            "estimate_name": "count",
-            "estimate_type": "integer",
-            "estimate_value": str(n_episodes),
-        })
+        rows.append(
+            {
+                **base,
+                "variable_name": "Number episodes",
+                "variable_level": "",
+                "estimate_name": "count",
+                "estimate_type": "integer",
+                "estimate_value": str(n_episodes),
+            }
+        )
 
         # Distinct persons
         if n_episodes > 0:
             n_persons = df["person_id"].n_unique()
         else:
             n_persons = 0
-        rows.append({
-            **base,
-            "variable_name": "Number persons",
-            "variable_level": "",
-            "estimate_name": "count",
-            "estimate_type": "integer",
-            "estimate_value": str(n_persons),
-        })
+        rows.append(
+            {
+                **base,
+                "variable_name": "Number persons",
+                "variable_level": "",
+                "estimate_name": "count",
+                "estimate_type": "integer",
+                "estimate_value": str(n_persons),
+            }
+        )
 
         # Episodes by category
         if n_episodes > 0 and "category" in df.columns:
-            cat_counts = (
-                df.group_by("category")
-                .agg(pl.len().alias("n"))
-                .sort("category")
-            )
+            cat_counts = df.group_by("category").agg(pl.len().alias("n")).sort("category")
             for cat_row in cat_counts.iter_rows(named=True):
                 cat_name = cat_row["category"]
                 count = cat_row["n"]
                 pct = count / n_episodes * 100 if n_episodes > 0 else 0
 
-                rows.append({
-                    **base,
-                    "variable_name": "Outcome category",
-                    "variable_level": str(cat_name) if cat_name is not None else "Unknown",
-                    "estimate_name": "count",
-                    "estimate_type": "integer",
-                    "estimate_value": str(count),
-                })
-                rows.append({
-                    **base,
-                    "variable_name": "Outcome category",
-                    "variable_level": str(cat_name) if cat_name is not None else "Unknown",
-                    "estimate_name": "percentage",
-                    "estimate_type": "percentage",
-                    "estimate_value": f"{pct:.2f}",
-                })
+                rows.append(
+                    {
+                        **base,
+                        "variable_name": "Outcome category",
+                        "variable_level": str(cat_name) if cat_name is not None else "Unknown",
+                        "estimate_name": "count",
+                        "estimate_type": "integer",
+                        "estimate_value": str(count),
+                    }
+                )
+                rows.append(
+                    {
+                        **base,
+                        "variable_name": "Outcome category",
+                        "variable_level": str(cat_name) if cat_name is not None else "Unknown",
+                        "estimate_name": "percentage",
+                        "estimate_type": "percentage",
+                        "estimate_value": f"{pct:.2f}",
+                    }
+                )
 
         # Episode duration statistics
         if n_episodes > 0:
@@ -143,14 +147,16 @@ def summarise_pregnancies(
                     ("median", f"{dur_valid.median():.2f}"),
                     ("max", f"{dur_valid.max():.2f}"),
                 ]:
-                    rows.append({
-                        **base,
-                        "variable_name": "Episode duration (days)",
-                        "variable_level": "",
-                        "estimate_name": est_name,
-                        "estimate_type": "numeric",
-                        "estimate_value": est_value,
-                    })
+                    rows.append(
+                        {
+                            **base,
+                            "variable_name": "Episode duration (days)",
+                            "variable_level": "",
+                            "estimate_name": est_name,
+                            "estimate_type": "numeric",
+                            "estimate_value": est_value,
+                        }
+                    )
 
         # Gestational age statistics (if available)
         if n_episodes > 0 and "gestational_age_weeks" in df.columns:
@@ -163,77 +169,79 @@ def summarise_pregnancies(
                     ("median", f"{ga.median():.2f}"),
                     ("max", f"{ga.max():.2f}"),
                 ]:
-                    rows.append({
-                        **base,
-                        "variable_name": "Gestational age (weeks)",
-                        "variable_level": "",
-                        "estimate_name": est_name,
-                        "estimate_type": "numeric",
-                        "estimate_value": est_value,
-                    })
+                    rows.append(
+                        {
+                            **base,
+                            "variable_name": "Gestational age (weeks)",
+                            "variable_level": "",
+                            "estimate_name": est_name,
+                            "estimate_type": "numeric",
+                            "estimate_value": est_value,
+                        }
+                    )
 
         # Source distribution
         if n_episodes > 0 and "source" in df.columns:
-            src_counts = (
-                df.group_by("source")
-                .agg(pl.len().alias("n"))
-                .sort("source")
-            )
+            src_counts = df.group_by("source").agg(pl.len().alias("n")).sort("source")
             for src_row in src_counts.iter_rows(named=True):
                 src_name = src_row["source"]
                 count = src_row["n"]
-                rows.append({
-                    **base,
-                    "variable_name": "Episode source",
-                    "variable_level": str(src_name) if src_name else "Unknown",
-                    "estimate_name": "count",
-                    "estimate_type": "integer",
-                    "estimate_value": str(count),
-                })
+                rows.append(
+                    {
+                        **base,
+                        "variable_name": "Episode source",
+                        "variable_level": str(src_name) if src_name else "Unknown",
+                        "estimate_name": "count",
+                        "estimate_type": "integer",
+                        "estimate_value": str(count),
+                    }
+                )
 
         # Precision distribution
         if n_episodes > 0 and "precision" in df.columns:
-            prec_counts = (
-                df.group_by("precision")
-                .agg(pl.len().alias("n"))
-                .sort("precision")
-            )
+            prec_counts = df.group_by("precision").agg(pl.len().alias("n")).sort("precision")
             for prec_row in prec_counts.iter_rows(named=True):
                 prec_name = prec_row["precision"]
                 count = prec_row["n"]
-                rows.append({
-                    **base,
-                    "variable_name": "Start date precision",
-                    "variable_level": str(prec_name) if prec_name else "Unknown",
-                    "estimate_name": "count",
-                    "estimate_type": "integer",
-                    "estimate_value": str(count),
-                })
+                rows.append(
+                    {
+                        **base,
+                        "variable_name": "Start date precision",
+                        "variable_level": str(prec_name) if prec_name else "Unknown",
+                        "estimate_name": "count",
+                        "estimate_type": "integer",
+                        "estimate_value": str(count),
+                    }
+                )
 
     if not rows:
         # Return minimal empty result
-        rows.append({
-            "result_id": result_id,
-            "cdm_name": result.cdm_name,
-            "group_name": OVERALL,
-            "group_level": OVERALL,
-            "strata_name": OVERALL,
-            "strata_level": OVERALL,
-            "variable_name": "Number episodes",
-            "variable_level": "",
-            "estimate_name": "count",
-            "estimate_type": "integer",
-            "estimate_value": "0",
-            "additional_name": OVERALL,
-            "additional_level": OVERALL,
-        })
+        rows.append(
+            {
+                "result_id": result_id,
+                "cdm_name": result.cdm_name,
+                "group_name": OVERALL,
+                "group_level": OVERALL,
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Number episodes",
+                "variable_level": "",
+                "estimate_name": "count",
+                "estimate_type": "integer",
+                "estimate_value": "0",
+                "additional_name": OVERALL,
+                "additional_level": OVERALL,
+            }
+        )
 
     data = pl.DataFrame(rows)
-    settings = pl.DataFrame({
-        "result_id": [result_id],
-        "result_type": ["summarise_pregnancies"],
-        "package_name": [_PACKAGE_NAME],
-        "package_version": [_PACKAGE_VERSION],
-    })
+    settings = pl.DataFrame(
+        {
+            "result_id": [result_id],
+            "result_type": ["summarise_pregnancies"],
+            "package_name": [_PACKAGE_NAME],
+            "package_version": [_PACKAGE_VERSION],
+        }
+    )
 
     return SummarisedResult(data, settings=settings)

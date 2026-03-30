@@ -55,10 +55,7 @@ def require_is_first_drug_entry(
     for cid in ids:
         subset = df.filter(pl.col("cohort_definition_id") == cid)
         first_only = (
-            subset
-            .sort("cohort_start_date")
-            .group_by("cohort_definition_id", "subject_id")
-            .first()
+            subset.sort("cohort_start_date").group_by("cohort_definition_id", "subject_id").first()
         )
         parts.append(first_only)
 
@@ -71,7 +68,10 @@ def require_is_first_drug_entry(
     result = result.sort("cohort_definition_id", "subject_id", "cohort_start_date")
 
     return _build_result(
-        cohort, result, prev_counts, ids,
+        cohort,
+        result,
+        prev_counts,
+        ids,
         "Restricted to first drug entry",
         name,
     )
@@ -116,17 +116,11 @@ def require_prior_drug_washout(
 
     parts = []
     for cid in ids:
-        subset = (
-            df
-            .filter(pl.col("cohort_definition_id") == cid)
-            .sort("cohort_start_date")
-        )
+        subset = df.filter(pl.col("cohort_definition_id") == cid).sort("cohort_start_date")
 
         # Compute lag of cohort_end_date within each subject
         subset = subset.with_columns(
-            _prev_end=pl.col("cohort_end_date")
-            .shift(1)
-            .over("subject_id"),
+            _prev_end=pl.col("cohort_end_date").shift(1).over("subject_id"),
         )
 
         # Keep rows where there is no prior entry or gap >= days
@@ -145,7 +139,10 @@ def require_prior_drug_washout(
     result = result.sort("cohort_definition_id", "subject_id", "cohort_start_date")
 
     return _build_result(
-        cohort, result, prev_counts, ids,
+        cohort,
+        result,
+        prev_counts,
+        ids,
         f"Prior drug washout >= {days} days",
         name,
     )
@@ -201,7 +198,11 @@ def require_observation_before_drug(
     temp_table = CdmTable(data=df, tbl_name="_temp")
     temp_table.cdm = ref_cdm
     enriched_table = add_prior_observation(temp_table, ref_cdm)
-    enriched = enriched_table.collect() if not isinstance(enriched_table.data, pl.DataFrame) else enriched_table.data
+    enriched = (
+        enriched_table.collect()
+        if not isinstance(enriched_table.data, pl.DataFrame)
+        else enriched_table.data
+    )
 
     # Filter
     to_filter = enriched.filter(pl.col("cohort_definition_id").is_in(ids))
@@ -219,7 +220,10 @@ def require_observation_before_drug(
     result = result.sort("cohort_definition_id", "subject_id", "cohort_start_date")
 
     return _build_result(
-        cohort, result, prev_counts, ids,
+        cohort,
+        result,
+        prev_counts,
+        ids,
         f"Prior observation >= {days} days",
         name,
     )
@@ -283,7 +287,10 @@ def require_drug_in_date_range(
 
     range_str = f"{start or '*'} to {end or '*'}"
     return _build_result(
-        cohort, result, prev_counts, ids,
+        cohort,
+        result,
+        prev_counts,
+        ids,
         f"Drug in date range {range_str}",
         name,
     )
@@ -303,13 +310,9 @@ def _collect(cohort: CohortTable) -> pl.DataFrame:
 
 def _count_by_cohort(df: pl.DataFrame) -> pl.DataFrame:
     """Count records and subjects per cohort_definition_id."""
-    return (
-        df
-        .group_by("cohort_definition_id")
-        .agg(
-            pl.len().alias("number_records"),
-            pl.col("subject_id").n_unique().alias("number_subjects"),
-        )
+    return df.group_by("cohort_definition_id").agg(
+        pl.len().alias("number_records"),
+        pl.col("subject_id").n_unique().alias("number_subjects"),
     )
 
 
@@ -338,25 +341,29 @@ def _build_result(
         cur_nr = cur["number_records"][0] if len(cur) > 0 else 0
         cur_ns = cur["number_subjects"][0] if len(cur) > 0 else 0
 
-        new_attrition_rows.append({
-            "cohort_definition_id": cid,
-            "number_records": cur_nr,
-            "number_subjects": cur_ns,
-            "reason_id": max_reason_id + 1,
-            "reason": reason,
-            "excluded_records": prev_nr - cur_nr,
-            "excluded_subjects": prev_ns - cur_ns,
-        })
+        new_attrition_rows.append(
+            {
+                "cohort_definition_id": cid,
+                "number_records": cur_nr,
+                "number_subjects": cur_ns,
+                "reason_id": max_reason_id + 1,
+                "reason": reason,
+                "excluded_records": prev_nr - cur_nr,
+                "excluded_subjects": prev_ns - cur_ns,
+            }
+        )
 
     if new_attrition_rows:
-        new_attrition_df = pl.DataFrame(new_attrition_rows).cast({
-            "cohort_definition_id": pl.Int64,
-            "number_records": pl.Int64,
-            "number_subjects": pl.Int64,
-            "reason_id": pl.Int64,
-            "excluded_records": pl.Int64,
-            "excluded_subjects": pl.Int64,
-        })
+        new_attrition_df = pl.DataFrame(new_attrition_rows).cast(
+            {
+                "cohort_definition_id": pl.Int64,
+                "number_records": pl.Int64,
+                "number_subjects": pl.Int64,
+                "reason_id": pl.Int64,
+                "excluded_records": pl.Int64,
+                "excluded_subjects": pl.Int64,
+            }
+        )
         attrition = pl.concat([existing_attrition, new_attrition_df])
     else:
         attrition = existing_attrition
@@ -369,5 +376,7 @@ def _build_result(
         tbl_source=original._tbl_source if hasattr(original, "_tbl_source") else "local",
         settings=original.settings.clone(),
         attrition=attrition,
-        cohort_codelist=original.cohort_codelist.clone() if len(original.cohort_codelist) > 0 else None,
+        cohort_codelist=original.cohort_codelist.clone()
+        if len(original.cohort_codelist) > 0
+        else None,
     )

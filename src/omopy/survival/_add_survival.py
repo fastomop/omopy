@@ -119,10 +119,12 @@ def add_cohort_survival(
 
     # Left join to observation period (enclosing the index date)
     joined = tbl.left_join(obs, tbl["subject_id"] == obs["_obs_pid"]).filter(
-        lambda t: t["_obs_start"].isnull()
-        | (
-            (t["_obs_start"] <= t["cohort_start_date"])
-            & (t["cohort_start_date"] <= t["_obs_end"])
+        lambda t: (
+            t["_obs_start"].isnull()
+            | (
+                (t["_obs_start"] <= t["cohort_start_date"])
+                & (t["cohort_start_date"] <= t["_obs_end"])
+            )
         )
     )
 
@@ -155,15 +157,12 @@ def add_cohort_survival(
                 >= joined["cohort_start_date"] - ibis.interval(days=washout_days)
             )
             & (prior_outcomes["_p_date"] < joined["cohort_start_date"]),
-        ).mutate(
-            _has_washout_event=lambda t: t["_p_pid"].notnull()
-        )
+        ).mutate(_has_washout_event=lambda t: t["_p_pid"].notnull())
 
         # Group to collapse duplicates from multiple washout events
         group_cols = [c for c in joined.columns]
-        with_washout = (
-            with_washout.group_by(group_cols)
-            .agg(_has_washout_event=with_washout["_has_washout_event"].max())
+        with_washout = with_washout.group_by(group_cols).agg(
+            _has_washout_event=with_washout["_has_washout_event"].max()
         )
 
         joined = with_washout
@@ -178,14 +177,11 @@ def add_cohort_survival(
             prior_outcomes,
             (joined["subject_id"] == prior_outcomes["_p_pid"])
             & (prior_outcomes["_p_date"] < joined["cohort_start_date"]),
-        ).mutate(
-            _has_washout_event=lambda t: t["_p_pid"].notnull()
-        )
+        ).mutate(_has_washout_event=lambda t: t["_p_pid"].notnull())
 
         group_cols = [c for c in joined.columns]
-        with_washout = (
-            with_washout.group_by(group_cols)
-            .agg(_has_washout_event=with_washout["_has_washout_event"].max())
+        with_washout = with_washout.group_by(group_cols).agg(
+            _has_washout_event=with_washout["_has_washout_event"].max()
         )
 
         joined = with_washout
@@ -200,17 +196,12 @@ def add_cohort_survival(
         future_outcomes,
         (joined["subject_id"] == future_outcomes["_f_pid"])
         & (future_outcomes["_f_date"] >= joined["cohort_start_date"]),
-    ).mutate(
-        _days_to_event=(
-            lambda t: (t["_f_date"] - t["cohort_start_date"]).cast("int64")
-        )
-    )
+    ).mutate(_days_to_event=(lambda t: (t["_f_date"] - t["cohort_start_date"]).cast("int64")))
 
     # Take the FIRST (minimum) days_to_event per row
     group_cols2 = [c for c in joined.columns]
-    with_event = (
-        with_event.group_by(group_cols2)
-        .agg(_days_to_event=with_event["_days_to_event"].min())
+    with_event = with_event.group_by(group_cols2).agg(
+        _days_to_event=with_event["_days_to_event"].min()
     )
 
     # --- Step 4: Apply censoring hierarchy ---
@@ -220,9 +211,9 @@ def add_cohort_survival(
     # Apply censor_on_date if provided
     if censor_on_date is not None:
         # censor_on_date is a column name in x with a date
-        days_to_censor_date = (
-            with_event[censor_on_date] - with_event["cohort_start_date"]
-        ).cast("int64")
+        days_to_censor_date = (with_event[censor_on_date] - with_event["cohort_start_date"]).cast(
+            "int64"
+        )
         censor_time = ibis.least(censor_time, days_to_censor_date)
 
     # Apply follow_up_days cap
@@ -234,8 +225,7 @@ def add_cohort_survival(
     # Event occurred if days_to_event is not null AND days_to_event <= censor_time
     status_expr = ibis.cases(
         (
-            with_event["_days_to_event"].notnull()
-            & (with_event["_days_to_event"] <= censor_time),
+            with_event["_days_to_event"].notnull() & (with_event["_days_to_event"] <= censor_time),
             1,
         ),
         else_=0,
@@ -244,8 +234,7 @@ def add_cohort_survival(
     # Time: days_to_event if event, censor_time if censored
     time_expr = ibis.cases(
         (
-            with_event["_days_to_event"].notnull()
-            & (with_event["_days_to_event"] <= censor_time),
+            with_event["_days_to_event"].notnull() & (with_event["_days_to_event"] <= censor_time),
             with_event["_days_to_event"],
         ),
         else_=censor_time,
@@ -261,9 +250,7 @@ def add_cohort_survival(
         else_=time_expr,
     )
 
-    result = with_event.mutate(
-        **{status_column: final_status, time_column: final_time}
-    )
+    result = with_event.mutate(**{status_column: final_status, time_column: final_time})
 
     # Select only original columns + new columns
     select_cols = [c for c in orig_cols if c != "_row_id"] + [time_column, status_column]

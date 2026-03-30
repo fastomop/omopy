@@ -28,13 +28,12 @@ __all__ = [
 
 
 def _filter_result_type(
-    result: SummarisedResult, result_type: str,
+    result: SummarisedResult,
+    result_type: str,
 ) -> SummarisedResult:
     """Filter a SummarisedResult to rows matching the given result_type."""
     settings = result.settings
-    matching_ids = settings.filter(
-        pl.col("result_type") == result_type
-    )["result_id"].to_list()
+    matching_ids = settings.filter(pl.col("result_type") == result_type)["result_id"].to_list()
 
     if not matching_ids:
         return result
@@ -313,14 +312,10 @@ def plot_proportion_of_patients_covered(
     """
     from omopy.vis import scatter_plot
 
-    result = _filter_result_type(
-        result, "summarise_proportion_of_patients_covered"
-    )
+    result = _filter_result_type(result, "summarise_proportion_of_patients_covered")
 
     # Filter to ppc estimates
-    data = result.data.filter(
-        pl.col("estimate_name").is_in(["ppc", "ppc_lower", "ppc_upper"])
-    )
+    data = result.data.filter(pl.col("estimate_name").is_in(["ppc", "ppc_lower", "ppc_upper"]))
     result = SummarisedResult(data, settings=result.settings)
 
     return scatter_plot(

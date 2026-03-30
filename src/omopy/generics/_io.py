@@ -133,20 +133,22 @@ def export_concept_set_expression(
         for name, entries in cse.items():
             items = []
             for e in entries:
-                items.append({
-                    "concept": {
-                        "CONCEPT_ID": e.concept_id,
-                        "CONCEPT_NAME": e.concept_name,
-                        "DOMAIN_ID": e.domain_id,
-                        "VOCABULARY_ID": e.vocabulary_id,
-                        "CONCEPT_CLASS_ID": e.concept_class_id,
-                        "STANDARD_CONCEPT": e.standard_concept,
-                        "CONCEPT_CODE": e.concept_code,
-                    },
-                    "isExcluded": e.is_excluded,
-                    "includeDescendants": e.include_descendants,
-                    "includeMapped": e.include_mapped,
-                })
+                items.append(
+                    {
+                        "concept": {
+                            "CONCEPT_ID": e.concept_id,
+                            "CONCEPT_NAME": e.concept_name,
+                            "DOMAIN_ID": e.domain_id,
+                            "VOCABULARY_ID": e.vocabulary_id,
+                            "CONCEPT_CLASS_ID": e.concept_class_id,
+                            "STANDARD_CONCEPT": e.standard_concept,
+                            "CONCEPT_CODE": e.concept_code,
+                        },
+                        "isExcluded": e.is_excluded,
+                        "includeDescendants": e.include_descendants,
+                        "includeMapped": e.include_mapped,
+                    }
+                )
             out = path / f"{name}.json"
             out.write_text(json.dumps(items, indent=2), encoding="utf-8")
         return path
@@ -155,14 +157,16 @@ def export_concept_set_expression(
         rows = []
         for name, entries in cse.items():
             for e in entries:
-                rows.append({
-                    "codelist_name": name,
-                    "concept_id": e.concept_id,
-                    "concept_name": e.concept_name,
-                    "is_excluded": e.is_excluded,
-                    "include_descendants": e.include_descendants,
-                    "include_mapped": e.include_mapped,
-                })
+                rows.append(
+                    {
+                        "codelist_name": name,
+                        "concept_id": e.concept_id,
+                        "concept_name": e.concept_name,
+                        "is_excluded": e.is_excluded,
+                        "include_descendants": e.include_descendants,
+                        "include_mapped": e.include_mapped,
+                    }
+                )
         out = path / "concept_set_expression.csv"
         _write_csv(rows, out)
         return out
@@ -222,26 +226,26 @@ def _parse_cse_entries(data: list[dict[str, Any]]) -> list[ConceptEntry]:
     entries = []
     for item in data:
         concept = item.get("concept", item)
-        entries.append(ConceptEntry(
-            concept_id=int(concept.get("CONCEPT_ID", concept.get("concept_id", 0))),
-            concept_name=str(concept.get("CONCEPT_NAME", concept.get("concept_name", ""))),
-            domain_id=str(concept.get("DOMAIN_ID", concept.get("domain_id", ""))),
-            vocabulary_id=str(concept.get("VOCABULARY_ID", concept.get("vocabulary_id", ""))),
-            concept_class_id=str(
-                concept.get("CONCEPT_CLASS_ID", concept.get("concept_class_id", ""))
-            ),
-            standard_concept=str(
-                concept.get("STANDARD_CONCEPT", concept.get("standard_concept", ""))
-            ),
-            concept_code=str(concept.get("CONCEPT_CODE", concept.get("concept_code", ""))),
-            is_excluded=bool(item.get("isExcluded", item.get("is_excluded", False))),
-            include_descendants=bool(
-                item.get("includeDescendants", item.get("include_descendants", True))
-            ),
-            include_mapped=bool(
-                item.get("includeMapped", item.get("include_mapped", False))
-            ),
-        ))
+        entries.append(
+            ConceptEntry(
+                concept_id=int(concept.get("CONCEPT_ID", concept.get("concept_id", 0))),
+                concept_name=str(concept.get("CONCEPT_NAME", concept.get("concept_name", ""))),
+                domain_id=str(concept.get("DOMAIN_ID", concept.get("domain_id", ""))),
+                vocabulary_id=str(concept.get("VOCABULARY_ID", concept.get("vocabulary_id", ""))),
+                concept_class_id=str(
+                    concept.get("CONCEPT_CLASS_ID", concept.get("concept_class_id", ""))
+                ),
+                standard_concept=str(
+                    concept.get("STANDARD_CONCEPT", concept.get("standard_concept", ""))
+                ),
+                concept_code=str(concept.get("CONCEPT_CODE", concept.get("concept_code", ""))),
+                is_excluded=bool(item.get("isExcluded", item.get("is_excluded", False))),
+                include_descendants=bool(
+                    item.get("includeDescendants", item.get("include_descendants", True))
+                ),
+                include_mapped=bool(item.get("includeMapped", item.get("include_mapped", False))),
+            )
+        )
     return entries
 
 
@@ -286,9 +290,8 @@ def import_summarised_result(
 
     # Extract settings
     if all(c in df.columns for c in SETTINGS_REQUIRED_COLUMNS):
-        settings = (
-            df.select([c for c in settings_cols if c in df.columns])
-            .unique(subset=["result_id"])
+        settings = df.select([c for c in settings_cols if c in df.columns]).unique(
+            subset=["result_id"]
         )
     else:
         settings = None

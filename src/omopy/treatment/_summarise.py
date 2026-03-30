@@ -177,16 +177,11 @@ def _build_pathway_strings(history: pl.DataFrame) -> pl.DataFrame:
     # Use n_target if present for grouping
     group_cols = ["person_id", "target_cohort_id"]
 
-    pathways = (
-        events.group_by(group_cols)
-        .agg(
-            pl.col("event_cohort_name")
-            .str.join(delimiter="-")
-            .alias("pathway"),
-            pl.col("age").first(),
-            pl.col("sex").first(),
-            pl.col("index_year").first(),
-        )
+    pathways = events.group_by(group_cols).agg(
+        pl.col("event_cohort_name").str.join(delimiter="-").alias("pathway"),
+        pl.col("age").first(),
+        pl.col("sex").first(),
+        pl.col("index_year").first(),
     )
 
     return pathways
@@ -271,59 +266,63 @@ def summarise_treatment_pathways(
 
             # Count pathways
             pathway_counts = (
-                sdf.group_by("pathway")
-                .agg(pl.len().alias("freq"))
-                .sort("freq", descending=True)
+                sdf.group_by("pathway").agg(pl.len().alias("freq")).sort("freq", descending=True)
             )
 
             # Apply min cell count
-            pathway_counts = pathway_counts.filter(
-                pl.col("freq") >= min_cell_count
-            )
+            pathway_counts = pathway_counts.filter(pl.col("freq") >= min_cell_count)
 
             for row in pathway_counts.iter_rows(named=True):
-                all_rows.append({
-                    "result_id": result_id,
-                    "cdm_name": cdm_name,
-                    "group_name": "target_cohort_name",
-                    "group_level": ts.cohort_name,
-                    "strata_name": sname,
-                    "strata_level": slevel,
-                    "variable_name": "treatment_pathway",
-                    "variable_level": row["pathway"],
-                    "estimate_name": "count",
-                    "estimate_type": "integer",
-                    "estimate_value": str(row["freq"]),
-                    "additional_name": OVERALL,
-                    "additional_level": OVERALL,
-                })
+                all_rows.append(
+                    {
+                        "result_id": result_id,
+                        "cdm_name": cdm_name,
+                        "group_name": "target_cohort_name",
+                        "group_level": ts.cohort_name,
+                        "strata_name": sname,
+                        "strata_level": slevel,
+                        "variable_name": "treatment_pathway",
+                        "variable_level": row["pathway"],
+                        "estimate_name": "count",
+                        "estimate_type": "integer",
+                        "estimate_value": str(row["freq"]),
+                        "additional_name": OVERALL,
+                        "additional_level": OVERALL,
+                    }
+                )
 
             # Also emit percentage
             total = sdf.height
             for row in pathway_counts.iter_rows(named=True):
                 pct = row["freq"] / total * 100 if total > 0 else 0.0
-                all_rows.append({
-                    "result_id": result_id,
-                    "cdm_name": cdm_name,
-                    "group_name": "target_cohort_name",
-                    "group_level": ts.cohort_name,
-                    "strata_name": sname,
-                    "strata_level": slevel,
-                    "variable_name": "treatment_pathway",
-                    "variable_level": row["pathway"],
-                    "estimate_name": "percentage",
-                    "estimate_type": "percentage",
-                    "estimate_value": f"{pct:.2f}",
-                    "additional_name": OVERALL,
-                    "additional_level": OVERALL,
-                })
+                all_rows.append(
+                    {
+                        "result_id": result_id,
+                        "cdm_name": cdm_name,
+                        "group_name": "target_cohort_name",
+                        "group_level": ts.cohort_name,
+                        "strata_name": sname,
+                        "strata_level": slevel,
+                        "variable_name": "treatment_pathway",
+                        "variable_level": row["pathway"],
+                        "estimate_name": "percentage",
+                        "estimate_type": "percentage",
+                        "estimate_value": f"{pct:.2f}",
+                        "additional_name": OVERALL,
+                        "additional_level": OVERALL,
+                    }
+                )
 
             # Count rows
             all_rows.extend(
                 _add_count_rows(
-                    sdf, result_id, cdm_name,
-                    "target_cohort_name", ts.cohort_name,
-                    sname, slevel,
+                    sdf,
+                    result_id,
+                    cdm_name,
+                    "target_cohort_name",
+                    ts.cohort_name,
+                    sname,
+                    slevel,
                 )
             )
 
@@ -357,11 +356,7 @@ def _add_age_group(df: pl.DataFrame, age_window: int | list[int]) -> pl.DataFram
         labels.append(f"{lo}-{hi}")
 
     # Use cut for binning
-    df = df.with_columns(
-        pl.col("age")
-        .cut(breaks[1:-1], labels=labels)
-        .alias("age_group")
-    )
+    df = df.with_columns(pl.col("age").cut(breaks[1:-1], labels=labels).alias("age_group"))
 
     return df
 
@@ -418,9 +413,7 @@ def summarise_event_duration(
     target_specs = [c for c in result.cohorts if c.type == "target"]
 
     for ts in target_specs:
-        target_events = events.filter(
-            pl.col("target_cohort_id") == ts.cohort_id
-        )
+        target_events = events.filter(pl.col("target_cohort_id") == ts.cohort_id)
 
         if target_events.height == 0:
             continue
@@ -435,9 +428,14 @@ def summarise_event_duration(
 
         # 1. Overall aggregation
         _emit_duration_rows(
-            all_rows, target_events, result_id, cdm_name,
-            ts.cohort_name, ts.cohort_id,
-            line="overall", min_cell_count=min_cell_count,
+            all_rows,
+            target_events,
+            result_id,
+            cdm_name,
+            ts.cohort_name,
+            ts.cohort_id,
+            line="overall",
+            min_cell_count=min_cell_count,
         )
 
         # 2. Per-line aggregation
@@ -445,9 +443,14 @@ def summarise_event_duration(
             for seq in sorted(target_events["event_seq"].unique().to_list()):
                 line_events = target_events.filter(pl.col("event_seq") == seq)
                 _emit_duration_rows(
-                    all_rows, line_events, result_id, cdm_name,
-                    ts.cohort_name, ts.cohort_id,
-                    line=str(seq), min_cell_count=min_cell_count,
+                    all_rows,
+                    line_events,
+                    result_id,
+                    cdm_name,
+                    ts.cohort_name,
+                    ts.cohort_id,
+                    line=str(seq),
+                    min_cell_count=min_cell_count,
                 )
 
     if not all_rows:
@@ -494,21 +497,23 @@ def _emit_duration_rows(
         }
 
         for est_name in estimates:
-            all_rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": "target_cohort_name",
-                "group_level": target_name,
-                "strata_name": OVERALL,
-                "strata_level": OVERALL,
-                "variable_name": event_name,
-                "variable_level": "",
-                "estimate_name": est_name,
-                "estimate_type": "numeric" if est_name not in ("count",) else "integer",
-                "estimate_value": stats[est_name],
-                "additional_name": "line",
-                "additional_level": line,
-            })
+            all_rows.append(
+                {
+                    "result_id": result_id,
+                    "cdm_name": cdm_name,
+                    "group_name": "target_cohort_name",
+                    "group_level": target_name,
+                    "strata_name": OVERALL,
+                    "strata_level": OVERALL,
+                    "variable_name": event_name,
+                    "variable_level": "",
+                    "estimate_name": est_name,
+                    "estimate_type": "numeric" if est_name not in ("count",) else "integer",
+                    "estimate_value": stats[est_name],
+                    "additional_name": "line",
+                    "additional_level": line,
+                }
+            )
 
     # Overall mono/combination
     if "_event_class" in events.columns:

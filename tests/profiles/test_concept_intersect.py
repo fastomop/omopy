@@ -25,7 +25,9 @@ class TestAddConceptIntersectFlag:
         obs = synthea_cdm["observation_period"]
         cs = Codelist({"hypertension": [320128]})
         result = add_concept_intersect_flag(
-            obs, cs, synthea_cdm,
+            obs,
+            cs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             window=(0, float("inf")),
         )
@@ -40,12 +42,16 @@ class TestAddConceptIntersectFlag:
     def test_multiple_concept_sets(self, synthea_cdm):
         """Flag for multiple concept sets at once."""
         obs = synthea_cdm["observation_period"]
-        cs = Codelist({
-            "hypertension": [320128],
-            "sinusitis": [40481087],
-        })
+        cs = Codelist(
+            {
+                "hypertension": [320128],
+                "sinusitis": [40481087],
+            }
+        )
         result = add_concept_intersect_flag(
-            obs, cs, synthea_cdm,
+            obs,
+            cs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             window=(0, float("inf")),
         )
@@ -58,7 +64,9 @@ class TestAddConceptIntersectFlag:
         obs = synthea_cdm["observation_period"]
         cs = Codelist({"hypertension": [320128]})
         result = add_concept_intersect_flag(
-            obs, cs, synthea_cdm,
+            obs,
+            cs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             window=[(0, 365), (366, float("inf"))],
         )
@@ -72,7 +80,9 @@ class TestAddConceptIntersectFlag:
         orig_count = obs.count()
         cs = Codelist({"hypertension": [320128]})
         result = add_concept_intersect_flag(
-            obs, cs, synthea_cdm,
+            obs,
+            cs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         assert result.count() == orig_count
@@ -82,7 +92,9 @@ class TestAddConceptIntersectFlag:
         obs = synthea_cdm["observation_period"]
         cs = Codelist({"nonexistent": [999999999]})
         result = add_concept_intersect_flag(
-            obs, cs, synthea_cdm,
+            obs,
+            cs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         df = result.collect()
@@ -97,7 +109,9 @@ class TestAddConceptIntersectFlag:
         # by using concepts from drug_exposure if any exist
         cs = Codelist({"hypertension": [320128]})
         result = add_concept_intersect_flag(
-            obs, cs, synthea_cdm,
+            obs,
+            cs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             in_observation=False,
         )
@@ -111,7 +125,9 @@ class TestAddConceptIntersectCount:
         obs = synthea_cdm["observation_period"]
         cs = Codelist({"hypertension": [320128]})
         result = add_concept_intersect_count(
-            obs, cs, synthea_cdm,
+            obs,
+            cs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             window=(0, float("inf")),
         )
@@ -125,12 +141,16 @@ class TestAddConceptIntersectCount:
     def test_multiple_sets_count(self, synthea_cdm):
         """Count with multiple concept sets."""
         obs = synthea_cdm["observation_period"]
-        cs = Codelist({
-            "hypertension": [320128],
-            "sinusitis": [40481087],
-        })
+        cs = Codelist(
+            {
+                "hypertension": [320128],
+                "sinusitis": [40481087],
+            }
+        )
         result = add_concept_intersect_count(
-            obs, cs, synthea_cdm,
+            obs,
+            cs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         df = result.collect()
@@ -145,7 +165,9 @@ class TestAddConceptIntersectDate:
         obs = synthea_cdm["observation_period"]
         cs = Codelist({"hypertension": [320128]})
         result = add_concept_intersect_date(
-            obs, cs, synthea_cdm,
+            obs,
+            cs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             window=(0, float("inf")),
             order="first",
@@ -163,7 +185,9 @@ class TestAddConceptIntersectDays:
         obs = synthea_cdm["observation_period"]
         cs = Codelist({"hypertension": [320128]})
         result = add_concept_intersect_days(
-            obs, cs, synthea_cdm,
+            obs,
+            cs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             window=(0, float("inf")),
             order="first",

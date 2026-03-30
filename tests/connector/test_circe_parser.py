@@ -70,19 +70,21 @@ class TestParseMinimal:
 
     def test_parse_json_string(self):
         """parse_cohort_json accepts a JSON string."""
-        raw = json.dumps({
-            "ConceptSets": [],
-            "PrimaryCriteria": {
-                "CriteriaList": [],
-                "ObservationWindow": {"PriorDays": 0, "PostDays": 0},
-                "PrimaryCriteriaLimit": {"Type": "All"},
-            },
-            "QualifiedLimit": {"Type": "First"},
-            "ExpressionLimit": {"Type": "First"},
-            "InclusionRules": [],
-            "CollapseSettings": {"CollapseType": "ERA", "EraPad": 0},
-            "CensorWindow": {},
-        })
+        raw = json.dumps(
+            {
+                "ConceptSets": [],
+                "PrimaryCriteria": {
+                    "CriteriaList": [],
+                    "ObservationWindow": {"PriorDays": 0, "PostDays": 0},
+                    "PrimaryCriteriaLimit": {"Type": "All"},
+                },
+                "QualifiedLimit": {"Type": "First"},
+                "ExpressionLimit": {"Type": "First"},
+                "InclusionRules": [],
+                "CollapseSettings": {"CollapseType": "ERA", "EraPad": 0},
+                "CensorWindow": {},
+            }
+        )
         expr = parse_cohort_json(raw)
         assert isinstance(expr, CohortExpression)
         assert expr.qualified_limit.type == "First"
@@ -352,11 +354,13 @@ class TestEdgeCases:
     def test_missing_optional_fields(self):
         """Missing optional fields default to sensible values."""
         raw = {
-            "ConceptSets": [{
-                "id": 0,
-                "name": "test",
-                "expression": {"items": []},
-            }],
+            "ConceptSets": [
+                {
+                    "id": 0,
+                    "name": "test",
+                    "expression": {"items": []},
+                }
+            ],
             "PrimaryCriteria": {
                 "CriteriaList": [],
                 "ObservationWindow": {"PriorDays": 0, "PostDays": 0},

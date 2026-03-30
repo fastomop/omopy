@@ -72,17 +72,20 @@ def _make_events(
         if "duration_era" not in r:
             r["duration_era"] = (r["event_end_date"] - r["event_start_date"]).days
 
-    return pl.DataFrame(rows, schema_overrides={
-        "person_id": pl.Int64,
-        "event_cohort_id": pl.Utf8,
-        "event_start_date": pl.Date,
-        "event_end_date": pl.Date,
-        "duration_era": pl.Int64,
-        "index_year": pl.Int32,
-        "age": pl.Int64,
-        "target_cohort_id": pl.Int64,
-        "n_target": pl.Int32,
-    })
+    return pl.DataFrame(
+        rows,
+        schema_overrides={
+            "person_id": pl.Int64,
+            "event_cohort_id": pl.Utf8,
+            "event_start_date": pl.Date,
+            "event_end_date": pl.Date,
+            "duration_era": pl.Int64,
+            "index_year": pl.Int32,
+            "age": pl.Int64,
+            "target_cohort_id": pl.Int64,
+            "n_target": pl.Int32,
+        },
+    )
 
 
 D = datetime.date
@@ -98,14 +101,17 @@ class TestModuleImports:
 
     def test_import_module(self):
         import omopy.treatment
+
         assert hasattr(omopy.treatment, "__all__")
 
     def test_export_count(self):
         import omopy.treatment
+
         assert len(omopy.treatment.__all__) == 11
 
     def test_all_exports_accessible(self):
         import omopy.treatment
+
         for name in omopy.treatment.__all__:
             obj = getattr(omopy.treatment, name)
             assert obj is not None, f"{name} is None"
@@ -113,6 +119,7 @@ class TestModuleImports:
     def test_callable_exports(self):
         """Non-type exports should be callable."""
         import omopy.treatment
+
         for name in omopy.treatment.__all__:
             obj = getattr(omopy.treatment, name)
             assert callable(obj), f"{name} is not callable"
@@ -131,6 +138,7 @@ class TestModuleImports:
             table_event_duration,
             table_treatment_pathways,
         )
+
         assert callable(compute_pathways)
         assert callable(summarise_treatment_pathways)
         assert callable(summarise_event_duration)
@@ -261,18 +269,34 @@ class TestEraCollapse:
         assert result.height == 0
 
     def test_single_event_unchanged(self):
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+            ]
+        )
         result = _era_collapse(df, era_collapse_size=30)
         assert result.height == 1
 
     def test_merge_same_drug_within_gap(self):
         """Two eras of same drug separated by 10 days (< 30) should merge."""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-            {"event_cohort_id": "1", "event_start_date": D(2020, 2, 10), "event_end_date": D(2020, 3, 10)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 2, 10),
+                    "event_end_date": D(2020, 3, 10),
+                },
+            ]
+        )
         result = _era_collapse(df, era_collapse_size=30)
         events = result.filter(pl.col("type") == "event")
         assert events.height == 1
@@ -281,31 +305,65 @@ class TestEraCollapse:
 
     def test_no_merge_different_drugs(self):
         """Two eras of different drugs should NOT merge even if gap < threshold."""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-            {"event_cohort_id": "2", "event_start_date": D(2020, 2, 5), "event_end_date": D(2020, 3, 5)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+                {
+                    "event_cohort_id": "2",
+                    "event_start_date": D(2020, 2, 5),
+                    "event_end_date": D(2020, 3, 5),
+                },
+            ]
+        )
         result = _era_collapse(df, era_collapse_size=30)
         events = result.filter(pl.col("type") == "event")
         assert events.height == 2
 
     def test_no_merge_large_gap(self):
         """Same drug but gap > threshold should NOT merge."""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-            {"event_cohort_id": "1", "event_start_date": D(2020, 4, 1), "event_end_date": D(2020, 5, 1)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 4, 1),
+                    "event_end_date": D(2020, 5, 1),
+                },
+            ]
+        )
         result = _era_collapse(df, era_collapse_size=30)
         events = result.filter(pl.col("type") == "event")
         assert events.height == 2
 
     def test_merge_three_eras_chained(self):
         """Three eras of same drug, each within gap of previous — all merge."""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 20)},
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 30), "event_end_date": D(2020, 2, 15)},
-            {"event_cohort_id": "1", "event_start_date": D(2020, 2, 25), "event_end_date": D(2020, 3, 15)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 20),
+                },
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 30),
+                    "event_end_date": D(2020, 2, 15),
+                },
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 2, 25),
+                    "event_end_date": D(2020, 3, 15),
+                },
+            ]
+        )
         result = _era_collapse(df, era_collapse_size=15)
         events = result.filter(pl.col("type") == "event")
         assert events.height == 1
@@ -314,12 +372,25 @@ class TestEraCollapse:
 
     def test_exits_preserved(self):
         """Exit-type rows should pass through unchanged."""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-        ]) 
-        exit_df = _make_events([
-            {"event_cohort_id": "99", "event_start_date": D(2020, 6, 1), "event_end_date": D(2020, 6, 30)},
-        ], type_col="exit")
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+            ]
+        )
+        exit_df = _make_events(
+            [
+                {
+                    "event_cohort_id": "99",
+                    "event_start_date": D(2020, 6, 1),
+                    "event_end_date": D(2020, 6, 30),
+                },
+            ],
+            type_col="exit",
+        )
         combined = pl.concat([df, exit_df], how="diagonal_relaxed")
         result = _era_collapse(combined, era_collapse_size=30)
         exits = result.filter(pl.col("type") == "exit")
@@ -327,10 +398,20 @@ class TestEraCollapse:
 
     def test_zero_era_collapse_size(self):
         """With era_collapse_size=0, only overlapping eras merge."""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 31), "event_end_date": D(2020, 2, 28)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 31),
+                    "event_end_date": D(2020, 2, 28),
+                },
+            ]
+        )
         result = _era_collapse(df, era_collapse_size=0)
         events = result.filter(pl.col("type") == "event")
         # Gap is 0 days, which is <= 0 so should merge
@@ -338,12 +419,34 @@ class TestEraCollapse:
 
     def test_multiple_persons(self):
         """Collapse should respect person boundaries."""
-        df = _make_events([
-            {"person_id": 1, "event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 20)},
-            {"person_id": 1, "event_cohort_id": "1", "event_start_date": D(2020, 1, 25), "event_end_date": D(2020, 2, 15)},
-            {"person_id": 2, "event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 20)},
-            {"person_id": 2, "event_cohort_id": "1", "event_start_date": D(2020, 1, 25), "event_end_date": D(2020, 2, 15)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "person_id": 1,
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 20),
+                },
+                {
+                    "person_id": 1,
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 25),
+                    "event_end_date": D(2020, 2, 15),
+                },
+                {
+                    "person_id": 2,
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 20),
+                },
+                {
+                    "person_id": 2,
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 25),
+                    "event_end_date": D(2020, 2, 15),
+                },
+            ]
+        )
         result = _era_collapse(df, era_collapse_size=10)
         events = result.filter(pl.col("type") == "event")
         # Each person's two eras merge → 2 total
@@ -360,27 +463,53 @@ class TestCombinationWindow:
 
     def test_no_events(self):
         df = _make_events([])
-        result = _combination_window(df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate")
+        result = _combination_window(
+            df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate"
+        )
         assert result.height == 0
 
     def test_no_overlap(self):
         """Sequential eras with no overlap should pass through."""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-            {"event_cohort_id": "2", "event_start_date": D(2020, 2, 1), "event_end_date": D(2020, 2, 28)},
-        ])
-        result = _combination_window(df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate")
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+                {
+                    "event_cohort_id": "2",
+                    "event_start_date": D(2020, 2, 1),
+                    "event_end_date": D(2020, 2, 28),
+                },
+            ]
+        )
+        result = _combination_window(
+            df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate"
+        )
         events = result.filter(pl.col("type") == "event")
         assert events.height == 2
 
     def test_small_overlap_truncate(self):
         """Overlap < combination_window with truncate method should clip previous era."""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 2, 15)},
-            {"event_cohort_id": "2", "event_start_date": D(2020, 2, 10), "event_end_date": D(2020, 3, 10)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 2, 15),
+                },
+                {
+                    "event_cohort_id": "2",
+                    "event_start_date": D(2020, 2, 10),
+                    "event_end_date": D(2020, 3, 10),
+                },
+            ]
+        )
         # Overlap is 5 days (Feb 10-15), combination_window=30 → switch
-        result = _combination_window(df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate")
+        result = _combination_window(
+            df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate"
+        )
         events = result.filter(pl.col("type") == "event")
         # Previous era should be truncated to end at Feb 10
         drug1 = events.filter(pl.col("event_cohort_id") == "1")
@@ -389,26 +518,56 @@ class TestCombinationWindow:
 
     def test_large_overlap_creates_combination(self):
         """Overlap >= combination_window creates combo segment (FRFS case)."""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 3, 1)},
-            {"event_cohort_id": "2", "event_start_date": D(2020, 1, 15), "event_end_date": D(2020, 4, 1)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 3, 1),
+                },
+                {
+                    "event_cohort_id": "2",
+                    "event_start_date": D(2020, 1, 15),
+                    "event_end_date": D(2020, 4, 1),
+                },
+            ]
+        )
         # Overlap: Jan 15 to Mar 1 = 45 days, combination_window=30 → combination
-        result = _combination_window(df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate")
+        result = _combination_window(
+            df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate"
+        )
         events = result.filter(pl.col("type") == "event")
         combo_rows = events.filter(pl.col("event_cohort_id").str.contains(r"\+"))
         assert combo_rows.height >= 1
 
     def test_exits_preserved(self):
         """Exit rows should pass through combination window unchanged."""
-        event_df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-        ])
-        exit_df = _make_events([
-            {"event_cohort_id": "99", "event_start_date": D(2020, 6, 1), "event_end_date": D(2020, 6, 30)},
-        ], type_col="exit")
+        event_df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+            ]
+        )
+        exit_df = _make_events(
+            [
+                {
+                    "event_cohort_id": "99",
+                    "event_start_date": D(2020, 6, 1),
+                    "event_end_date": D(2020, 6, 30),
+                },
+            ],
+            type_col="exit",
+        )
         combined = pl.concat([event_df, exit_df], how="diagonal_relaxed")
-        result = _combination_window(combined, combination_window=30, min_post_combination_duration=0, overlap_method="truncate")
+        result = _combination_window(
+            combined,
+            combination_window=30,
+            min_post_combination_duration=0,
+            overlap_method="truncate",
+        )
         exits = result.filter(pl.col("type") == "exit")
         assert exits.height == 1
 
@@ -422,12 +581,30 @@ class TestFilterTreatments:
     """Test treatment filtering strategies."""
 
     def _sorted_events(self) -> pl.DataFrame:
-        return _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-            {"event_cohort_id": "2", "event_start_date": D(2020, 2, 1), "event_end_date": D(2020, 2, 28)},
-            {"event_cohort_id": "1", "event_start_date": D(2020, 3, 1), "event_end_date": D(2020, 3, 31)},
-            {"event_cohort_id": "2", "event_start_date": D(2020, 4, 1), "event_end_date": D(2020, 4, 30)},
-        ])
+        return _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+                {
+                    "event_cohort_id": "2",
+                    "event_start_date": D(2020, 2, 1),
+                    "event_end_date": D(2020, 2, 28),
+                },
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 3, 1),
+                    "event_end_date": D(2020, 3, 31),
+                },
+                {
+                    "event_cohort_id": "2",
+                    "event_start_date": D(2020, 4, 1),
+                    "event_end_date": D(2020, 4, 30),
+                },
+            ]
+        )
 
     def test_all_keeps_everything(self):
         df = self._sorted_events()
@@ -444,23 +621,55 @@ class TestFilterTreatments:
 
     def test_changes_removes_consecutive_dupes(self):
         """A-A-B-B → A-B"""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-            {"event_cohort_id": "1", "event_start_date": D(2020, 2, 1), "event_end_date": D(2020, 2, 28)},
-            {"event_cohort_id": "2", "event_start_date": D(2020, 3, 1), "event_end_date": D(2020, 3, 31)},
-            {"event_cohort_id": "2", "event_start_date": D(2020, 4, 1), "event_end_date": D(2020, 4, 30)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 2, 1),
+                    "event_end_date": D(2020, 2, 28),
+                },
+                {
+                    "event_cohort_id": "2",
+                    "event_start_date": D(2020, 3, 1),
+                    "event_end_date": D(2020, 3, 31),
+                },
+                {
+                    "event_cohort_id": "2",
+                    "event_start_date": D(2020, 4, 1),
+                    "event_end_date": D(2020, 4, 30),
+                },
+            ]
+        )
         result = _filter_treatments(df, "changes")
         events = result.filter(pl.col("type") == "event")
         assert events.height == 2
 
     def test_changes_keeps_non_consecutive(self):
         """A-B-A keeps all 3 because A→B→A are all changes."""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-            {"event_cohort_id": "2", "event_start_date": D(2020, 2, 1), "event_end_date": D(2020, 2, 28)},
-            {"event_cohort_id": "1", "event_start_date": D(2020, 3, 1), "event_end_date": D(2020, 3, 31)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+                {
+                    "event_cohort_id": "2",
+                    "event_start_date": D(2020, 2, 1),
+                    "event_end_date": D(2020, 2, 28),
+                },
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 3, 1),
+                    "event_end_date": D(2020, 3, 31),
+                },
+            ]
+        )
         result = _filter_treatments(df, "changes")
         events = result.filter(pl.col("type") == "event")
         assert events.height == 3
@@ -473,12 +682,25 @@ class TestFilterTreatments:
 
     def test_exits_preserved(self):
         """Exits should pass through all filter strategies."""
-        event_df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-        ])
-        exit_df = _make_events([
-            {"event_cohort_id": "99", "event_start_date": D(2020, 6, 1), "event_end_date": D(2020, 6, 30)},
-        ], type_col="exit")
+        event_df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+            ]
+        )
+        exit_df = _make_events(
+            [
+                {
+                    "event_cohort_id": "99",
+                    "event_start_date": D(2020, 6, 1),
+                    "event_end_date": D(2020, 6, 30),
+                },
+            ],
+            type_col="exit",
+        )
         combined = pl.concat([event_df, exit_df], how="diagonal_relaxed")
         for strategy in ("all", "first", "changes"):
             result = _filter_treatments(combined, strategy)
@@ -495,10 +717,20 @@ class TestFinalizePathways:
     """Test pathway finalisation (sequencing, name resolution, truncation)."""
 
     def test_assigns_event_seq(self):
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-            {"event_cohort_id": "2", "event_start_date": D(2020, 2, 1), "event_end_date": D(2020, 2, 28)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+                {
+                    "event_cohort_id": "2",
+                    "event_start_date": D(2020, 2, 1),
+                    "event_end_date": D(2020, 2, 28),
+                },
+            ]
+        )
         cohort_names = {1: "DrugA", 2: "DrugB"}
         result = _finalize_pathways(df, max_path_length=5, cohort_names=cohort_names)
         assert "event_seq" in result.columns
@@ -506,28 +738,54 @@ class TestFinalizePathways:
         assert seqs == [1, 2]
 
     def test_resolves_names(self):
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+            ]
+        )
         cohort_names = {1: "Aspirin"}
         result = _finalize_pathways(df, max_path_length=5, cohort_names=cohort_names)
         assert "event_cohort_name" in result.columns
         assert result["event_cohort_name"][0] == "Aspirin"
 
     def test_resolves_combination_names(self):
-        df = _make_events([
-            {"event_cohort_id": "1+2", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1+2",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+            ]
+        )
         cohort_names = {1: "Aspirin", 2: "Metformin"}
         result = _finalize_pathways(df, max_path_length=5, cohort_names=cohort_names)
         assert result["event_cohort_name"][0] == "Aspirin+Metformin"
 
     def test_max_path_length_truncation(self):
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-            {"event_cohort_id": "2", "event_start_date": D(2020, 2, 1), "event_end_date": D(2020, 2, 28)},
-            {"event_cohort_id": "3", "event_start_date": D(2020, 3, 1), "event_end_date": D(2020, 3, 31)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+                {
+                    "event_cohort_id": "2",
+                    "event_start_date": D(2020, 2, 1),
+                    "event_end_date": D(2020, 2, 28),
+                },
+                {
+                    "event_cohort_id": "3",
+                    "event_start_date": D(2020, 3, 1),
+                    "event_end_date": D(2020, 3, 31),
+                },
+            ]
+        )
         cohort_names = {1: "A", 2: "B", 3: "C"}
         result = _finalize_pathways(df, max_path_length=2, cohort_names=cohort_names)
         assert result.height == 2  # Only first 2 events
@@ -549,29 +807,33 @@ class TestBuildPathwayStrings:
     """Test pathway string construction."""
 
     def test_basic_pathway(self):
-        df = pl.DataFrame({
-            "person_id": [1, 1],
-            "target_cohort_id": [100, 100],
-            "event_cohort_name": ["DrugA", "DrugB"],
-            "event_seq": [1, 2],
-            "age": [50, 50],
-            "sex": ["Male", "Male"],
-            "index_year": [2020, 2020],
-        })
+        df = pl.DataFrame(
+            {
+                "person_id": [1, 1],
+                "target_cohort_id": [100, 100],
+                "event_cohort_name": ["DrugA", "DrugB"],
+                "event_seq": [1, 2],
+                "age": [50, 50],
+                "sex": ["Male", "Male"],
+                "index_year": [2020, 2020],
+            }
+        )
         result = _build_pathway_strings(df)
         assert result.height == 1
         assert result["pathway"][0] == "DrugA-DrugB"
 
     def test_multiple_persons(self):
-        df = pl.DataFrame({
-            "person_id": [1, 1, 2],
-            "target_cohort_id": [100, 100, 100],
-            "event_cohort_name": ["DrugA", "DrugB", "DrugC"],
-            "event_seq": [1, 2, 1],
-            "age": [50, 50, 60],
-            "sex": ["Male", "Male", "Female"],
-            "index_year": [2020, 2020, 2021],
-        })
+        df = pl.DataFrame(
+            {
+                "person_id": [1, 1, 2],
+                "target_cohort_id": [100, 100, 100],
+                "event_cohort_name": ["DrugA", "DrugB", "DrugC"],
+                "event_seq": [1, 2, 1],
+                "age": [50, 50, 60],
+                "sex": ["Male", "Male", "Female"],
+                "index_year": [2020, 2020, 2021],
+            }
+        )
         result = _build_pathway_strings(df)
         assert result.height == 2
 
@@ -591,15 +853,17 @@ class TestBuildPathwayStrings:
         assert result.height == 0
 
     def test_single_step_pathway(self):
-        df = pl.DataFrame({
-            "person_id": [1],
-            "target_cohort_id": [100],
-            "event_cohort_name": ["DrugA"],
-            "event_seq": [1],
-            "age": [50],
-            "sex": ["Male"],
-            "index_year": [2020],
-        })
+        df = pl.DataFrame(
+            {
+                "person_id": [1],
+                "target_cohort_id": [100],
+                "event_cohort_name": ["DrugA"],
+                "event_seq": [1],
+                "age": [50],
+                "sex": ["Male"],
+                "index_year": [2020],
+            }
+        )
         result = _build_pathway_strings(df)
         assert result.height == 1
         assert result["pathway"][0] == "DrugA"
@@ -642,47 +906,55 @@ class TestMockTreatmentPathways:
 
     def test_returns_summarised_result(self):
         from omopy.treatment import mock_treatment_pathways
+
         result = mock_treatment_pathways()
         assert isinstance(result, SummarisedResult)
 
     def test_has_standard_columns(self):
         from omopy.treatment import mock_treatment_pathways
+
         result = mock_treatment_pathways()
         for col in SUMMARISED_RESULT_COLUMNS:
             assert col in result.data.columns, f"Missing column: {col}"
 
     def test_has_pathway_result_type(self):
         from omopy.treatment import mock_treatment_pathways
+
         result = mock_treatment_pathways()
         types = result.settings["result_type"].to_list()
         assert "summarise_treatment_pathways" in types
 
     def test_has_duration_result_type_by_default(self):
         from omopy.treatment import mock_treatment_pathways
+
         result = mock_treatment_pathways()
         types = result.settings["result_type"].to_list()
         assert "summarise_event_duration" in types
 
     def test_no_duration_when_disabled(self):
         from omopy.treatment import mock_treatment_pathways
+
         result = mock_treatment_pathways(include_duration=False)
         types = result.settings["result_type"].to_list()
         assert "summarise_event_duration" not in types
 
     def test_deterministic(self):
         from omopy.treatment import mock_treatment_pathways
+
         r1 = mock_treatment_pathways(seed=42)
         r2 = mock_treatment_pathways(seed=42)
         assert r1.data.equals(r2.data)
 
     def test_different_seeds(self):
         from omopy.treatment import mock_treatment_pathways
+
         r1 = mock_treatment_pathways(seed=1)
         r2 = mock_treatment_pathways(seed=2)
         assert not r1.data.equals(r2.data)
 
     def test_custom_n_targets(self):
         from omopy.treatment import mock_treatment_pathways
+
         result = mock_treatment_pathways(n_targets=3)
         group_levels = result.data["group_level"].unique().to_list()
         target_names = [g for g in group_levels if g.startswith("target_")]
@@ -690,26 +962,23 @@ class TestMockTreatmentPathways:
 
     def test_has_pathway_rows(self):
         from omopy.treatment import mock_treatment_pathways
+
         result = mock_treatment_pathways()
-        pathway_rows = result.data.filter(
-            pl.col("variable_name") == "treatment_pathway"
-        )
+        pathway_rows = result.data.filter(pl.col("variable_name") == "treatment_pathway")
         assert pathway_rows.height > 0
 
     def test_has_count_rows(self):
         from omopy.treatment import mock_treatment_pathways
+
         result = mock_treatment_pathways()
-        count_rows = result.data.filter(
-            pl.col("variable_name") == "Number records"
-        )
+        count_rows = result.data.filter(pl.col("variable_name") == "Number records")
         assert count_rows.height > 0
 
     def test_has_percentage_rows(self):
         from omopy.treatment import mock_treatment_pathways
+
         result = mock_treatment_pathways()
-        pct_rows = result.data.filter(
-            pl.col("estimate_name") == "percentage"
-        )
+        pct_rows = result.data.filter(pl.col("estimate_name") == "percentage")
         assert pct_rows.height > 0
 
 
@@ -724,28 +993,34 @@ class TestSummariseTreatmentPathways:
     @pytest.fixture()
     def simple_pathway_result(self):
         """Minimal PathwayResult for testing summarise."""
-        history = pl.DataFrame({
-            "person_id": [1, 1, 2, 2, 3],
-            "index_year": [2020, 2020, 2020, 2020, 2021],
-            "event_cohort_id": ["1", "2", "1", "3", "1"],
-            "event_cohort_name": ["DrugA", "DrugB", "DrugA", "DrugC", "DrugA"],
-            "event_start_date": [
-                D(2020, 1, 1), D(2020, 2, 1),
-                D(2020, 1, 15), D(2020, 3, 1),
-                D(2021, 1, 1),
-            ],
-            "event_end_date": [
-                D(2020, 1, 31), D(2020, 2, 28),
-                D(2020, 2, 15), D(2020, 3, 31),
-                D(2021, 1, 31),
-            ],
-            "duration_era": [30, 27, 31, 30, 30],
-            "event_seq": [1, 2, 1, 2, 1],
-            "age": [50, 50, 60, 60, 70],
-            "sex": ["Male", "Male", "Female", "Female", "Male"],
-            "target_cohort_id": [100, 100, 100, 100, 100],
-            "target_cohort_name": ["Target", "Target", "Target", "Target", "Target"],
-        })
+        history = pl.DataFrame(
+            {
+                "person_id": [1, 1, 2, 2, 3],
+                "index_year": [2020, 2020, 2020, 2020, 2021],
+                "event_cohort_id": ["1", "2", "1", "3", "1"],
+                "event_cohort_name": ["DrugA", "DrugB", "DrugA", "DrugC", "DrugA"],
+                "event_start_date": [
+                    D(2020, 1, 1),
+                    D(2020, 2, 1),
+                    D(2020, 1, 15),
+                    D(2020, 3, 1),
+                    D(2021, 1, 1),
+                ],
+                "event_end_date": [
+                    D(2020, 1, 31),
+                    D(2020, 2, 28),
+                    D(2020, 2, 15),
+                    D(2020, 3, 31),
+                    D(2021, 1, 31),
+                ],
+                "duration_era": [30, 27, 31, 30, 30],
+                "event_seq": [1, 2, 1, 2, 1],
+                "age": [50, 50, 60, 60, 70],
+                "sex": ["Male", "Male", "Female", "Female", "Male"],
+                "target_cohort_id": [100, 100, 100, 100, 100],
+                "target_cohort_name": ["Target", "Target", "Target", "Target", "Target"],
+            }
+        )
         return PathwayResult(
             treatment_history=history,
             attrition=pl.DataFrame(),
@@ -761,32 +1036,36 @@ class TestSummariseTreatmentPathways:
 
     def test_returns_summarised_result(self, simple_pathway_result):
         from omopy.treatment import summarise_treatment_pathways
+
         result = summarise_treatment_pathways(simple_pathway_result, min_cell_count=0)
         assert isinstance(result, SummarisedResult)
 
     def test_has_standard_columns(self, simple_pathway_result):
         from omopy.treatment import summarise_treatment_pathways
+
         result = summarise_treatment_pathways(simple_pathway_result, min_cell_count=0)
         for col in SUMMARISED_RESULT_COLUMNS:
             assert col in result.data.columns
 
     def test_has_pathway_variable(self, simple_pathway_result):
         from omopy.treatment import summarise_treatment_pathways
+
         result = summarise_treatment_pathways(simple_pathway_result, min_cell_count=0)
         var_names = result.data["variable_name"].unique().to_list()
         assert "treatment_pathway" in var_names
 
     def test_has_count_estimates(self, simple_pathway_result):
         from omopy.treatment import summarise_treatment_pathways
+
         result = summarise_treatment_pathways(simple_pathway_result, min_cell_count=0)
         counts = result.data.filter(
-            (pl.col("variable_name") == "treatment_pathway")
-            & (pl.col("estimate_name") == "count")
+            (pl.col("variable_name") == "treatment_pathway") & (pl.col("estimate_name") == "count")
         )
         assert counts.height > 0
 
     def test_has_percentage_estimates(self, simple_pathway_result):
         from omopy.treatment import summarise_treatment_pathways
+
         result = summarise_treatment_pathways(simple_pathway_result, min_cell_count=0)
         pcts = result.data.filter(
             (pl.col("variable_name") == "treatment_pathway")
@@ -796,29 +1075,32 @@ class TestSummariseTreatmentPathways:
 
     def test_min_cell_count_filters(self, simple_pathway_result):
         from omopy.treatment import summarise_treatment_pathways
+
         # With min_cell_count=0, should have pathways
         result_all = summarise_treatment_pathways(simple_pathway_result, min_cell_count=0)
         # With high min_cell_count, should have fewer/no pathways
         result_filtered = summarise_treatment_pathways(simple_pathway_result, min_cell_count=100)
-        assert result_filtered.data.filter(
-            pl.col("variable_name") == "treatment_pathway"
-        ).height <= result_all.data.filter(
-            pl.col("variable_name") == "treatment_pathway"
-        ).height
+        assert (
+            result_filtered.data.filter(pl.col("variable_name") == "treatment_pathway").height
+            <= result_all.data.filter(pl.col("variable_name") == "treatment_pathway").height
+        )
 
     def test_settings_result_type(self, simple_pathway_result):
         from omopy.treatment import summarise_treatment_pathways
+
         result = summarise_treatment_pathways(simple_pathway_result, min_cell_count=0)
         assert result.settings["result_type"][0] == "summarise_treatment_pathways"
 
     def test_cdm_name_propagated(self, simple_pathway_result):
         from omopy.treatment import summarise_treatment_pathways
+
         result = summarise_treatment_pathways(simple_pathway_result, min_cell_count=0)
         cdm_names = result.data["cdm_name"].unique().to_list()
         assert "test_cdm" in cdm_names
 
     def test_empty_history(self):
         from omopy.treatment import summarise_treatment_pathways
+
         pr = PathwayResult(
             treatment_history=pl.DataFrame(
                 schema={
@@ -856,29 +1138,35 @@ class TestSummariseEventDuration:
     @pytest.fixture()
     def duration_pathway_result(self):
         """PathwayResult with known durations."""
-        history = pl.DataFrame({
-            "person_id": [1, 1, 2, 2, 3],
-            "index_year": [2020, 2020, 2020, 2020, 2021],
-            "event_cohort_id": ["1", "2", "1", "2", "1"],
-            "event_cohort_name": ["DrugA", "DrugB", "DrugA", "DrugB", "DrugA"],
-            "event_start_date": [
-                D(2020, 1, 1), D(2020, 2, 1),
-                D(2020, 1, 15), D(2020, 3, 1),
-                D(2021, 1, 1),
-            ],
-            "event_end_date": [
-                D(2020, 1, 31), D(2020, 2, 28),
-                D(2020, 2, 15), D(2020, 3, 31),
-                D(2021, 1, 31),
-            ],
-            "duration_era": [30, 27, 31, 30, 30],
-            "event_seq": [1, 2, 1, 2, 1],
-            "age": [50, 50, 60, 60, 70],
-            "sex": ["Male", "Male", "Female", "Female", "Male"],
-            "target_cohort_id": [100, 100, 100, 100, 100],
-            "target_cohort_name": ["Target", "Target", "Target", "Target", "Target"],
-            "type": ["event"] * 5,
-        })
+        history = pl.DataFrame(
+            {
+                "person_id": [1, 1, 2, 2, 3],
+                "index_year": [2020, 2020, 2020, 2020, 2021],
+                "event_cohort_id": ["1", "2", "1", "2", "1"],
+                "event_cohort_name": ["DrugA", "DrugB", "DrugA", "DrugB", "DrugA"],
+                "event_start_date": [
+                    D(2020, 1, 1),
+                    D(2020, 2, 1),
+                    D(2020, 1, 15),
+                    D(2020, 3, 1),
+                    D(2021, 1, 1),
+                ],
+                "event_end_date": [
+                    D(2020, 1, 31),
+                    D(2020, 2, 28),
+                    D(2020, 2, 15),
+                    D(2020, 3, 31),
+                    D(2021, 1, 31),
+                ],
+                "duration_era": [30, 27, 31, 30, 30],
+                "event_seq": [1, 2, 1, 2, 1],
+                "age": [50, 50, 60, 60, 70],
+                "sex": ["Male", "Male", "Female", "Female", "Male"],
+                "target_cohort_id": [100, 100, 100, 100, 100],
+                "target_cohort_name": ["Target", "Target", "Target", "Target", "Target"],
+                "type": ["event"] * 5,
+            }
+        )
         return PathwayResult(
             treatment_history=history,
             attrition=pl.DataFrame(),
@@ -893,17 +1181,20 @@ class TestSummariseEventDuration:
 
     def test_returns_summarised_result(self, duration_pathway_result):
         from omopy.treatment import summarise_event_duration
+
         result = summarise_event_duration(duration_pathway_result)
         assert isinstance(result, SummarisedResult)
 
     def test_has_standard_columns(self, duration_pathway_result):
         from omopy.treatment import summarise_event_duration
+
         result = summarise_event_duration(duration_pathway_result)
         for col in SUMMARISED_RESULT_COLUMNS:
             assert col in result.data.columns
 
     def test_has_duration_stats(self, duration_pathway_result):
         from omopy.treatment import summarise_event_duration
+
         result = summarise_event_duration(duration_pathway_result)
         est_names = set(result.data["estimate_name"].unique().to_list())
         for expected in ("min", "q25", "median", "q75", "max", "mean"):
@@ -911,18 +1202,21 @@ class TestSummariseEventDuration:
 
     def test_has_line_additional(self, duration_pathway_result):
         from omopy.treatment import summarise_event_duration
+
         result = summarise_event_duration(duration_pathway_result)
         addl_names = result.data["additional_name"].unique().to_list()
         assert "line" in addl_names
 
     def test_has_overall_line(self, duration_pathway_result):
         from omopy.treatment import summarise_event_duration
+
         result = summarise_event_duration(duration_pathway_result)
         lines = result.data["additional_level"].unique().to_list()
         assert "overall" in lines
 
     def test_has_per_line_stats(self, duration_pathway_result):
         from omopy.treatment import summarise_event_duration
+
         result = summarise_event_duration(duration_pathway_result)
         lines = result.data["additional_level"].unique().to_list()
         # Should have line "1" and "2"
@@ -931,11 +1225,13 @@ class TestSummariseEventDuration:
 
     def test_settings_result_type(self, duration_pathway_result):
         from omopy.treatment import summarise_event_duration
+
         result = summarise_event_duration(duration_pathway_result)
         assert result.settings["result_type"][0] == "summarise_event_duration"
 
     def test_empty_history(self):
         from omopy.treatment import summarise_event_duration
+
         pr = PathwayResult(
             treatment_history=pl.DataFrame(
                 schema={
@@ -974,21 +1270,25 @@ class TestTableFunctions:
     @pytest.fixture()
     def mock_result(self):
         from omopy.treatment import mock_treatment_pathways
+
         return mock_treatment_pathways(seed=42)
 
     def test_table_treatment_pathways_returns_data(self, mock_result):
         from omopy.treatment import table_treatment_pathways
+
         result = table_treatment_pathways(mock_result, type="polars")
         assert isinstance(result, pl.DataFrame)
         assert result.height > 0
 
     def test_table_event_duration_returns_data(self, mock_result):
         from omopy.treatment import table_event_duration
+
         result = table_event_duration(mock_result, type="polars")
         assert isinstance(result, pl.DataFrame)
 
     def test_table_treatment_pathways_custom_header(self, mock_result):
         from omopy.treatment import table_treatment_pathways
+
         result = table_treatment_pathways(
             mock_result,
             type="polars",
@@ -998,6 +1298,7 @@ class TestTableFunctions:
 
     def test_table_event_duration_custom_group(self, mock_result):
         from omopy.treatment import table_event_duration
+
         result = table_event_duration(
             mock_result,
             type="polars",
@@ -1017,53 +1318,64 @@ class TestPlotSankey:
     @pytest.fixture()
     def mock_result(self):
         from omopy.treatment import mock_treatment_pathways
+
         return mock_treatment_pathways(seed=42)
 
     def test_returns_figure(self, mock_result):
         from omopy.treatment import plot_sankey
+
         fig = plot_sankey(mock_result)
         assert fig is not None
 
     def test_has_data(self, mock_result):
         from omopy.treatment import plot_sankey
+
         fig = plot_sankey(mock_result)
         assert len(fig.data) > 0
 
     def test_custom_title(self, mock_result):
         from omopy.treatment import plot_sankey
+
         fig = plot_sankey(mock_result, title="My Title")
         assert fig.layout.title.text == "My Title"
 
     def test_max_paths(self, mock_result):
         from omopy.treatment import plot_sankey
+
         fig = plot_sankey(mock_result, max_paths=3)
         assert fig is not None
 
     def test_group_combinations(self, mock_result):
         from omopy.treatment import plot_sankey
+
         fig = plot_sankey(mock_result, group_combinations=True)
         assert fig is not None
 
     def test_custom_colors_dict(self, mock_result):
         from omopy.treatment import plot_sankey
+
         fig = plot_sankey(mock_result, colors={"Aspirin": "#ff0000"})
         assert fig is not None
 
     def test_custom_colors_list(self, mock_result):
         from omopy.treatment import plot_sankey
+
         fig = plot_sankey(mock_result, colors=["#ff0000", "#00ff00"])
         assert fig is not None
 
     def test_empty_result(self):
         from omopy.treatment import plot_sankey
+
         empty = SummarisedResult(
             pl.DataFrame(schema={col: pl.Utf8 for col in SUMMARISED_RESULT_COLUMNS}),
-            settings=pl.DataFrame({
-                "result_id": [1],
-                "result_type": ["summarise_treatment_pathways"],
-                "package_name": ["omopy.treatment"],
-                "package_version": ["0.1.0"],
-            }),
+            settings=pl.DataFrame(
+                {
+                    "result_id": [1],
+                    "result_type": ["summarise_treatment_pathways"],
+                    "package_name": ["omopy.treatment"],
+                    "package_version": ["0.1.0"],
+                }
+            ),
         )
         fig = plot_sankey(empty)
         assert fig is not None  # Should return empty figure
@@ -1075,30 +1387,36 @@ class TestPlotSunburst:
     @pytest.fixture()
     def mock_result(self):
         from omopy.treatment import mock_treatment_pathways
+
         return mock_treatment_pathways(seed=42)
 
     def test_returns_figure(self, mock_result):
         from omopy.treatment import plot_sunburst
+
         fig = plot_sunburst(mock_result)
         assert fig is not None
 
     def test_has_data(self, mock_result):
         from omopy.treatment import plot_sunburst
+
         fig = plot_sunburst(mock_result)
         assert len(fig.data) > 0
 
     def test_custom_title(self, mock_result):
         from omopy.treatment import plot_sunburst
+
         fig = plot_sunburst(mock_result, title="Sunburst Test")
         assert fig.layout.title.text == "Sunburst Test"
 
     def test_unit_count(self, mock_result):
         from omopy.treatment import plot_sunburst
+
         fig = plot_sunburst(mock_result, unit="count")
         assert fig is not None
 
     def test_group_combinations(self, mock_result):
         from omopy.treatment import plot_sunburst
+
         fig = plot_sunburst(mock_result, group_combinations=True)
         assert fig is not None
 
@@ -1109,45 +1427,54 @@ class TestPlotEventDuration:
     @pytest.fixture()
     def mock_result(self):
         from omopy.treatment import mock_treatment_pathways
+
         return mock_treatment_pathways(seed=42, include_duration=True)
 
     def test_returns_figure(self, mock_result):
         from omopy.treatment import plot_event_duration
+
         fig = plot_event_duration(mock_result)
         assert fig is not None
 
     def test_has_traces(self, mock_result):
         from omopy.treatment import plot_event_duration
+
         fig = plot_event_duration(mock_result)
         assert len(fig.data) > 0
 
     def test_custom_title(self, mock_result):
         from omopy.treatment import plot_event_duration
+
         fig = plot_event_duration(mock_result, title="Duration Test")
         assert fig.layout.title.text == "Duration Test"
 
     def test_treatment_groups_group(self, mock_result):
         from omopy.treatment import plot_event_duration
+
         fig = plot_event_duration(mock_result, treatment_groups="group")
         assert fig is not None
 
     def test_treatment_groups_individual(self, mock_result):
         from omopy.treatment import plot_event_duration
+
         fig = plot_event_duration(mock_result, treatment_groups="individual")
         assert fig is not None
 
     def test_exclude_overall(self, mock_result):
         from omopy.treatment import plot_event_duration
+
         fig = plot_event_duration(mock_result, include_overall=False)
         assert fig is not None
 
     def test_specific_event_lines(self, mock_result):
         from omopy.treatment import plot_event_duration
+
         fig = plot_event_duration(mock_result, event_lines=[1, 2])
         assert fig is not None
 
     def test_no_duration_data(self):
         from omopy.treatment import mock_treatment_pathways, plot_event_duration
+
         result = mock_treatment_pathways(include_duration=False)
         fig = plot_event_duration(result)
         assert fig is not None  # Should return empty figure
@@ -1163,18 +1490,34 @@ class TestEdgeCases:
 
     def test_era_collapse_adjacent_eras(self):
         """Adjacent eras (end == start of next) should merge with collapse_size=0."""
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 31), "event_end_date": D(2020, 2, 28)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 31),
+                    "event_end_date": D(2020, 2, 28),
+                },
+            ]
+        )
         result = _era_collapse(df, era_collapse_size=0)
         events = result.filter(pl.col("type") == "event")
         assert events.height == 1
 
     def test_filter_treatments_single_event(self):
-        df = _make_events([
-            {"event_cohort_id": "1", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "1",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+            ]
+        )
         for strategy in ("all", "first", "changes"):
             result = _filter_treatments(df, strategy)
             events = result.filter(pl.col("type") == "event")
@@ -1187,14 +1530,21 @@ class TestEdgeCases:
 
     def test_finalize_unknown_cohort_name(self):
         """Cohort ID with no name mapping should use the raw ID."""
-        df = _make_events([
-            {"event_cohort_id": "999", "event_start_date": D(2020, 1, 1), "event_end_date": D(2020, 1, 31)},
-        ])
+        df = _make_events(
+            [
+                {
+                    "event_cohort_id": "999",
+                    "event_start_date": D(2020, 1, 1),
+                    "event_end_date": D(2020, 1, 31),
+                },
+            ]
+        )
         result = _finalize_pathways(df, max_path_length=5, cohort_names={})
         assert result["event_cohort_name"][0] == "999"
 
     def test_summarise_empty_pathway_result(self):
         from omopy.treatment import summarise_treatment_pathways
+
         pr = PathwayResult(
             treatment_history=pl.DataFrame(
                 schema={

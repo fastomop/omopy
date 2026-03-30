@@ -25,9 +25,9 @@ def _filter_result_type(
     result_type: str,
 ) -> SummarisedResult:
     """Filter a SummarisedResult to a specific result_type."""
-    matching_ids = result.settings.filter(
-        pl.col("result_type") == result_type
-    )["result_id"].to_list()
+    matching_ids = result.settings.filter(pl.col("result_type") == result_type)[
+        "result_id"
+    ].to_list()
 
     if not matching_ids:
         return result

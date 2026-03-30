@@ -103,8 +103,7 @@ def _to_tidy(
 
     # Pivot estimate columns to wide
     index_cols = [
-        c for c in data.columns
-        if c not in ("estimate_name", "estimate_type", "estimate_value")
+        c for c in data.columns if c not in ("estimate_name", "estimate_type", "estimate_value")
     ]
 
     wide = data.pivot(
@@ -115,9 +114,12 @@ def _to_tidy(
 
     # Drop the raw name/level columns that were split
     drop_cols = [
-        "group_name", "group_level",
-        "strata_name", "strata_level",
-        "additional_name", "additional_level",
+        "group_name",
+        "group_level",
+        "strata_name",
+        "strata_level",
+        "additional_name",
+        "additional_level",
     ]
     wide = wide.drop([c for c in drop_cols if c in wide.columns])
 
@@ -126,9 +128,13 @@ def _to_tidy(
         if col in ("n_persons", "n_events", "n_cases", "person_days"):
             wide = wide.with_columns(pl.col(col).cast(pl.Int64, strict=False))
         elif col in (
-            "person_years", "incidence_100000_pys",
-            "incidence_100000_pys_95ci_lower", "incidence_100000_pys_95ci_upper",
-            "prevalence", "prevalence_95ci_lower", "prevalence_95ci_upper",
+            "person_years",
+            "incidence_100000_pys",
+            "incidence_100000_pys_95ci_lower",
+            "incidence_100000_pys_95ci_upper",
+            "prevalence",
+            "prevalence_95ci_lower",
+            "prevalence_95ci_upper",
         ):
             wide = wide.with_columns(pl.col(col).cast(pl.Float64, strict=False))
 
@@ -139,9 +145,7 @@ def _to_tidy(
     return wide
 
 
-def _split_name_level(
-    df: pl.DataFrame, name_col: str, level_col: str
-) -> pl.DataFrame:
+def _split_name_level(df: pl.DataFrame, name_col: str, level_col: str) -> pl.DataFrame:
     """Split a compound name/level column pair into individual columns.
 
     E.g., ``group_name = "a &&& b"``, ``group_level = "x &&& y"``
@@ -163,9 +167,7 @@ def _split_name_level(
                 # Extract the i-th component from level_col
                 df = df.with_columns(
                     pl.when(pl.col(name_col) == pattern)
-                    .then(
-                        pl.col(level_col).str.split(NAME_LEVEL_SEP).list.get(i)
-                    )
+                    .then(pl.col(level_col).str.split(NAME_LEVEL_SEP).list.get(i))
                     .otherwise(pl.lit(None))
                     .alias(n)
                 )

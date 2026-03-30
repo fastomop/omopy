@@ -161,10 +161,7 @@ class CdmReference:
     @property
     def cohort_tables(self) -> dict[str, CohortTable]:
         """All tables that are CohortTable instances."""
-        return {
-            name: tbl for name, tbl in self._tables.items()
-            if isinstance(tbl, CohortTable)
-        }
+        return {name: tbl for name, tbl in self._tables.items() if isinstance(tbl, CohortTable)}
 
     # -- Snapshot / summary -------------------------------------------------
 

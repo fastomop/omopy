@@ -118,9 +118,7 @@ def generate_cohort_set(
         )
 
         all_rows.append(rows)
-        all_settings.append(
-            {"cohort_definition_id": cohort_id, "cohort_name": cohort_name}
-        )
+        all_settings.append({"cohort_definition_id": cohort_id, "cohort_name": cohort_name})
         all_attrition.append(attrition)
 
     # Combine results
@@ -136,9 +134,7 @@ def generate_cohort_set(
             }
         )
 
-    settings_df = pl.DataFrame(all_settings).cast(
-        {"cohort_definition_id": pl.Int64}
-    )
+    settings_df = pl.DataFrame(all_settings).cast({"cohort_definition_id": pl.Int64})
 
     attrition_df = pl.concat(all_attrition, how="vertical_relaxed")
 
@@ -206,9 +202,7 @@ def _generate_single_cohort(
     # -----------------------------------------------------------------------
     # Step 1: Resolve concept sets
     # -----------------------------------------------------------------------
-    codeset_tables = resolve_concept_sets(
-        expression.concept_sets, con, catalog, cdm_schema
-    )
+    codeset_tables = resolve_concept_sets(expression.concept_sets, con, catalog, cdm_schema)
 
     # -----------------------------------------------------------------------
     # Step 2: Build primary events (UNION of all domain criteria)
@@ -217,9 +211,7 @@ def _generate_single_cohort(
     event_parts: list[ir.Table] = []
 
     for dc in primary.criteria_list:
-        part = build_domain_query(
-            dc, con, catalog, cdm_schema, codeset_tables
-        )
+        part = build_domain_query(dc, con, catalog, cdm_schema, codeset_tables)
         event_parts.append(part)
 
     if not event_parts:
@@ -232,11 +224,7 @@ def _generate_single_cohort(
         events = events.union(p)
 
     # Assign sequential event_id via row_number (needed after union)
-    events = events.mutate(
-        event_id=ibis.row_number().over(
-            ibis.window(order_by="sort_date")
-        )
-    )
+    events = events.mutate(event_id=ibis.row_number().over(ibis.window(order_by="sort_date")))
 
     count = _record_attrition("Initial events", events, 0)
     if count == 0:
@@ -394,7 +382,9 @@ def _generate_single_cohort(
     # Fix the last step — use actual row count
     if attrition_steps:
         attrition_steps[-1]["number_records"] = len(cohort_df)
-        attrition_steps[-1]["number_subjects"] = cohort_df["subject_id"].n_unique() if len(cohort_df) > 0 else 0
+        attrition_steps[-1]["number_subjects"] = (
+            cohort_df["subject_id"].n_unique() if len(cohort_df) > 0 else 0
+        )
         attrition_steps[-1]["excluded_records"] = count - len(cohort_df)
         attrition_steps[-1]["excluded_subjects"] = count - len(cohort_df)
 
@@ -508,9 +498,7 @@ def _normalise_cohort_set(
 
     # List of dicts
     if isinstance(cohort_set, list):
-        return [
-            _normalise_single_defn(d, idx=i + 1) for i, d in enumerate(cohort_set)
-        ]
+        return [_normalise_single_defn(d, idx=i + 1) for i, d in enumerate(cohort_set)]
 
     msg = f"Unsupported cohort_set type: {type(cohort_set)}"
     raise TypeError(msg)
@@ -581,9 +569,7 @@ def _build_codelist(
             }
         )
 
-    return pl.DataFrame(rows).cast(
-        {"cohort_definition_id": pl.Int64, "concept_id": pl.Int64}
-    )
+    return pl.DataFrame(rows).cast({"cohort_definition_id": pl.Int64, "concept_id": pl.Int64})
 
 
 # ---------------------------------------------------------------------------

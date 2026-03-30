@@ -18,41 +18,84 @@ from omopy.generics.summarised_result import (
 
 def _sample_result_data(n: int = 10) -> pl.DataFrame:
     """Create a minimal valid SummarisedResult DataFrame."""
-    return pl.DataFrame({
-        "result_id": [1] * n,
-        "cdm_name": ["test_cdm"] * n,
-        "group_name": [OVERALL] * n,
-        "group_level": [OVERALL] * n,
-        "strata_name": [OVERALL] * n,
-        "strata_level": [OVERALL] * n,
-        "variable_name": ["number subjects"] * (n // 2) + ["age"] * (n - n // 2),
-        "variable_level": [None] * n,
-        "estimate_name": ["count"] * (n // 2) + ["mean"] * (n - n // 2),
-        "estimate_type": ["integer"] * (n // 2) + ["numeric"] * (n - n // 2),
-        "estimate_value": [str(i * 10) for i in range(n)],
-        "additional_name": [OVERALL] * n,
-        "additional_level": [OVERALL] * n,
-    })
+    return pl.DataFrame(
+        {
+            "result_id": [1] * n,
+            "cdm_name": ["test_cdm"] * n,
+            "group_name": [OVERALL] * n,
+            "group_level": [OVERALL] * n,
+            "strata_name": [OVERALL] * n,
+            "strata_level": [OVERALL] * n,
+            "variable_name": ["number subjects"] * (n // 2) + ["age"] * (n - n // 2),
+            "variable_level": [None] * n,
+            "estimate_name": ["count"] * (n // 2) + ["mean"] * (n - n // 2),
+            "estimate_type": ["integer"] * (n // 2) + ["numeric"] * (n - n // 2),
+            "estimate_value": [str(i * 10) for i in range(n)],
+            "additional_name": [OVERALL] * n,
+            "additional_level": [OVERALL] * n,
+        }
+    )
 
 
 def _sample_settings() -> pl.DataFrame:
-    return pl.DataFrame({
-        "result_id": [1],
-        "result_type": ["test_analysis"],
-        "package_name": ["omopy"],
-        "package_version": ["0.1.0"],
-    })
+    return pl.DataFrame(
+        {
+            "result_id": [1],
+            "result_type": ["test_analysis"],
+            "package_name": ["omopy"],
+            "package_version": ["0.1.0"],
+        }
+    )
 
 
 def _multi_group_data() -> pl.DataFrame:
     """Create data with non-trivial group_name/group_level pairs."""
     rows = [
-        (1, "test", "age &&& sex", "50 &&& female", OVERALL, OVERALL,
-         "number subjects", None, "count", "integer", "100", OVERALL, OVERALL),
-        (1, "test", "age &&& sex", "60 &&& male", OVERALL, OVERALL,
-         "number subjects", None, "count", "integer", "200", OVERALL, OVERALL),
-        (1, "test", OVERALL, OVERALL, OVERALL, OVERALL,
-         "number subjects", None, "count", "integer", "300", OVERALL, OVERALL),
+        (
+            1,
+            "test",
+            "age &&& sex",
+            "50 &&& female",
+            OVERALL,
+            OVERALL,
+            "number subjects",
+            None,
+            "count",
+            "integer",
+            "100",
+            OVERALL,
+            OVERALL,
+        ),
+        (
+            1,
+            "test",
+            "age &&& sex",
+            "60 &&& male",
+            OVERALL,
+            OVERALL,
+            "number subjects",
+            None,
+            "count",
+            "integer",
+            "200",
+            OVERALL,
+            OVERALL,
+        ),
+        (
+            1,
+            "test",
+            OVERALL,
+            OVERALL,
+            OVERALL,
+            OVERALL,
+            "number subjects",
+            None,
+            "count",
+            "integer",
+            "300",
+            OVERALL,
+            OVERALL,
+        ),
     ]
     return pl.DataFrame(
         rows,
@@ -185,8 +228,14 @@ class TestSplitNameLevel:
     def test_split_all(self):
         sr = SummarisedResult(_sample_result_data(), settings=_sample_settings())
         df = sr.split_all()
-        for col in ("group_name", "group_level", "strata_name",
-                     "strata_level", "additional_name", "additional_level"):
+        for col in (
+            "group_name",
+            "group_level",
+            "strata_name",
+            "strata_level",
+            "additional_name",
+            "additional_level",
+        ):
             assert col not in df.columns
 
 
@@ -240,12 +289,14 @@ class TestAddSettings:
 
 class TestFiltering:
     def test_filter_settings(self):
-        settings = pl.DataFrame({
-            "result_id": [1, 2],
-            "result_type": ["analysis_a", "analysis_b"],
-            "package_name": ["omopy", "omopy"],
-            "package_version": ["0.1.0", "0.1.0"],
-        })
+        settings = pl.DataFrame(
+            {
+                "result_id": [1, 2],
+                "result_type": ["analysis_a", "analysis_b"],
+                "package_name": ["omopy", "omopy"],
+                "package_version": ["0.1.0", "0.1.0"],
+            }
+        )
         data = _sample_result_data()
         # Add some result_id=2 rows, ensuring matching schema
         extra = _sample_result_data(5).with_columns(
@@ -258,12 +309,14 @@ class TestFiltering:
         assert all(filtered.data["result_id"] == 1)
 
     def test_filter_settings_list(self):
-        settings = pl.DataFrame({
-            "result_id": [1, 2],
-            "result_type": ["a", "b"],
-            "package_name": ["omopy", "omopy"],
-            "package_version": ["0.1.0", "0.1.0"],
-        })
+        settings = pl.DataFrame(
+            {
+                "result_id": [1, 2],
+                "result_type": ["a", "b"],
+                "package_name": ["omopy", "omopy"],
+                "package_version": ["0.1.0", "0.1.0"],
+            }
+        )
         data = _sample_result_data()
         extra = _sample_result_data(5).with_columns(
             pl.lit(2).cast(pl.Int64).alias("result_id"),

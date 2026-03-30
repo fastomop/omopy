@@ -50,7 +50,7 @@ HIP_CONCEPTS: dict[int, dict] = {
     4092289: {"name": "Delivery of live newborn", "category": "LB", "gest_value": 40},
     4128331: {"name": "Normal delivery", "category": "LB", "gest_value": 40},
     4324765: {"name": "Delivery by cesarean section", "category": "LB", "gest_value": 38},
-    440059:  {"name": "Cesarean section", "category": "LB", "gest_value": 38},
+    440059: {"name": "Cesarean section", "category": "LB", "gest_value": 38},
     4032243: {"name": "Outcome of delivery - live birth", "category": "LB", "gest_value": 40},
     4195928: {"name": "Born alive", "category": "LB", "gest_value": 40},
     4129922: {"name": "Twin live born", "category": "LB", "gest_value": 37},
@@ -58,7 +58,7 @@ HIP_CONCEPTS: dict[int, dict] = {
     # ---- Stillbirth (SB) ----
     4014296: {"name": "Stillbirth", "category": "SB", "gest_value": 28},
     4092290: {"name": "Delivery of stillborn", "category": "SB", "gest_value": 28},
-    439389:  {"name": "Fetal death", "category": "SB", "gest_value": 28},
+    439389: {"name": "Fetal death", "category": "SB", "gest_value": 28},
     4136750: {"name": "Intrauterine death", "category": "SB", "gest_value": 28},
     4067106: {"name": "Late fetal death", "category": "SB", "gest_value": 28},
     # ---- Abortion (AB) ----
@@ -80,7 +80,7 @@ HIP_CONCEPTS: dict[int, dict] = {
     4142115: {"name": "Vaginal delivery", "category": "DELIV", "gest_value": 39},
     4241044: {"name": "Induction of labor", "category": "DELIV", "gest_value": 39},
     # ---- Ectopic pregnancy (ECT) ----
-    443213:  {"name": "Ectopic pregnancy", "category": "ECT", "gest_value": None},
+    443213: {"name": "Ectopic pregnancy", "category": "ECT", "gest_value": None},
     4060360: {"name": "Tubal pregnancy", "category": "ECT", "gest_value": None},
     4170147: {"name": "Cornual ectopic pregnancy", "category": "ECT", "gest_value": None},
     4148218: {"name": "Abdominal ectopic pregnancy", "category": "ECT", "gest_value": None},
@@ -214,7 +214,7 @@ ESD_CONCEPT_IDS: frozenset[int] = frozenset(ESD_CONCEPTS.keys())
 
 # GR3m month ranges (trimester -> month range)
 GR3M_MONTH_RANGES: dict[int, tuple[int, int]] = {
-    4299535: (1, 3),   # First trimester
-    4128160: (4, 6),   # Second trimester
-    4219502: (7, 9),   # Third trimester
+    4299535: (1, 3),  # First trimester
+    4128160: (4, 6),  # Second trimester
+    4219502: (7, 9),  # Third trimester
 }

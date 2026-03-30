@@ -92,29 +92,35 @@ def _make_cohort_json(
 ) -> str:
     """Build a minimal CIRCE JSON string for testing."""
     d: dict = {
-        "ConceptSets": [{
-            "id": 0,
-            "name": concept_name,
-            "expression": {
-                "items": [{
-                    "concept": {
-                        "CONCEPT_ID": concept_id,
-                        "CONCEPT_NAME": concept_name,
-                        "CONCEPT_CODE": "",
-                        "DOMAIN_ID": "Condition",
-                        "VOCABULARY_ID": "SNOMED",
-                        "STANDARD_CONCEPT": "S",
-                        "INVALID_REASON": "",
-                        "CONCEPT_CLASS_ID": "Disorder",
-                    },
-                    "includeDescendants": include_descendants,
-                }],
-            },
-        }],
+        "ConceptSets": [
+            {
+                "id": 0,
+                "name": concept_name,
+                "expression": {
+                    "items": [
+                        {
+                            "concept": {
+                                "CONCEPT_ID": concept_id,
+                                "CONCEPT_NAME": concept_name,
+                                "CONCEPT_CODE": "",
+                                "DOMAIN_ID": "Condition",
+                                "VOCABULARY_ID": "SNOMED",
+                                "STANDARD_CONCEPT": "S",
+                                "INVALID_REASON": "",
+                                "CONCEPT_CLASS_ID": "Disorder",
+                            },
+                            "includeDescendants": include_descendants,
+                        }
+                    ],
+                },
+            }
+        ],
         "PrimaryCriteria": {
-            "CriteriaList": [{
-                "ConditionOccurrence": {"CodesetId": 0},
-            }],
+            "CriteriaList": [
+                {
+                    "ConditionOccurrence": {"CodesetId": 0},
+                }
+            ],
             "ObservationWindow": {"PriorDays": 0, "PostDays": 0},
             "PrimaryCriteriaLimit": {"Type": primary_limit},
         },
@@ -171,9 +177,7 @@ class TestConceptResolver:
                 ),
             ),
         )
-        result = resolve_concept_sets(
-            (cs_no_desc, cs_desc), synthea_con, "synthea", "base"
-        )
+        result = resolve_concept_sets((cs_no_desc, cs_desc), synthea_con, "synthea", "base")
         no_desc_count = result[0].count().execute()
         desc_count = result[1].count().execute()
         assert desc_count >= no_desc_count
@@ -199,13 +203,9 @@ class TestDomainQueries:
     def test_condition_occurrence_query(self, synthea_con):
         """Build a ConditionOccurrence query for viral sinusitis."""
         cs = _make_concept_set(VIRAL_SINUSITIS_ID, "Viral sinusitis")
-        codeset_tables = resolve_concept_sets(
-            (cs,), synthea_con, "synthea", "base"
-        )
+        codeset_tables = resolve_concept_sets((cs,), synthea_con, "synthea", "base")
         dc = DomainCriteria(domain_type="ConditionOccurrence", codeset_id=0)
-        events = build_domain_query(
-            dc, synthea_con, "synthea", "base", codeset_tables
-        )
+        events = build_domain_query(dc, synthea_con, "synthea", "base", codeset_tables)
 
         result = events.execute()
         assert "person_id" in result.columns
@@ -219,13 +219,9 @@ class TestDomainQueries:
     def test_condition_occurrence_count(self, synthea_con):
         """Viral sinusitis should have 4 occurrences in the Synthea DB."""
         cs = _make_concept_set(VIRAL_SINUSITIS_ID, "Viral sinusitis")
-        codeset_tables = resolve_concept_sets(
-            (cs,), synthea_con, "synthea", "base"
-        )
+        codeset_tables = resolve_concept_sets((cs,), synthea_con, "synthea", "base")
         dc = DomainCriteria(domain_type="ConditionOccurrence", codeset_id=0)
-        events = build_domain_query(
-            dc, synthea_con, "synthea", "base", codeset_tables
-        )
+        events = build_domain_query(dc, synthea_con, "synthea", "base", codeset_tables)
         count = events.count().execute()
         assert count == 4
 
@@ -241,17 +237,11 @@ class TestObservationWindowAndLimit:
     def test_observation_window_basic(self, synthea_con):
         """Events within observation periods pass through."""
         cs = _make_concept_set(VIRAL_SINUSITIS_ID, "Viral sinusitis")
-        codeset_tables = resolve_concept_sets(
-            (cs,), synthea_con, "synthea", "base"
-        )
+        codeset_tables = resolve_concept_sets((cs,), synthea_con, "synthea", "base")
         dc = DomainCriteria(domain_type="ConditionOccurrence", codeset_id=0)
-        events = build_domain_query(
-            dc, synthea_con, "synthea", "base", codeset_tables
-        )
+        events = build_domain_query(dc, synthea_con, "synthea", "base", codeset_tables)
 
-        obs_period = synthea_con.table(
-            "observation_period", database=("synthea", "base")
-        )
+        obs_period = synthea_con.table("observation_period", database=("synthea", "base"))
 
         filtered = apply_observation_window(events, obs_period)
         result = filtered.execute()
@@ -263,17 +253,11 @@ class TestObservationWindowAndLimit:
     def test_first_limit_one_per_person(self, synthea_con):
         """First limit keeps one event per person."""
         cs = _make_concept_set(ESSENTIAL_HYPERTENSION_ID, "Essential hypertension")
-        codeset_tables = resolve_concept_sets(
-            (cs,), synthea_con, "synthea", "base"
-        )
+        codeset_tables = resolve_concept_sets((cs,), synthea_con, "synthea", "base")
         dc = DomainCriteria(domain_type="ConditionOccurrence", codeset_id=0)
-        events = build_domain_query(
-            dc, synthea_con, "synthea", "base", codeset_tables
-        )
+        events = build_domain_query(dc, synthea_con, "synthea", "base", codeset_tables)
 
-        obs_period = synthea_con.table(
-            "observation_period", database=("synthea", "base")
-        )
+        obs_period = synthea_con.table("observation_period", database=("synthea", "base"))
         events = apply_observation_window(events, obs_period)
 
         limit = CriteriaLimit(type="First")
@@ -298,11 +282,13 @@ class TestEraCollapse:
         """Non-overlapping periods stay separate."""
         import pyarrow as pa
 
-        data = pa.table({
-            "person_id": pa.array([1, 1, 2], type=pa.int64()),
-            "start_date": pa.array(["2020-01-01", "2020-06-01", "2020-01-01"]),
-            "end_date": pa.array(["2020-01-31", "2020-06-30", "2020-12-31"]),
-        })
+        data = pa.table(
+            {
+                "person_id": pa.array([1, 1, 2], type=pa.int64()),
+                "start_date": pa.array(["2020-01-01", "2020-06-01", "2020-01-01"]),
+                "end_date": pa.array(["2020-01-31", "2020-06-30", "2020-12-31"]),
+            }
+        )
         synthea_con.con.register("__test_era_no_overlap", data)
         tbl = synthea_con.table("__test_era_no_overlap")
         tbl = tbl.cast({"start_date": "date", "end_date": "date"})
@@ -314,11 +300,13 @@ class TestEraCollapse:
         """Overlapping periods for same person get merged."""
         import pyarrow as pa
 
-        data = pa.table({
-            "person_id": pa.array([1, 1, 1], type=pa.int64()),
-            "start_date": pa.array(["2020-01-01", "2020-01-15", "2020-02-01"]),
-            "end_date": pa.array(["2020-01-31", "2020-02-15", "2020-03-01"]),
-        })
+        data = pa.table(
+            {
+                "person_id": pa.array([1, 1, 1], type=pa.int64()),
+                "start_date": pa.array(["2020-01-01", "2020-01-15", "2020-02-01"]),
+                "end_date": pa.array(["2020-01-31", "2020-02-15", "2020-03-01"]),
+            }
+        )
         synthea_con.con.register("__test_era_overlap", data)
         tbl = synthea_con.table("__test_era_overlap")
         tbl = tbl.cast({"start_date": "date", "end_date": "date"})
@@ -333,11 +321,13 @@ class TestEraCollapse:
         """Era pad bridges small gaps between periods."""
         import pyarrow as pa
 
-        data = pa.table({
-            "person_id": pa.array([1, 1], type=pa.int64()),
-            "start_date": pa.array(["2020-01-01", "2020-02-05"]),
-            "end_date": pa.array(["2020-01-31", "2020-03-01"]),
-        })
+        data = pa.table(
+            {
+                "person_id": pa.array([1, 1], type=pa.int64()),
+                "start_date": pa.array(["2020-01-01", "2020-02-05"]),
+                "end_date": pa.array(["2020-01-31", "2020-03-01"]),
+            }
+        )
         synthea_con.con.register("__test_era_pad", data)
         tbl = synthea_con.table("__test_era_pad")
         tbl = tbl.cast({"start_date": "date", "end_date": "date"})
@@ -367,7 +357,8 @@ class TestGenerateCohortSet:
     def test_simple_cohort_first_per_person(self, cdm):
         """Simple condition cohort with First limit per person."""
         json_str = _make_cohort_json(
-            VIRAL_SINUSITIS_ID, "Viral sinusitis",
+            VIRAL_SINUSITIS_ID,
+            "Viral sinusitis",
             primary_limit="First",
             qualified_limit="First",
             expression_limit="First",
@@ -395,7 +386,8 @@ class TestGenerateCohortSet:
     def test_all_events_cohort(self, cdm):
         """Cohort with All limits keeps all events."""
         json_str = _make_cohort_json(
-            VIRAL_SINUSITIS_ID, "Viral sinusitis",
+            VIRAL_SINUSITIS_ID,
+            "Viral sinusitis",
             primary_limit="All",
             qualified_limit="All",
             expression_limit="All",
@@ -412,7 +404,8 @@ class TestGenerateCohortSet:
     def test_date_offset_end_strategy(self, cdm):
         """DateOffset end strategy caps end date."""
         json_str = _make_cohort_json(
-            ESSENTIAL_HYPERTENSION_ID, "Essential hypertension",
+            ESSENTIAL_HYPERTENSION_ID,
+            "Essential hypertension",
             primary_limit="All",
             qualified_limit="All",
             expression_limit="All",
@@ -433,29 +426,36 @@ class TestGenerateCohortSet:
     def test_inclusion_rule_gender(self, cdm):
         """Inclusion rule filtering by gender (male only)."""
         json_str = _make_cohort_json(
-            ESSENTIAL_HYPERTENSION_ID, "Essential hypertension",
+            ESSENTIAL_HYPERTENSION_ID,
+            "Essential hypertension",
             primary_limit="All",
             qualified_limit="First",
             expression_limit="First",
-            inclusion_rules=[{
-                "name": "Male",
-                "expression": {
-                    "Type": "ALL",
-                    "CriteriaList": [],
-                    "DemographicCriteriaList": [{
-                        "Gender": [{
-                            "CONCEPT_CODE": "M",
-                            "CONCEPT_ID": MALE_CONCEPT_ID,
-                            "CONCEPT_NAME": "MALE",
-                            "DOMAIN_ID": "Gender",
-                            "INVALID_REASON_CAPTION": "Unknown",
-                            "STANDARD_CONCEPT_CAPTION": "Unknown",
-                            "VOCABULARY_ID": "Gender",
-                        }],
-                    }],
-                    "Groups": [],
-                },
-            }],
+            inclusion_rules=[
+                {
+                    "name": "Male",
+                    "expression": {
+                        "Type": "ALL",
+                        "CriteriaList": [],
+                        "DemographicCriteriaList": [
+                            {
+                                "Gender": [
+                                    {
+                                        "CONCEPT_CODE": "M",
+                                        "CONCEPT_ID": MALE_CONCEPT_ID,
+                                        "CONCEPT_NAME": "MALE",
+                                        "DOMAIN_ID": "Gender",
+                                        "INVALID_REASON_CAPTION": "Unknown",
+                                        "STANDARD_CONCEPT_CAPTION": "Unknown",
+                                        "VOCABULARY_ID": "Gender",
+                                    }
+                                ],
+                            }
+                        ],
+                        "Groups": [],
+                    },
+                }
+            ],
         )
 
         result = generate_cohort_set(cdm, json_str, name="ht_male")
@@ -465,8 +465,9 @@ class TestGenerateCohortSet:
         if len(df) > 0:
             person = cdm["person"].collect()
             male_ids = set(
-                person.filter(pl.col("gender_concept_id") == MALE_CONCEPT_ID)
-                ["person_id"].to_list()
+                person.filter(pl.col("gender_concept_id") == MALE_CONCEPT_ID)[
+                    "person_id"
+                ].to_list()
             )
             cohort_ids = set(df["subject_id"].to_list())
             assert cohort_ids.issubset(male_ids)
@@ -474,7 +475,8 @@ class TestGenerateCohortSet:
     def test_empty_cohort_nonexistent_concept(self, cdm):
         """A cohort with a non-existent concept produces empty result."""
         json_str = _make_cohort_json(
-            999999999, "Nonexistent",
+            999999999,
+            "Nonexistent",
             primary_limit="First",
         )
 
@@ -485,9 +487,12 @@ class TestGenerateCohortSet:
 
     def test_dict_input(self, cdm):
         """Accept a dict with expression key."""
-        raw = json.loads(_make_cohort_json(
-            VIRAL_SINUSITIS_ID, "Viral sinusitis",
-        ))
+        raw = json.loads(
+            _make_cohort_json(
+                VIRAL_SINUSITIS_ID,
+                "Viral sinusitis",
+            )
+        )
         defn = {
             "cohort_definition_id": 42,
             "cohort_name": "vs_dict",
@@ -506,16 +511,22 @@ class TestGenerateCohortSet:
             {
                 "cohort_definition_id": 1,
                 "cohort_name": "viral_sinusitis",
-                "expression": json.loads(_make_cohort_json(
-                    VIRAL_SINUSITIS_ID, "Viral sinusitis",
-                )),
+                "expression": json.loads(
+                    _make_cohort_json(
+                        VIRAL_SINUSITIS_ID,
+                        "Viral sinusitis",
+                    )
+                ),
             },
             {
                 "cohort_definition_id": 2,
                 "cohort_name": "hypertension",
-                "expression": json.loads(_make_cohort_json(
-                    ESSENTIAL_HYPERTENSION_ID, "Essential hypertension",
-                )),
+                "expression": json.loads(
+                    _make_cohort_json(
+                        ESSENTIAL_HYPERTENSION_ID,
+                        "Essential hypertension",
+                    )
+                ),
             },
         ]
 
@@ -546,7 +557,8 @@ class TestCohortValidity:
         """Generate a test cohort."""
         cdm = cdm_from_con(synthea_con, cdm_schema="base")
         json_str = _make_cohort_json(
-            VIRAL_SINUSITIS_ID, "Viral sinusitis",
+            VIRAL_SINUSITIS_ID,
+            "Viral sinusitis",
         )
         result = generate_cohort_set(cdm, json_str, name="validity_test")
         return result["validity_test"]
@@ -555,18 +567,14 @@ class TestCohortValidity:
         """Cohort end dates must be >= start dates."""
         df = cohort.collect()
         if len(df) > 0:
-            invalid = df.filter(
-                pl.col("cohort_end_date") < pl.col("cohort_start_date")
-            )
+            invalid = df.filter(pl.col("cohort_end_date") < pl.col("cohort_start_date"))
             assert len(invalid) == 0
 
     def test_all_subjects_in_person(self, cohort, synthea_con):
         """All cohort subjects must exist in the person table."""
         df = cohort.collect()
         if len(df) > 0:
-            person = synthea_con.table(
-                "person", database=("synthea", "base")
-            ).execute()
+            person = synthea_con.table("person", database=("synthea", "base")).execute()
             person_ids = set(person["person_id"].tolist())
             cohort_ids = set(df["subject_id"].to_list())
             assert cohort_ids.issubset(person_ids)

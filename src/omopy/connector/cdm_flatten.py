@@ -123,10 +123,7 @@ def cdm_flatten(
     # Validate
     for d in domains:
         if d not in _DOMAIN_MAP:
-            msg = (
-                f"Invalid domain '{d}'. "
-                f"Valid domains: {', '.join(_VALID_DOMAINS)}"
-            )
+            msg = f"Invalid domain '{d}'. Valid domains: {', '.join(_VALID_DOMAINS)}"
             raise ValueError(msg)
         if d not in cdm:
             msg = f"Domain table '{d}' not found in CDM"
@@ -248,7 +245,10 @@ def _flatten_polars(
         # Join observation_concept_name
         result = result.join(
             concept_lookup.rename(
-                {"concept_id": "observation_concept_id", "concept_name": "observation_concept_name"}
+                {
+                    "concept_id": "observation_concept_id",
+                    "concept_name": "observation_concept_name",
+                }
             ),
             on="observation_concept_id",
             how="left",

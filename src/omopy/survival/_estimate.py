@@ -302,26 +302,33 @@ def _estimate_survival(
             n_initial = len(local_df)
             attrition_rows.append(
                 _attrition_row(
-                    result_id, target_name, outcome_name,
+                    result_id,
+                    target_name,
+                    outcome_name,
                     "Starting population",
-                    n_initial, n_initial, 0,
+                    n_initial,
+                    n_initial,
+                    0,
                 )
             )
 
             # Step 2: Remove NAs (washout exclusions)
             pre_washout = len(local_df)
             local_df = local_df.filter(
-                pl.col("outcome_time").is_not_null()
-                & pl.col("outcome_status").is_not_null()
+                pl.col("outcome_time").is_not_null() & pl.col("outcome_status").is_not_null()
             )
             n_after_washout = len(local_df)
             excluded_washout = pre_washout - n_after_washout
             if excluded_washout > 0:
                 attrition_rows.append(
                     _attrition_row(
-                        result_id, target_name, outcome_name,
+                        result_id,
+                        target_name,
+                        outcome_name,
                         "Excluded: prior outcome in washout",
-                        n_after_washout, excluded_washout, len(attrition_rows),
+                        n_after_washout,
+                        excluded_washout,
+                        len(attrition_rows),
                     )
                 )
 
@@ -333,9 +340,13 @@ def _estimate_survival(
             if excluded_min > 0:
                 attrition_rows.append(
                     _attrition_row(
-                        result_id, target_name, outcome_name,
+                        result_id,
+                        target_name,
+                        outcome_name,
                         f"Excluded: follow-up < {minimum_survival_days} days",
-                        n_after_min, excluded_min, len(attrition_rows),
+                        n_after_min,
+                        excluded_min,
+                        len(attrition_rows),
                     )
                 )
 
@@ -367,9 +378,7 @@ def _estimate_survival(
                 competing_cols = competing_local.select(
                     *join_cols, "competing_time", "competing_status"
                 )
-                local_df = local_df.join(
-                    competing_cols, on=join_cols, how="left"
-                )
+                local_df = local_df.join(competing_cols, on=join_cols, how="left")
 
                 # Create combined status: 0=censored, 1=primary event, 2=competing event
                 local_df = _add_competing_risk_vars(local_df)
@@ -402,17 +411,32 @@ def _estimate_survival(
 
                 # Format into SummarisedResult rows
                 est_rows = _format_estimates(
-                    estimates, result_id, cdm.cdm_name,
-                    target_name, outcome_name, s_name, s_level,
+                    estimates,
+                    result_id,
+                    cdm.cdm_name,
+                    target_name,
+                    outcome_name,
+                    s_name,
+                    s_level,
                 )
                 evt_rows = _format_events(
-                    events, result_id, cdm.cdm_name,
-                    target_name, outcome_name, s_name, s_level,
+                    events,
+                    result_id,
+                    cdm.cdm_name,
+                    target_name,
+                    outcome_name,
+                    s_name,
+                    s_level,
                     event_gap,
                 )
                 sum_rows = _format_summary(
-                    summary, result_id, cdm.cdm_name,
-                    target_name, outcome_name, s_name, s_level,
+                    summary,
+                    result_id,
+                    cdm.cdm_name,
+                    target_name,
+                    outcome_name,
+                    s_name,
+                    s_level,
                 )
                 all_data.extend([est_rows, evt_rows, sum_rows])
 
@@ -509,12 +533,14 @@ def _single_event_survival(
         ci_lower = np.array([])
         ci_upper = np.array([])
 
-    estimates_df = pl.DataFrame({
-        "time": timepoints,
-        "estimate": surv_vals.tolist(),
-        "estimate_95CI_lower": ci_lower.tolist(),
-        "estimate_95CI_upper": ci_upper.tolist(),
-    })
+    estimates_df = pl.DataFrame(
+        {
+            "time": timepoints,
+            "estimate": surv_vals.tolist(),
+            "estimate_95CI_lower": ci_lower.tolist(),
+            "estimate_95CI_upper": ci_upper.tolist(),
+        }
+    )
 
     # Risk table (events grouped by event_gap intervals)
     events_df = _compute_risk_table(df, event_gap, max_time)
@@ -578,7 +604,7 @@ def _competing_risk_survival(
         cif1[i] = (cif1[i - 1] if i > 0 else 0) + h1 * overall_surv
 
         # Update overall survival (for next step)
-        overall_surv *= (1 - d_total / n_risk)
+        overall_surv *= 1 - d_total / n_risk
 
     max_time = int(times_arr.max()) if len(times_arr) > 0 else 0
     max_time_est = restricted_mean_follow_up or max_time
@@ -590,8 +616,11 @@ def _competing_risk_survival(
 
     if len(event_times) > 0 and len(timepoints) > 0:
         cif_vals = np.interp(
-            timepoints, event_times, cif1,
-            left=0.0, right=cif1[-1] if len(cif1) > 0 else 0.0,
+            timepoints,
+            event_times,
+            cif1,
+            left=0.0,
+            right=cif1[-1] if len(cif1) > 0 else 0.0,
         )
     else:
         cif_vals = np.zeros(len(timepoints))
@@ -599,9 +628,9 @@ def _competing_risk_survival(
     # Approximate CI using Greenwood-like variance (simplified)
     # For a proper implementation, we'd use the full AJ variance formula
     # Here we use a simple approximation: SE ~ sqrt(CIF * (1-CIF) / n_risk)
-    n_at_risk_at_times = np.array([
-        np.sum(times_arr >= t) for t in timepoints
-    ]) if timepoints else np.array([])
+    n_at_risk_at_times = (
+        np.array([np.sum(times_arr >= t) for t in timepoints]) if timepoints else np.array([])
+    )
 
     ci_lower = np.zeros(len(timepoints))
     ci_upper = np.zeros(len(timepoints))
@@ -611,19 +640,24 @@ def _competing_risk_survival(
         ci_lower[j] = max(0.0, cif_vals[j] - 1.96 * se)
         ci_upper[j] = min(1.0, cif_vals[j] + 1.96 * se)
 
-    estimates_df = pl.DataFrame({
-        "time": timepoints,
-        "estimate": cif_vals.tolist(),
-        "estimate_95CI_lower": ci_lower.tolist(),
-        "estimate_95CI_upper": ci_upper.tolist(),
-    })
+    estimates_df = pl.DataFrame(
+        {
+            "time": timepoints,
+            "estimate": cif_vals.tolist(),
+            "estimate_95CI_lower": ci_lower.tolist(),
+            "estimate_95CI_upper": ci_upper.tolist(),
+        }
+    )
 
     # Risk table
     events_df = _compute_risk_table_competing(df, event_gap, max_time)
 
     # Summary
     summary = _compute_cif_summary(
-        df, cif1, event_times, restricted_mean_follow_up,
+        df,
+        cif1,
+        event_times,
+        restricted_mean_follow_up,
     )
 
     return estimates_df, events_df, summary
@@ -658,16 +692,27 @@ def _compute_risk_table(
         n_events = int(np.sum(mask & (events == 1)))
         n_censor = int(np.sum(mask & (events == 0)))
 
-        rows.append({
-            "time": t_start,
-            "n_risk": n_risk,
-            "n_events": n_events,
-            "n_censor": n_censor,
-        })
+        rows.append(
+            {
+                "time": t_start,
+                "n_risk": n_risk,
+                "n_events": n_events,
+                "n_censor": n_censor,
+            }
+        )
 
-    return pl.DataFrame(rows) if rows else pl.DataFrame({
-        "time": [], "n_risk": [], "n_events": [], "n_censor": [],
-    })
+    return (
+        pl.DataFrame(rows)
+        if rows
+        else pl.DataFrame(
+            {
+                "time": [],
+                "n_risk": [],
+                "n_events": [],
+                "n_censor": [],
+            }
+        )
+    )
 
 
 def _compute_risk_table_competing(
@@ -689,16 +734,27 @@ def _compute_risk_table_competing(
         n_events = int(np.sum(mask & (status == 1)))
         n_censor = int(np.sum(mask & (status == 0)))
 
-        rows.append({
-            "time": t_start,
-            "n_risk": n_risk,
-            "n_events": n_events,
-            "n_censor": n_censor,
-        })
+        rows.append(
+            {
+                "time": t_start,
+                "n_risk": n_risk,
+                "n_events": n_events,
+                "n_censor": n_censor,
+            }
+        )
 
-    return pl.DataFrame(rows) if rows else pl.DataFrame({
-        "time": [], "n_risk": [], "n_events": [], "n_censor": [],
-    })
+    return (
+        pl.DataFrame(rows)
+        if rows
+        else pl.DataFrame(
+            {
+                "time": [],
+                "n_risk": [],
+                "n_events": [],
+                "n_censor": [],
+            }
+        )
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -771,8 +827,14 @@ def _compute_km_summary(
 
     # Quantiles
     quantiles = {}
-    for q_name, q_val in [("q0", 0.0), ("q05", 0.05), ("q25", 0.25),
-                           ("q75", 0.75), ("q95", 0.95), ("q100", 1.0)]:
+    for q_name, q_val in [
+        ("q0", 0.0),
+        ("q05", 0.05),
+        ("q25", 0.25),
+        ("q75", 0.75),
+        ("q95", 0.95),
+        ("q100", 1.0),
+    ]:
         if q_val == 0.0:
             quantiles[q_name] = float(times.min()) if len(times) > 0 else None
         elif q_val == 1.0:
@@ -870,37 +932,39 @@ def _add_competing_risk_vars(df: pl.DataFrame) -> pl.DataFrame:
 
     When both events occur at the same time, primary event takes precedence.
     """
-    return df.with_columns([
-        # Combined time: minimum of outcome_time and competing_time
-        pl.when(
-            pl.col("competing_time").is_not_null()
-            & (pl.col("competing_time") < pl.col("outcome_time"))
-        )
-        .then(pl.col("competing_time"))
-        .otherwise(pl.col("outcome_time"))
-        .alias("combined_time"),
-        # Combined status
-        pl.when(
-            (pl.col("outcome_status") == 1)
-            & (
-                pl.col("competing_status").is_null()
-                | (pl.col("competing_status") == 0)
-                | (pl.col("outcome_time") <= pl.col("competing_time"))
+    return df.with_columns(
+        [
+            # Combined time: minimum of outcome_time and competing_time
+            pl.when(
+                pl.col("competing_time").is_not_null()
+                & (pl.col("competing_time") < pl.col("outcome_time"))
             )
-        )
-        .then(pl.lit(1))
-        .when(
-            (pl.col("competing_status") == 1)
-            & (
-                pl.col("outcome_status").is_null()
-                | (pl.col("outcome_status") == 0)
-                | (pl.col("competing_time") < pl.col("outcome_time"))
+            .then(pl.col("competing_time"))
+            .otherwise(pl.col("outcome_time"))
+            .alias("combined_time"),
+            # Combined status
+            pl.when(
+                (pl.col("outcome_status") == 1)
+                & (
+                    pl.col("competing_status").is_null()
+                    | (pl.col("competing_status") == 0)
+                    | (pl.col("outcome_time") <= pl.col("competing_time"))
+                )
             )
-        )
-        .then(pl.lit(2))
-        .otherwise(pl.lit(0))
-        .alias("combined_status"),
-    ])
+            .then(pl.lit(1))
+            .when(
+                (pl.col("competing_status") == 1)
+                & (
+                    pl.col("outcome_status").is_null()
+                    | (pl.col("outcome_status") == 0)
+                    | (pl.col("competing_time") < pl.col("outcome_time"))
+                )
+            )
+            .then(pl.lit(2))
+            .otherwise(pl.lit(0))
+            .alias("combined_status"),
+        ]
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -923,21 +987,23 @@ def _format_estimates(
         t = row["time"]
         for est_name in ["estimate", "estimate_95CI_lower", "estimate_95CI_upper"]:
             val = row[est_name]
-            rows.append({
-                "result_id": str(result_id),
-                "cdm_name": cdm_name,
-                "group_name": "target_cohort",
-                "group_level": target_name,
-                "strata_name": strata_name,
-                "strata_level": strata_level,
-                "variable_name": "outcome",
-                "variable_level": outcome_name,
-                "estimate_name": est_name,
-                "estimate_type": "numeric",
-                "estimate_value": _fmt(val),
-                "additional_name": "time",
-                "additional_level": str(t),
-            })
+            rows.append(
+                {
+                    "result_id": str(result_id),
+                    "cdm_name": cdm_name,
+                    "group_name": "target_cohort",
+                    "group_level": target_name,
+                    "strata_name": strata_name,
+                    "strata_level": strata_level,
+                    "variable_name": "outcome",
+                    "variable_level": outcome_name,
+                    "estimate_name": est_name,
+                    "estimate_type": "numeric",
+                    "estimate_value": _fmt(val),
+                    "additional_name": "time",
+                    "additional_level": str(t),
+                }
+            )
 
     return _rows_to_df(rows)
 
@@ -961,21 +1027,23 @@ def _format_events(
             ("n_events_count", row["n_events"]),
             ("n_censor_count", row["n_censor"]),
         ]:
-            rows.append({
-                "result_id": str(result_id),
-                "cdm_name": cdm_name,
-                "group_name": "target_cohort",
-                "group_level": target_name,
-                "strata_name": strata_name,
-                "strata_level": strata_level,
-                "variable_name": "outcome",
-                "variable_level": outcome_name,
-                "estimate_name": est_name,
-                "estimate_type": "integer",
-                "estimate_value": str(int(est_val)),
-                "additional_name": NAME_LEVEL_SEP.join(["time", "eventgap"]),
-                "additional_level": NAME_LEVEL_SEP.join([str(t), str(event_gap)]),
-            })
+            rows.append(
+                {
+                    "result_id": str(result_id),
+                    "cdm_name": cdm_name,
+                    "group_name": "target_cohort",
+                    "group_level": target_name,
+                    "strata_name": strata_name,
+                    "strata_level": strata_level,
+                    "variable_name": "outcome",
+                    "variable_level": outcome_name,
+                    "estimate_name": est_name,
+                    "estimate_type": "integer",
+                    "estimate_value": str(int(est_val)),
+                    "additional_name": NAME_LEVEL_SEP.join(["time", "eventgap"]),
+                    "additional_level": NAME_LEVEL_SEP.join([str(t), str(event_gap)]),
+                }
+            )
 
     return _rows_to_df(rows)
 
@@ -994,21 +1062,23 @@ def _format_summary(
 
     for est_name, est_val in summary.items():
         est_type = "integer" if est_name in ("number_records", "n_events") else "numeric"
-        rows.append({
-            "result_id": str(result_id),
-            "cdm_name": cdm_name,
-            "group_name": "target_cohort",
-            "group_level": target_name,
-            "strata_name": strata_name,
-            "strata_level": strata_level,
-            "variable_name": "outcome",
-            "variable_level": outcome_name,
-            "estimate_name": est_name,
-            "estimate_type": est_type,
-            "estimate_value": _fmt(est_val),
-            "additional_name": OVERALL,
-            "additional_level": OVERALL,
-        })
+        rows.append(
+            {
+                "result_id": str(result_id),
+                "cdm_name": cdm_name,
+                "group_name": "target_cohort",
+                "group_level": target_name,
+                "strata_name": strata_name,
+                "strata_level": strata_level,
+                "variable_name": "outcome",
+                "variable_level": outcome_name,
+                "estimate_name": est_name,
+                "estimate_type": est_type,
+                "estimate_value": _fmt(est_val),
+                "additional_name": OVERALL,
+                "additional_level": OVERALL,
+            }
+        )
 
     return _rows_to_df(rows)
 
@@ -1021,21 +1091,23 @@ def _format_attrition(
     rows: list[dict[str, str]] = []
     for attr in attrition_rows:
         for est_name in ["number_records", "excluded_records"]:
-            rows.append({
-                "result_id": str(attr["result_id"]),
-                "cdm_name": cdm_name,
-                "group_name": "target_cohort",
-                "group_level": attr["target_name"],
-                "strata_name": "reason",
-                "strata_level": attr["reason"],
-                "variable_name": "outcome",
-                "variable_level": attr["outcome_name"],
-                "estimate_name": est_name,
-                "estimate_type": "integer",
-                "estimate_value": str(attr[est_name]),
-                "additional_name": "reason_id",
-                "additional_level": str(attr["reason_id"]),
-            })
+            rows.append(
+                {
+                    "result_id": str(attr["result_id"]),
+                    "cdm_name": cdm_name,
+                    "group_name": "target_cohort",
+                    "group_level": attr["target_name"],
+                    "strata_name": "reason",
+                    "strata_level": attr["reason"],
+                    "variable_name": "outcome",
+                    "variable_level": attr["outcome_name"],
+                    "estimate_name": est_name,
+                    "estimate_type": "integer",
+                    "estimate_value": str(attr[est_name]),
+                    "additional_name": "reason_id",
+                    "additional_level": str(attr["reason_id"]),
+                }
+            )
     return _rows_to_df(rows)
 
 
@@ -1178,9 +1250,11 @@ def _empty_data() -> pl.DataFrame:
 
 def _empty_settings() -> pl.DataFrame:
     """Create an empty settings DataFrame."""
-    return pl.DataFrame({
-        "result_id": pl.Series([], dtype=pl.Int64),
-        "result_type": pl.Series([], dtype=pl.Utf8),
-        "package_name": pl.Series([], dtype=pl.Utf8),
-        "package_version": pl.Series([], dtype=pl.Utf8),
-    })
+    return pl.DataFrame(
+        {
+            "result_id": pl.Series([], dtype=pl.Int64),
+            "result_type": pl.Series([], dtype=pl.Utf8),
+            "package_name": pl.Series([], dtype=pl.Utf8),
+            "package_version": pl.Series([], dtype=pl.Utf8),
+        }
+    )

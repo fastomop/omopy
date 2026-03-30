@@ -131,7 +131,9 @@ class TestAddAge:
 
     def test_age_unit_months(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
-        result = add_age(obs, synthea_cdm, index_date="observation_period_start_date", age_unit="months")
+        result = add_age(
+            obs, synthea_cdm, index_date="observation_period_start_date", age_unit="months"
+        )
         df = result.collect()
         ages = df["age"].drop_nulls()
         # Monthly ages should be >= 0 and generally > 12 for adults
@@ -139,7 +141,9 @@ class TestAddAge:
 
     def test_age_unit_days(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
-        result = add_age(obs, synthea_cdm, index_date="observation_period_start_date", age_unit="days")
+        result = add_age(
+            obs, synthea_cdm, index_date="observation_period_start_date", age_unit="days"
+        )
         df = result.collect()
         ages = df["age"].drop_nulls()
         assert (ages >= 0).all()
@@ -148,7 +152,9 @@ class TestAddAge:
 
     def test_custom_age_name(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
-        result = add_age(obs, synthea_cdm, index_date="observation_period_start_date", age_name="patient_age")
+        result = add_age(
+            obs, synthea_cdm, index_date="observation_period_start_date", age_name="patient_age"
+        )
         df = result.collect()
         assert "patient_age" in df.columns
         assert "age" not in df.columns
@@ -157,7 +163,8 @@ class TestAddAge:
         """Test age grouping with a list of ranges."""
         obs = synthea_cdm["observation_period"]
         result = add_age(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             age_group=[(0, 17), (18, 64), (65, float("inf"))],
         )
@@ -172,7 +179,8 @@ class TestAddAge:
         """Test age grouping with a dict of label -> range."""
         obs = synthea_cdm["observation_period"]
         result = add_age(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             age_group={"child": (0, 17), "adult": (18, 64), "senior": (65, float("inf"))},
         )
@@ -191,7 +199,8 @@ class TestAddPriorObservation:
     def test_adds_prior_obs_days(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_prior_observation(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         df = result.collect()
@@ -205,7 +214,8 @@ class TestAddPriorObservation:
     def test_prior_obs_date_type(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_prior_observation(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             prior_observation_type="date",
         )
@@ -219,7 +229,8 @@ class TestAddFutureObservation:
     def test_adds_future_obs_days(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_future_observation(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         df = result.collect()
@@ -231,7 +242,8 @@ class TestAddFutureObservation:
     def test_future_obs_date_type(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_future_observation(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             future_observation_type="date",
         )
@@ -250,10 +262,13 @@ class TestAddDemographics:
         """Add all demographics at once."""
         obs = synthea_cdm["observation_period"]
         result = add_demographics(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
-            age=True, sex=True,
-            prior_observation=True, future_observation=True,
+            age=True,
+            sex=True,
+            prior_observation=True,
+            future_observation=True,
             date_of_birth=True,
         )
         df = result.collect()
@@ -269,7 +284,8 @@ class TestAddDemographics:
         obs = synthea_cdm["observation_period"]
         orig_cols = obs.columns
         result = add_demographics(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         df = result.collect()
@@ -280,10 +296,13 @@ class TestAddDemographics:
         """When nothing is requested, table should be unchanged."""
         obs = synthea_cdm["observation_period"]
         result = add_demographics(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
-            age=False, sex=False,
-            prior_observation=False, future_observation=False,
+            age=False,
+            sex=False,
+            prior_observation=False,
+            future_observation=False,
             date_of_birth=False,
         )
         df = result.collect()
@@ -300,6 +319,7 @@ class TestAddDemographics:
     def test_returns_cdm_table(self, synthea_cdm):
         """Result should be a CdmTable, not raw Ibis."""
         from omopy.generics.cdm_table import CdmTable
+
         obs = synthea_cdm["observation_period"]
         result = add_sex(obs, synthea_cdm)
         assert isinstance(result, CdmTable)
@@ -314,6 +334,7 @@ class TestAddDemographics:
         """Should raise if no CDM reference is available."""
         from omopy.generics.cdm_table import CdmTable
         import ibis
+
         t = ibis.table({"person_id": "int64", "start_date": "date"}, name="test")
         tbl = CdmTable(t, tbl_name="test")
         with pytest.raises(ValueError, match="No CDM reference"):
@@ -330,7 +351,8 @@ class TestAddInObservation:
         """With window (0,0), everyone at obs start should be in observation."""
         obs = synthea_cdm["observation_period"]
         result = add_in_observation(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         df = result.collect()
@@ -342,7 +364,8 @@ class TestAddInObservation:
         """With infinite window, check overlap with observation period."""
         obs = synthea_cdm["observation_period"]
         result = add_in_observation(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             window=(float("-inf"), float("inf")),
         )
@@ -354,7 +377,8 @@ class TestAddInObservation:
     def test_custom_name_style(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_in_observation(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
             name_style="in_obs_{window_name}",
             window=[(0, 0), (0, 365)],

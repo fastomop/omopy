@@ -44,20 +44,30 @@ _CATEGORICAL_ESTIMATES = ("count", "percentage")
 _BINARY_ESTIMATES = ("count", "percentage")
 
 # Columns that are always numeric
-_NUMERIC_DEMOGRAPHICS = frozenset({
-    "age", "prior_observation", "future_observation",
-    "days_in_cohort", "days_to_next_record",
-})
+_NUMERIC_DEMOGRAPHICS = frozenset(
+    {
+        "age",
+        "prior_observation",
+        "future_observation",
+        "days_in_cohort",
+        "days_to_next_record",
+    }
+)
 
 # Columns that are always categorical
-_CATEGORICAL_DEMOGRAPHICS = frozenset({
-    "sex",
-})
+_CATEGORICAL_DEMOGRAPHICS = frozenset(
+    {
+        "sex",
+    }
+)
 
 # Columns that are always date-typed
-_DATE_DEMOGRAPHICS = frozenset({
-    "cohort_start_date", "cohort_end_date",
-})
+_DATE_DEMOGRAPHICS = frozenset(
+    {
+        "cohort_start_date",
+        "cohort_end_date",
+    }
+)
 
 __all__ = [
     "summarise_characteristics",
@@ -76,7 +86,8 @@ __all__ = [
 
 
 def _classify_variable(
-    df: pl.DataFrame, col: str,
+    df: pl.DataFrame,
+    col: str,
 ) -> Literal["numeric", "categorical", "date", "binary"]:
     """Classify a column into a variable type for estimate selection."""
     if col in _NUMERIC_DEMOGRAPHICS:
@@ -179,7 +190,11 @@ def _compute_estimates(
         elif est == "min":
             if n > 0:
                 val = non_null.min()
-                est_type = "date" if var_type == "date" else ("integer" if var_type == "integer" else "numeric")
+                est_type = (
+                    "date"
+                    if var_type == "date"
+                    else ("integer" if var_type == "integer" else "numeric")
+                )
                 results.append(("min", est_type, str(val)))
             else:
                 est_type = "date" if var_type == "date" else "numeric"
@@ -187,7 +202,11 @@ def _compute_estimates(
         elif est == "max":
             if n > 0:
                 val = non_null.max()
-                est_type = "date" if var_type == "date" else ("integer" if var_type == "integer" else "numeric")
+                est_type = (
+                    "date"
+                    if var_type == "date"
+                    else ("integer" if var_type == "integer" else "numeric")
+                )
                 results.append(("max", est_type, str(val)))
             else:
                 est_type = "date" if var_type == "date" else "numeric"
@@ -263,14 +282,16 @@ def _summarise_variables(
             # For categorical: one row per level × estimate
             cat_results = _compute_categorical_estimates(df[var], len(df))
             for level, est_name, est_type, est_value in cat_results:
-                rows.append({
-                    **base,
-                    "variable_name": var_display,
-                    "variable_level": level,
-                    "estimate_name": est_name,
-                    "estimate_type": est_type,
-                    "estimate_value": est_value,
-                })
+                rows.append(
+                    {
+                        **base,
+                        "variable_name": var_display,
+                        "variable_level": level,
+                        "estimate_name": est_name,
+                        "estimate_type": est_type,
+                        "estimate_value": est_value,
+                    }
+                )
         elif var_type == "binary":
             # Binary: count/percentage for value == 1 (or True)
             total = len(df)
@@ -279,34 +300,40 @@ def _summarise_variables(
             else:
                 n_pos = (df[var] == 1).sum()
             pct = (n_pos / total * 100.0) if total > 0 else 0.0
-            rows.append({
-                **base,
-                "variable_name": var_display,
-                "variable_level": "",
-                "estimate_name": "count",
-                "estimate_type": "integer",
-                "estimate_value": str(n_pos),
-            })
-            rows.append({
-                **base,
-                "variable_name": var_display,
-                "variable_level": "",
-                "estimate_name": "percentage",
-                "estimate_type": "percentage",
-                "estimate_value": f"{pct:.2f}",
-            })
+            rows.append(
+                {
+                    **base,
+                    "variable_name": var_display,
+                    "variable_level": "",
+                    "estimate_name": "count",
+                    "estimate_type": "integer",
+                    "estimate_value": str(n_pos),
+                }
+            )
+            rows.append(
+                {
+                    **base,
+                    "variable_name": var_display,
+                    "variable_level": "",
+                    "estimate_name": "percentage",
+                    "estimate_type": "percentage",
+                    "estimate_value": f"{pct:.2f}",
+                }
+            )
         else:
             # Numeric or date: compute distribution estimates
             est_results = _compute_estimates(df[var], var_type, custom_ests)
             for est_name, est_type, est_value in est_results:
-                rows.append({
-                    **base,
-                    "variable_name": var_display,
-                    "variable_level": "",
-                    "estimate_name": est_name,
-                    "estimate_type": est_type,
-                    "estimate_value": est_value,
-                })
+                rows.append(
+                    {
+                        **base,
+                        "variable_name": var_display,
+                        "variable_level": "",
+                        "estimate_name": est_name,
+                        "estimate_type": est_type,
+                        "estimate_value": est_value,
+                    }
+                )
 
     return rows
 
@@ -571,8 +598,9 @@ def summarise_characteristics(
     # Step 4: Compute days_in_cohort and days_to_next_record
     if demographics and "cohort_start_date" in df.columns and "cohort_end_date" in df.columns:
         df = df.with_columns(
-            ((pl.col("cohort_end_date") - pl.col("cohort_start_date")).dt.total_days() + 1)
-            .alias("days_in_cohort")
+            ((pl.col("cohort_end_date") - pl.col("cohort_start_date")).dt.total_days() + 1).alias(
+                "days_in_cohort"
+            )
         )
 
     # Identify variables to summarise
@@ -716,10 +744,12 @@ def summarise_cohort_attrition(
         return _empty_result("summarise_cohort_attrition")
 
     # Map cohort_definition_id -> cohort_name
-    id_to_name = dict(zip(
-        settings_meta["cohort_definition_id"].to_list(),
-        settings_meta["cohort_name"].to_list(),
-    ))
+    id_to_name = dict(
+        zip(
+            settings_meta["cohort_definition_id"].to_list(),
+            settings_meta["cohort_name"].to_list(),
+        )
+    )
 
     all_rows: list[dict[str, Any]] = []
     result_id = 1
@@ -748,14 +778,16 @@ def summarise_cohort_attrition(
             val = row.get(var, 0)
             if val is None:
                 val = 0
-            all_rows.append({
-                **base,
-                "variable_name": var,
-                "variable_level": "",
-                "estimate_name": "count",
-                "estimate_type": "integer",
-                "estimate_value": str(int(val)),
-            })
+            all_rows.append(
+                {
+                    **base,
+                    "variable_name": var,
+                    "variable_level": "",
+                    "estimate_name": "count",
+                    "estimate_type": "integer",
+                    "estimate_value": str(int(val)),
+                }
+            )
 
     if not all_rows:
         return _empty_result("summarise_cohort_attrition")
@@ -813,32 +845,38 @@ def summarise_cohort_timing(
     cdm_name = cdm.cdm_name if cdm else "unknown"
 
     settings_meta = _filter_settings_by_cohort_id(working.settings, cohort_id)
-    id_to_name = dict(zip(
-        settings_meta["cohort_definition_id"].to_list(),
-        settings_meta["cohort_name"].to_list(),
-    ))
+    id_to_name = dict(
+        zip(
+            settings_meta["cohort_definition_id"].to_list(),
+            settings_meta["cohort_name"].to_list(),
+        )
+    )
 
     # Optionally restrict to first entry
     if restrict_to_first_entry:
-        df = (
-            df.sort("cohort_start_date")
-            .group_by(["cohort_definition_id", "subject_id"])
-            .first()
-        )
+        df = df.sort("cohort_start_date").group_by(["cohort_definition_id", "subject_id"]).first()
 
     # Self-join on subject_id
     left = df.select(
-        "cohort_definition_id", "subject_id", "cohort_start_date",
-    ).rename({
-        "cohort_definition_id": "cid_ref",
-        "cohort_start_date": "date_ref",
-    })
+        "cohort_definition_id",
+        "subject_id",
+        "cohort_start_date",
+    ).rename(
+        {
+            "cohort_definition_id": "cid_ref",
+            "cohort_start_date": "date_ref",
+        }
+    )
     right = df.select(
-        "cohort_definition_id", "subject_id", "cohort_start_date",
-    ).rename({
-        "cohort_definition_id": "cid_comp",
-        "cohort_start_date": "date_comp",
-    })
+        "cohort_definition_id",
+        "subject_id",
+        "cohort_start_date",
+    ).rename(
+        {
+            "cohort_definition_id": "cid_comp",
+            "cohort_start_date": "date_comp",
+        }
+    )
 
     # Also carry strata columns if needed
     strata_flat = _flatten_strata(strata)
@@ -853,13 +891,19 @@ def summarise_cohort_timing(
 
     # Compute days between entries
     joined = joined.with_columns(
-        (pl.col("date_comp") - pl.col("date_ref")).dt.total_days().alias("days_between_cohort_entries")
+        (pl.col("date_comp") - pl.col("date_ref"))
+        .dt.total_days()
+        .alias("days_between_cohort_entries")
     )
 
     # Map IDs to names
     joined = joined.with_columns(
-        pl.col("cid_ref").replace_strict(id_to_name, default="unknown").alias("cohort_name_reference"),
-        pl.col("cid_comp").replace_strict(id_to_name, default="unknown").alias("cohort_name_comparator"),
+        pl.col("cid_ref")
+        .replace_strict(id_to_name, default="unknown")
+        .alias("cohort_name_reference"),
+        pl.col("cid_comp")
+        .replace_strict(id_to_name, default="unknown")
+        .alias("cohort_name_comparator"),
     )
 
     all_rows: list[dict[str, Any]] = []
@@ -880,7 +924,9 @@ def summarise_cohort_timing(
             & (pl.col("cohort_name_comparator") == comp_name)
         )
 
-        strata_groups = _resolve_strata(pair_df, strata) if strata_flat else [(OVERALL, OVERALL, pair_df)]
+        strata_groups = (
+            _resolve_strata(pair_df, strata) if strata_flat else [(OVERALL, OVERALL, pair_df)]
+        )
 
         for sname, slevel, sdf in strata_groups:
             base = {
@@ -895,43 +941,52 @@ def summarise_cohort_timing(
             }
 
             # Count rows
-            all_rows.append({
-                **base,
-                "variable_name": "Number records",
-                "variable_level": "",
-                "estimate_name": "count",
-                "estimate_type": "integer",
-                "estimate_value": str(len(sdf)),
-            })
-            all_rows.append({
-                **base,
-                "variable_name": "Number subjects",
-                "variable_level": "",
-                "estimate_name": "count",
-                "estimate_type": "integer",
-                "estimate_value": str(sdf["subject_id"].n_unique()),
-            })
+            all_rows.append(
+                {
+                    **base,
+                    "variable_name": "Number records",
+                    "variable_level": "",
+                    "estimate_name": "count",
+                    "estimate_type": "integer",
+                    "estimate_value": str(len(sdf)),
+                }
+            )
+            all_rows.append(
+                {
+                    **base,
+                    "variable_name": "Number subjects",
+                    "variable_level": "",
+                    "estimate_name": "count",
+                    "estimate_type": "integer",
+                    "estimate_value": str(sdf["subject_id"].n_unique()),
+                }
+            )
 
             # Timing distribution
             est_results = _compute_estimates(
-                sdf["days_between_cohort_entries"], "numeric", estimates,
+                sdf["days_between_cohort_entries"],
+                "numeric",
+                estimates,
             )
             for est_name, est_type, est_value in est_results:
-                all_rows.append({
-                    **base,
-                    "variable_name": "Days between cohort entries",
-                    "variable_level": "",
-                    "estimate_name": est_name,
-                    "estimate_type": est_type,
-                    "estimate_value": est_value,
-                })
+                all_rows.append(
+                    {
+                        **base,
+                        "variable_name": "Days between cohort entries",
+                        "variable_level": "",
+                        "estimate_name": est_name,
+                        "estimate_type": est_type,
+                        "estimate_value": est_value,
+                    }
+                )
 
     if not all_rows:
         return _empty_result("summarise_cohort_timing")
 
     data = pl.DataFrame(all_rows)
     settings_df = _make_settings(
-        result_id, "summarise_cohort_timing",
+        result_id,
+        "summarise_cohort_timing",
         restrict_to_first_entry=str(restrict_to_first_entry),
     )
     return SummarisedResult(data, settings=settings_df)
@@ -982,10 +1037,12 @@ def summarise_cohort_overlap(
     cdm_name = cdm.cdm_name if cdm else "unknown"
 
     settings_meta = _filter_settings_by_cohort_id(working.settings, cohort_id)
-    id_to_name = dict(zip(
-        settings_meta["cohort_definition_id"].to_list(),
-        settings_meta["cohort_name"].to_list(),
-    ))
+    id_to_name = dict(
+        zip(
+            settings_meta["cohort_definition_id"].to_list(),
+            settings_meta["cohort_name"].to_list(),
+        )
+    )
 
     # Add cohort_name column
     df = df.with_columns(
@@ -1021,11 +1078,7 @@ def summarise_cohort_overlap(
                     s = [s]
                 sname = NAME_LEVEL_SEP.join(s)
                 # Get unique strata levels
-                all_keys = (
-                    ref_df.select(s).unique()
-                    .vstack(comp_df.select(s).unique())
-                    .unique()
-                )
+                all_keys = ref_df.select(s).unique().vstack(comp_df.select(s).unique()).unique()
                 for key_row in all_keys.iter_rows():
                     if not isinstance(key_row, tuple):
                         key_row = (key_row,)
@@ -1067,29 +1120,34 @@ def summarise_cohort_overlap(
                 ("In both cohorts", in_both),
             ]:
                 pct = (count / total * 100.0) if total > 0 else 0.0
-                all_rows.append({
-                    **base,
-                    "variable_name": var_name,
-                    "variable_level": variable_level,
-                    "estimate_name": "count",
-                    "estimate_type": "integer",
-                    "estimate_value": str(count),
-                })
-                all_rows.append({
-                    **base,
-                    "variable_name": var_name,
-                    "variable_level": variable_level,
-                    "estimate_name": "percentage",
-                    "estimate_type": "percentage",
-                    "estimate_value": f"{pct:.2f}",
-                })
+                all_rows.append(
+                    {
+                        **base,
+                        "variable_name": var_name,
+                        "variable_level": variable_level,
+                        "estimate_name": "count",
+                        "estimate_type": "integer",
+                        "estimate_value": str(count),
+                    }
+                )
+                all_rows.append(
+                    {
+                        **base,
+                        "variable_name": var_name,
+                        "variable_level": variable_level,
+                        "estimate_name": "percentage",
+                        "estimate_type": "percentage",
+                        "estimate_value": f"{pct:.2f}",
+                    }
+                )
 
     if not all_rows:
         return _empty_result("summarise_cohort_overlap")
 
     data = pl.DataFrame(all_rows)
     settings_df = _make_settings(
-        result_id, "summarise_cohort_overlap",
+        result_id,
+        "summarise_cohort_overlap",
         overlap_by=overlap_by,
     )
     return SummarisedResult(data, settings=settings_df)
@@ -1155,8 +1213,13 @@ def summarise_large_scale_characteristics(
         strata = []
     if window is None:
         window = [
-            (-math.inf, -366), (-365, -31), (-30, -1),
-            (0, 0), (1, 30), (31, 365), (366, math.inf),
+            (-math.inf, -366),
+            (-365, -31),
+            (-30, -1),
+            (0, 0),
+            (1, 30),
+            (31, 365),
+            (366, math.inf),
         ]
     if event_in_window is None and episode_in_window is None:
         event_in_window = ["condition_occurrence", "drug_exposure"]
@@ -1168,10 +1231,12 @@ def summarise_large_scale_characteristics(
     cdm_name = cdm.cdm_name if cdm else "unknown"
 
     settings_meta = _filter_settings_by_cohort_id(working.settings, cohort_id)
-    id_to_name = dict(zip(
-        settings_meta["cohort_definition_id"].to_list(),
-        settings_meta["cohort_name"].to_list(),
-    ))
+    id_to_name = dict(
+        zip(
+            settings_meta["cohort_definition_id"].to_list(),
+            settings_meta["cohort_name"].to_list(),
+        )
+    )
 
     # Collect cohort data
     cohort_df = working.collect()
@@ -1192,17 +1257,33 @@ def summarise_large_scale_characteristics(
 
     # Standard domain-table mapping
     _DOMAIN_DATE_COLS: dict[str, tuple[str, str, str]] = {
-        "condition_occurrence": ("condition_concept_id", "condition_start_date", "condition_end_date"),
+        "condition_occurrence": (
+            "condition_concept_id",
+            "condition_start_date",
+            "condition_end_date",
+        ),
         "drug_exposure": ("drug_concept_id", "drug_exposure_start_date", "drug_exposure_end_date"),
         "procedure_occurrence": ("procedure_concept_id", "procedure_date", "procedure_date"),
         "measurement": ("measurement_concept_id", "measurement_date", "measurement_date"),
         "observation": ("observation_concept_id", "observation_date", "observation_date"),
         "visit_occurrence": ("visit_concept_id", "visit_start_date", "visit_end_date"),
-        "device_exposure": ("device_concept_id", "device_exposure_start_date", "device_exposure_end_date"),
+        "device_exposure": (
+            "device_concept_id",
+            "device_exposure_start_date",
+            "device_exposure_end_date",
+        ),
         "drug_era": ("drug_concept_id", "drug_era_start_date", "drug_era_end_date"),
-        "condition_era": ("condition_concept_id", "condition_era_start_date", "condition_era_end_date"),
+        "condition_era": (
+            "condition_concept_id",
+            "condition_era_start_date",
+            "condition_era_end_date",
+        ),
         "specimen": ("specimen_concept_id", "specimen_date", "specimen_date"),
-        "visit_detail": ("visit_detail_concept_id", "visit_detail_start_date", "visit_detail_end_date"),
+        "visit_detail": (
+            "visit_detail_concept_id",
+            "visit_detail_start_date",
+            "visit_detail_end_date",
+        ),
     }
 
     def _process_table(
@@ -1220,7 +1301,7 @@ def summarise_large_scale_characteristics(
 
         try:
             domain_df = cdm[table_name].collect()
-        except (KeyError, Exception):
+        except KeyError, Exception:
             return rows
 
         if domain_df is None or len(domain_df) == 0:
@@ -1246,10 +1327,12 @@ def summarise_large_scale_characteristics(
             domain_df = domain_df.filter(~pl.col("concept_id").is_in(excluded_codes))
 
         # Concept name lookup
-        concept_names = dict(zip(
-            concept_df["concept_id"].to_list(),
-            concept_df["concept_name"].to_list(),
-        ))
+        concept_names = dict(
+            zip(
+                concept_df["concept_id"].to_list(),
+                concept_df["concept_name"].to_list(),
+            )
+        )
 
         # Process each cohort
         for cname in sorted(id_to_name.values()):
@@ -1272,16 +1355,24 @@ def summarise_large_scale_characteristics(
                 # Filter by time window
                 if analysis_type == "event":
                     win_df = merged.with_columns(
-                        (pl.col("event_date") - pl.col("_index_date")).dt.total_days().alias("_diff")
+                        (pl.col("event_date") - pl.col("_index_date"))
+                        .dt.total_days()
+                        .alias("_diff")
                     )
                     win_df = _filter_window(win_df, "_diff", win_lower, win_upper)
                 else:
                     # Episode: interval overlap
                     win_df = merged.with_columns(
-                        (pl.col("event_start") - pl.col("_index_date")).dt.total_days().alias("_diff_start"),
-                        (pl.col("event_end") - pl.col("_index_date")).dt.total_days().alias("_diff_end"),
+                        (pl.col("event_start") - pl.col("_index_date"))
+                        .dt.total_days()
+                        .alias("_diff_start"),
+                        (pl.col("event_end") - pl.col("_index_date"))
+                        .dt.total_days()
+                        .alias("_diff_end"),
                     )
-                    win_df = _filter_episode_window(win_df, "_diff_start", "_diff_end", win_lower, win_upper)
+                    win_df = _filter_episode_window(
+                        win_df, "_diff_start", "_diff_end", win_lower, win_upper
+                    )
 
                 if len(win_df) == 0:
                     continue
@@ -1290,9 +1381,8 @@ def summarise_large_scale_characteristics(
                 n_subjects = c_df["subject_id"].n_unique()
 
                 # Count per concept
-                concept_counts = (
-                    win_df.group_by("concept_id")
-                    .agg(pl.col("person_id").n_unique().alias("n"))
+                concept_counts = win_df.group_by("concept_id").agg(
+                    pl.col("person_id").n_unique().alias("n")
                 )
 
                 for cc_row in concept_counts.iter_rows(named=True):
@@ -1306,41 +1396,47 @@ def summarise_large_scale_characteristics(
                     c_name_display = concept_names.get(cid, f"concept_{cid}")
                     pct = freq * 100.0
 
-                    strata_groups = _resolve_strata(c_df, strata) if strata else [(OVERALL, OVERALL, c_df)]
+                    strata_groups = (
+                        _resolve_strata(c_df, strata) if strata else [(OVERALL, OVERALL, c_df)]
+                    )
 
                     for sname, slevel, _ in strata_groups:
                         # For strata, recompute with filtered cohort
                         # (simplified: overall only for now)
-                        rows.append({
-                            "result_id": rid,
-                            "cdm_name": cdm_name,
-                            "group_name": "cohort_name",
-                            "group_level": cname,
-                            "strata_name": sname,
-                            "strata_level": slevel,
-                            "variable_name": c_name_display,
-                            "variable_level": win_name,
-                            "estimate_name": "count",
-                            "estimate_type": "integer",
-                            "estimate_value": str(count),
-                            "additional_name": "concept_id",
-                            "additional_level": str(cid),
-                        })
-                        rows.append({
-                            "result_id": rid,
-                            "cdm_name": cdm_name,
-                            "group_name": "cohort_name",
-                            "group_level": cname,
-                            "strata_name": sname,
-                            "strata_level": slevel,
-                            "variable_name": c_name_display,
-                            "variable_level": win_name,
-                            "estimate_name": "percentage",
-                            "estimate_type": "percentage",
-                            "estimate_value": f"{pct:.2f}",
-                            "additional_name": "concept_id",
-                            "additional_level": str(cid),
-                        })
+                        rows.append(
+                            {
+                                "result_id": rid,
+                                "cdm_name": cdm_name,
+                                "group_name": "cohort_name",
+                                "group_level": cname,
+                                "strata_name": sname,
+                                "strata_level": slevel,
+                                "variable_name": c_name_display,
+                                "variable_level": win_name,
+                                "estimate_name": "count",
+                                "estimate_type": "integer",
+                                "estimate_value": str(count),
+                                "additional_name": "concept_id",
+                                "additional_level": str(cid),
+                            }
+                        )
+                        rows.append(
+                            {
+                                "result_id": rid,
+                                "cdm_name": cdm_name,
+                                "group_name": "cohort_name",
+                                "group_level": cname,
+                                "strata_name": sname,
+                                "strata_level": slevel,
+                                "variable_name": c_name_display,
+                                "variable_level": win_name,
+                                "estimate_name": "percentage",
+                                "estimate_type": "percentage",
+                                "estimate_value": f"{pct:.2f}",
+                                "additional_name": "concept_id",
+                                "additional_level": str(cid),
+                            }
+                        )
 
         return rows
 
@@ -1351,15 +1447,17 @@ def summarise_large_scale_characteristics(
             if rows:
                 all_rows.extend(rows)
                 result_ids.append(next_result_id)
-                settings_rows.append({
-                    "result_id": next_result_id,
-                    "result_type": "summarise_large_scale_characteristics",
-                    "package_name": _PACKAGE_NAME,
-                    "package_version": _PACKAGE_VERSION,
-                    "table_name": table_name,
-                    "type": "event",
-                    "analysis": "standard",
-                })
+                settings_rows.append(
+                    {
+                        "result_id": next_result_id,
+                        "result_type": "summarise_large_scale_characteristics",
+                        "package_name": _PACKAGE_NAME,
+                        "package_version": _PACKAGE_VERSION,
+                        "table_name": table_name,
+                        "type": "event",
+                        "analysis": "standard",
+                    }
+                )
                 next_result_id += 1
 
     # Process episode tables
@@ -1369,15 +1467,17 @@ def summarise_large_scale_characteristics(
             if rows:
                 all_rows.extend(rows)
                 result_ids.append(next_result_id)
-                settings_rows.append({
-                    "result_id": next_result_id,
-                    "result_type": "summarise_large_scale_characteristics",
-                    "package_name": _PACKAGE_NAME,
-                    "package_version": _PACKAGE_VERSION,
-                    "table_name": table_name,
-                    "type": "episode",
-                    "analysis": "standard",
-                })
+                settings_rows.append(
+                    {
+                        "result_id": next_result_id,
+                        "result_type": "summarise_large_scale_characteristics",
+                        "package_name": _PACKAGE_NAME,
+                        "package_version": _PACKAGE_VERSION,
+                        "table_name": table_name,
+                        "type": "episode",
+                        "analysis": "standard",
+                    }
+                )
                 next_result_id += 1
 
     if not all_rows:
@@ -1424,20 +1524,24 @@ def summarise_cohort_codelist(
     if codelist_df is None or len(codelist_df) == 0:
         return _empty_result("summarise_cohort_codelist")
 
-    id_to_name = dict(zip(
-        settings_meta["cohort_definition_id"].to_list(),
-        settings_meta["cohort_name"].to_list(),
-    ))
+    id_to_name = dict(
+        zip(
+            settings_meta["cohort_definition_id"].to_list(),
+            settings_meta["cohort_name"].to_list(),
+        )
+    )
 
     # Try to get concept names
     concept_names: dict[int, str] = {}
     if cdm is not None:
         try:
             concept_df = cdm["concept"].collect()
-            concept_names = dict(zip(
-                concept_df["concept_id"].to_list(),
-                concept_df["concept_name"].to_list(),
-            ))
+            concept_names = dict(
+                zip(
+                    concept_df["concept_id"].to_list(),
+                    concept_df["concept_name"].to_list(),
+                )
+            )
         except Exception:
             pass
 
@@ -1453,21 +1557,23 @@ def summarise_cohort_codelist(
 
         concept_name_str = concept_names.get(concept_id, f"concept_{concept_id}")
 
-        all_rows.append({
-            "result_id": result_id,
-            "cdm_name": cdm_name,
-            "group_name": "cohort_name",
-            "group_level": cname,
-            "strata_name": "codelist_name" + NAME_LEVEL_SEP + "codelist_type",
-            "strata_level": codelist_name + NAME_LEVEL_SEP + codelist_type,
-            "variable_name": OVERALL,
-            "variable_level": OVERALL,
-            "estimate_name": "concept_id",
-            "estimate_type": "integer",
-            "estimate_value": str(concept_id),
-            "additional_name": "concept_name",
-            "additional_level": concept_name_str,
-        })
+        all_rows.append(
+            {
+                "result_id": result_id,
+                "cdm_name": cdm_name,
+                "group_name": "cohort_name",
+                "group_level": cname,
+                "strata_name": "codelist_name" + NAME_LEVEL_SEP + "codelist_type",
+                "strata_level": codelist_name + NAME_LEVEL_SEP + codelist_type,
+                "variable_name": OVERALL,
+                "variable_level": OVERALL,
+                "estimate_name": "concept_id",
+                "estimate_type": "integer",
+                "estimate_value": str(concept_id),
+                "additional_name": "concept_name",
+                "additional_level": concept_name_str,
+            }
+        )
 
     if not all_rows:
         return _empty_result("summarise_cohort_codelist")
@@ -1486,9 +1592,7 @@ def _empty_result(result_type: str) -> SummarisedResult:
     """Create an empty SummarisedResult with the correct schema."""
     from omopy.generics.summarised_result import SUMMARISED_RESULT_COLUMNS
 
-    data = pl.DataFrame(
-        {col: pl.Series([], dtype=pl.Utf8) for col in SUMMARISED_RESULT_COLUMNS}
-    )
+    data = pl.DataFrame({col: pl.Series([], dtype=pl.Utf8) for col in SUMMARISED_RESULT_COLUMNS})
     # result_id needs to be numeric
     data = data.with_columns(pl.col("result_id").cast(pl.Int64))
     settings = _make_settings(1, result_type)
@@ -1501,9 +1605,7 @@ def _filter_settings_by_cohort_id(
 ) -> pl.DataFrame:
     """Filter settings to only include requested cohort IDs."""
     if cohort_id is not None:
-        settings = settings.filter(
-            pl.col("cohort_definition_id").is_in(cohort_id)
-        )
+        settings = settings.filter(pl.col("cohort_definition_id").is_in(cohort_id))
     return settings
 
 

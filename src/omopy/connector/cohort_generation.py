@@ -82,7 +82,8 @@ def generate_concept_cohort_set(
     *,
     limit: Literal["first", "all"] = "first",
     required_observation: tuple[int, int] = (0, 0),
-    end: Literal["observation_period_end_date", "event_end_date"] | int = "observation_period_end_date",
+    end: Literal["observation_period_end_date", "event_end_date"]
+    | int = "observation_period_end_date",
 ) -> CdmReference:
     """Generate a cohort from concept sets.
 
@@ -148,9 +149,7 @@ def generate_concept_cohort_set(
 
     try:
         # Resolve descendants
-        concepts_tbl = _resolve_concepts(
-            con, temp_name, cdm, concept_defs, source
-        )
+        concepts_tbl = _resolve_concepts(con, temp_name, cdm, concept_defs, source)
 
         # Get domains present in the data
         domains = _get_domains(concepts_tbl, con)
@@ -172,8 +171,16 @@ def generate_concept_cohort_set(
 
         # Materialise and build CohortTable
         return _build_cohort_result(
-            cdm, name, cohort_tbl, concept_defs, concept_rows,
-            limit, required_observation, end, con, source
+            cdm,
+            name,
+            cohort_tbl,
+            concept_defs,
+            concept_rows,
+            limit,
+            required_observation,
+            end,
+            con,
+            source,
         )
     finally:
         _drop_temp(con, temp_name, source.cdm_schema)
@@ -198,31 +205,34 @@ def _normalize_concept_set(
 
     if isinstance(concept_set, ConceptSetExpression):
         for idx, (cname, entries) in enumerate(concept_set.items(), start=1):
-            concepts = [
-                (e.concept_id, e.include_descendants, e.is_excluded)
-                for e in entries
-            ]
-            result.append({
-                "cohort_definition_id": idx,
-                "cohort_name": cname,
-                "concepts": concepts,
-            })
+            concepts = [(e.concept_id, e.include_descendants, e.is_excluded) for e in entries]
+            result.append(
+                {
+                    "cohort_definition_id": idx,
+                    "cohort_name": cname,
+                    "concepts": concepts,
+                }
+            )
     elif isinstance(concept_set, Codelist):
         for idx, (cname, ids) in enumerate(concept_set.items(), start=1):
             concepts = [(cid, False, False) for cid in ids]
-            result.append({
-                "cohort_definition_id": idx,
-                "cohort_name": cname,
-                "concepts": concepts,
-            })
+            result.append(
+                {
+                    "cohort_definition_id": idx,
+                    "cohort_name": cname,
+                    "concepts": concepts,
+                }
+            )
     elif isinstance(concept_set, dict):
         for idx, (cname, ids) in enumerate(concept_set.items(), start=1):
             concepts = [(int(cid), False, False) for cid in ids]
-            result.append({
-                "cohort_definition_id": idx,
-                "cohort_name": cname,
-                "concepts": concepts,
-            })
+            result.append(
+                {
+                    "cohort_definition_id": idx,
+                    "cohort_name": cname,
+                    "concepts": concepts,
+                }
+            )
     else:
         msg = f"concept_set must be Codelist, ConceptSetExpression, or dict, got {type(concept_set).__name__}"
         raise TypeError(msg)
@@ -237,13 +247,15 @@ def _build_concept_rows(
     rows = []
     for cdef in concept_defs:
         for concept_id, include_desc, is_excluded in cdef["concepts"]:
-            rows.append({
-                "cohort_definition_id": cdef["cohort_definition_id"],
-                "cohort_name": cdef["cohort_name"],
-                "concept_id": concept_id,
-                "include_descendants": include_desc,
-                "is_excluded": is_excluded,
-            })
+            rows.append(
+                {
+                    "cohort_definition_id": cdef["cohort_definition_id"],
+                    "cohort_name": cdef["cohort_name"],
+                    "concept_id": concept_id,
+                    "include_descendants": include_desc,
+                    "is_excluded": is_excluded,
+                }
+            )
     return rows
 
 
@@ -252,25 +264,31 @@ def _concept_rows_to_arrow(rows: list[dict[str, Any]]) -> Any:
     import pyarrow as pa
 
     if not rows:
-        schema = pa.schema([
-            ("cohort_definition_id", pa.int64()),
-            ("cohort_name", pa.string()),
-            ("concept_id", pa.int64()),
-            ("include_descendants", pa.bool_()),
-            ("is_excluded", pa.bool_()),
-        ])
+        schema = pa.schema(
+            [
+                ("cohort_definition_id", pa.int64()),
+                ("cohort_name", pa.string()),
+                ("concept_id", pa.int64()),
+                ("include_descendants", pa.bool_()),
+                ("is_excluded", pa.bool_()),
+            ]
+        )
         return pa.table(
             {name: [] for name in schema.names},
             schema=schema,
         )
 
-    return pa.table({
-        "cohort_definition_id": pa.array([r["cohort_definition_id"] for r in rows], type=pa.int64()),
-        "cohort_name": [r["cohort_name"] for r in rows],
-        "concept_id": pa.array([r["concept_id"] for r in rows], type=pa.int64()),
-        "include_descendants": [r["include_descendants"] for r in rows],
-        "is_excluded": [r["is_excluded"] for r in rows],
-    })
+    return pa.table(
+        {
+            "cohort_definition_id": pa.array(
+                [r["cohort_definition_id"] for r in rows], type=pa.int64()
+            ),
+            "cohort_name": [r["cohort_name"] for r in rows],
+            "concept_id": pa.array([r["concept_id"] for r in rows], type=pa.int64()),
+            "include_descendants": [r["include_descendants"] for r in rows],
+            "is_excluded": [r["is_excluded"] for r in rows],
+        }
+    )
 
 
 def _register_arrow_temp(con: Any, name: str, arrow_table: Any, cdm_schema: str) -> None:
@@ -304,11 +322,7 @@ def _resolve_concepts(
     # Base concepts from the temp table
     base = con.table(temp_name)
 
-    has_descendants = any(
-        inc_desc
-        for cdef in concept_defs
-        for _, inc_desc, _ in cdef["concepts"]
-    )
+    has_descendants = any(inc_desc for cdef in concept_defs for _, inc_desc, _ in cdef["concepts"])
 
     if has_descendants:
         # Expand descendants
@@ -342,8 +356,7 @@ def _resolve_concepts(
     )
 
     resolved = (
-        all_concepts
-        .filter(all_concepts.is_excluded == False)  # noqa: E712
+        all_concepts.filter(all_concepts.is_excluded == False)  # noqa: E712
         .join(
             concept_lookup,
             "concept_id",
@@ -357,16 +370,9 @@ def _resolve_concepts(
 
 def _get_domains(concepts_tbl: ir.Table, con: Any) -> list[str]:
     """Get the list of domains present in the resolved concepts."""
-    domain_result = (
-        concepts_tbl
-        .select("domain_id")
-        .distinct()
-        .to_pyarrow()
-    )
+    domain_result = concepts_tbl.select("domain_id").distinct().to_pyarrow()
     domains = [
-        str(d).lower()
-        for d in domain_result.column("domain_id").to_pylist()
-        if d is not None
+        str(d).lower() for d in domain_result.column("domain_id").to_pylist() if d is not None
     ]
     return [d for d in domains if d in DOMAIN_TABLE_MAP]
 
@@ -393,9 +399,7 @@ def _gather_domain_events(
         domain_tbl = con.table(table_name, database=(catalog, schema))
 
         # Filter concepts for this domain
-        domain_concepts = concepts_tbl.filter(
-            concepts_tbl.domain_id.lower() == domain
-        )
+        domain_concepts = concepts_tbl.filter(concepts_tbl.domain_id.lower() == domain)
 
         # Join events with matching concepts (cast to int64 for type consistency)
         concept_id_expr = domain_tbl[info["concept_id_col"]].cast("int64")
@@ -463,12 +467,14 @@ def _apply_observation_constraints(
     prior_days, future_days = required_observation
     if prior_days > 0:
         cohort = cohort.filter(
-            (cohort.cohort_start_date - cohort.observation_period_start_date).cast("int64") >= prior_days
+            (cohort.cohort_start_date - cohort.observation_period_start_date).cast("int64")
+            >= prior_days
         )
 
     if future_days > 0:
         cohort = cohort.filter(
-            (cohort.observation_period_end_date - cohort.cohort_start_date).cast("int64") >= future_days
+            (cohort.observation_period_end_date - cohort.cohort_start_date).cast("int64")
+            >= future_days
         )
 
     # Apply end date strategy
@@ -491,15 +497,16 @@ def _apply_observation_constraints(
     )
 
     cohort = cohort.select(
-        "cohort_definition_id", "subject_id",
-        "cohort_start_date", "cohort_end_date",
+        "cohort_definition_id",
+        "subject_id",
+        "cohort_start_date",
+        "cohort_end_date",
     )
 
     # Apply limit
     if limit == "first":
         cohort = (
-            cohort
-            .group_by("cohort_definition_id", "subject_id")
+            cohort.group_by("cohort_definition_id", "subject_id")
             .order_by("cohort_start_date")
             .mutate(rn=ibis.row_number())
             .filter(ibis._.rn == 0)
@@ -563,8 +570,7 @@ def _collapse_cohort(cohort: ir.Table) -> ir.Table:
 
     # Step 4: aggregate per island
     collapsed = (
-        cohort
-        .group_by("cohort_definition_id", "subject_id", "_island_id")
+        cohort.group_by("cohort_definition_id", "subject_id", "_island_id")
         .agg(
             cohort_start_date=cohort.cohort_start_date.min(),
             cohort_end_date=cohort.cohort_end_date.max(),
@@ -593,36 +599,38 @@ def _build_cohort_result(
     cohort_df = pl.from_arrow(cohort_arrow)
 
     # Ensure proper dtypes
-    cohort_df = cohort_df.cast({
-        "cohort_definition_id": pl.Int64,
-        "subject_id": pl.Int64,
-        "cohort_start_date": pl.Date,
-        "cohort_end_date": pl.Date,
-    })
+    cohort_df = cohort_df.cast(
+        {
+            "cohort_definition_id": pl.Int64,
+            "subject_id": pl.Int64,
+            "cohort_start_date": pl.Date,
+            "cohort_end_date": pl.Date,
+        }
+    )
 
     # Build settings
     settings_rows = []
     for cdef in concept_defs:
-        settings_rows.append({
-            "cohort_definition_id": cdef["cohort_definition_id"],
-            "cohort_name": cdef["cohort_name"],
-            "limit": limit,
-            "prior_observation": required_observation[0],
-            "future_observation": required_observation[1],
-            "end": str(end),
-        })
-    settings_df = pl.DataFrame(settings_rows).cast({
-        "cohort_definition_id": pl.Int64,
-    })
+        settings_rows.append(
+            {
+                "cohort_definition_id": cdef["cohort_definition_id"],
+                "cohort_name": cdef["cohort_name"],
+                "limit": limit,
+                "prior_observation": required_observation[0],
+                "future_observation": required_observation[1],
+                "end": str(end),
+            }
+        )
+    settings_df = pl.DataFrame(settings_rows).cast(
+        {
+            "cohort_definition_id": pl.Int64,
+        }
+    )
 
     # Build attrition
-    counts = (
-        cohort_df
-        .group_by("cohort_definition_id")
-        .agg(
-            pl.len().alias("number_records"),
-            pl.col("subject_id").n_unique().alias("number_subjects"),
-        )
+    counts = cohort_df.group_by("cohort_definition_id").agg(
+        pl.len().alias("number_records"),
+        pl.col("subject_id").n_unique().alias("number_subjects"),
     )
     attrition_rows = []
     for cdef in concept_defs:
@@ -633,43 +641,55 @@ def _build_cohort_result(
             ns = match["number_subjects"][0]
         else:
             nr, ns = 0, 0
-        attrition_rows.append({
-            "cohort_definition_id": cid,
-            "number_records": nr,
-            "number_subjects": ns,
-            "reason_id": 1,
-            "reason": "Initial qualifying events",
-            "excluded_records": 0,
-            "excluded_subjects": 0,
-        })
-    attrition_df = pl.DataFrame(attrition_rows).cast({
-        "cohort_definition_id": pl.Int64,
-        "number_records": pl.Int64,
-        "number_subjects": pl.Int64,
-        "reason_id": pl.Int64,
-        "excluded_records": pl.Int64,
-        "excluded_subjects": pl.Int64,
-    })
+        attrition_rows.append(
+            {
+                "cohort_definition_id": cid,
+                "number_records": nr,
+                "number_subjects": ns,
+                "reason_id": 1,
+                "reason": "Initial qualifying events",
+                "excluded_records": 0,
+                "excluded_subjects": 0,
+            }
+        )
+    attrition_df = pl.DataFrame(attrition_rows).cast(
+        {
+            "cohort_definition_id": pl.Int64,
+            "number_records": pl.Int64,
+            "number_subjects": pl.Int64,
+            "reason_id": pl.Int64,
+            "excluded_records": pl.Int64,
+            "excluded_subjects": pl.Int64,
+        }
+    )
 
     # Build cohort codelist
     codelist_rows = []
     for row in concept_rows:
-        codelist_rows.append({
-            "cohort_definition_id": row["cohort_definition_id"],
-            "codelist_name": row["cohort_name"],
-            "concept_id": row["concept_id"],
-            "codelist_type": "index event",
-        })
-    codelist_df = pl.DataFrame(codelist_rows).cast({
-        "cohort_definition_id": pl.Int64,
-        "concept_id": pl.Int64,
-    }) if codelist_rows else pl.DataFrame(
-        schema={
-            "cohort_definition_id": pl.Int64,
-            "codelist_name": pl.Utf8,
-            "concept_id": pl.Int64,
-            "codelist_type": pl.Utf8,
-        }
+        codelist_rows.append(
+            {
+                "cohort_definition_id": row["cohort_definition_id"],
+                "codelist_name": row["cohort_name"],
+                "concept_id": row["concept_id"],
+                "codelist_type": "index event",
+            }
+        )
+    codelist_df = (
+        pl.DataFrame(codelist_rows).cast(
+            {
+                "cohort_definition_id": pl.Int64,
+                "concept_id": pl.Int64,
+            }
+        )
+        if codelist_rows
+        else pl.DataFrame(
+            schema={
+                "cohort_definition_id": pl.Int64,
+                "codelist_name": pl.Utf8,
+                "concept_id": pl.Int64,
+                "codelist_type": pl.Utf8,
+            }
+        )
     )
 
     # Also write the cohort table to the database write schema (best-effort;
@@ -741,37 +761,45 @@ def _empty_cohort(
     )
     settings_rows = []
     for cdef in concept_defs:
-        settings_rows.append({
-            "cohort_definition_id": cdef["cohort_definition_id"],
-            "cohort_name": cdef["cohort_name"],
-            "limit": limit,
-            "prior_observation": required_observation[0],
-            "future_observation": required_observation[1],
-            "end": str(end),
-        })
-    settings_df = pl.DataFrame(settings_rows).cast({
-        "cohort_definition_id": pl.Int64,
-    })
+        settings_rows.append(
+            {
+                "cohort_definition_id": cdef["cohort_definition_id"],
+                "cohort_name": cdef["cohort_name"],
+                "limit": limit,
+                "prior_observation": required_observation[0],
+                "future_observation": required_observation[1],
+                "end": str(end),
+            }
+        )
+    settings_df = pl.DataFrame(settings_rows).cast(
+        {
+            "cohort_definition_id": pl.Int64,
+        }
+    )
 
     attrition_rows = []
     for cdef in concept_defs:
-        attrition_rows.append({
-            "cohort_definition_id": cdef["cohort_definition_id"],
-            "number_records": 0,
-            "number_subjects": 0,
-            "reason_id": 1,
-            "reason": "Initial qualifying events",
-            "excluded_records": 0,
-            "excluded_subjects": 0,
-        })
-    attrition_df = pl.DataFrame(attrition_rows).cast({
-        "cohort_definition_id": pl.Int64,
-        "number_records": pl.Int64,
-        "number_subjects": pl.Int64,
-        "reason_id": pl.Int64,
-        "excluded_records": pl.Int64,
-        "excluded_subjects": pl.Int64,
-    })
+        attrition_rows.append(
+            {
+                "cohort_definition_id": cdef["cohort_definition_id"],
+                "number_records": 0,
+                "number_subjects": 0,
+                "reason_id": 1,
+                "reason": "Initial qualifying events",
+                "excluded_records": 0,
+                "excluded_subjects": 0,
+            }
+        )
+    attrition_df = pl.DataFrame(attrition_rows).cast(
+        {
+            "cohort_definition_id": pl.Int64,
+            "number_records": pl.Int64,
+            "number_subjects": pl.Int64,
+            "reason_id": pl.Int64,
+            "excluded_records": pl.Int64,
+            "excluded_subjects": pl.Int64,
+        }
+    )
 
     cohort_table = CohortTable(
         data=empty_df,

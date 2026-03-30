@@ -92,13 +92,15 @@ def mock_survival(
         obs_start = enroll_date - datetime.timedelta(days=rng.randint(0, 365))
         obs_end = end_date + datetime.timedelta(days=rng.randint(0, 180))
 
-        obs_rows.append({
-            "observation_period_id": pid,
-            "person_id": pid,
-            "observation_period_start_date": obs_start,
-            "observation_period_end_date": obs_end,
-            "period_type_concept_id": 44814724,
-        })
+        obs_rows.append(
+            {
+                "observation_period_id": pid,
+                "person_id": pid,
+                "observation_period_start_date": obs_start,
+                "observation_period_end_date": obs_end,
+                "period_type_concept_id": 44814724,
+            }
+        )
 
         # Person
         sex = rng.choice(["Male", "Female"])
@@ -106,15 +108,17 @@ def mock_survival(
         year_of_birth = enroll_date.year - age
         gender_concept_id = 8507 if sex == "Male" else 8532
 
-        persons.append({
-            "person_id": pid,
-            "gender_concept_id": gender_concept_id,
-            "year_of_birth": year_of_birth,
-            "month_of_birth": rng.randint(1, 12),
-            "day_of_birth": rng.randint(1, 28),
-            "race_concept_id": 0,
-            "ethnicity_concept_id": 0,
-        })
+        persons.append(
+            {
+                "person_id": pid,
+                "gender_concept_id": gender_concept_id,
+                "year_of_birth": year_of_birth,
+                "month_of_birth": rng.randint(1, 12),
+                "day_of_birth": rng.randint(1, 28),
+                "race_concept_id": 0,
+                "ethnicity_concept_id": 0,
+            }
+        )
 
         # Target cohort entry
         target_entry: dict[str, Any] = {
@@ -125,11 +129,7 @@ def mock_survival(
         }
         if include_strata:
             target_entry["sex"] = sex
-            target_entry["age_group"] = (
-                "young" if age < 50
-                else "middle" if age < 70
-                else "old"
-            )
+            target_entry["age_group"] = "young" if age < 50 else "middle" if age < 70 else "old"
         target_rows.append(target_entry)
 
         # Primary outcome (event_rate chance)
@@ -137,90 +137,118 @@ def mock_survival(
         if roll < event_rate:
             event_days = rng.randint(1, fu_days)
             event_date = enroll_date + datetime.timedelta(days=event_days)
-            outcome_rows.append({
-                "cohort_definition_id": 1,
-                "subject_id": pid,
-                "cohort_start_date": event_date,
-                "cohort_end_date": event_date,
-            })
+            outcome_rows.append(
+                {
+                    "cohort_definition_id": 1,
+                    "subject_id": pid,
+                    "cohort_start_date": event_date,
+                    "cohort_end_date": event_date,
+                }
+            )
         elif roll < event_rate + competing_rate:
             # Competing event
             event_days = rng.randint(1, fu_days)
             event_date = enroll_date + datetime.timedelta(days=event_days)
-            competing_rows.append({
-                "cohort_definition_id": 1,
-                "subject_id": pid,
-                "cohort_start_date": event_date,
-                "cohort_end_date": event_date,
-            })
+            competing_rows.append(
+                {
+                    "cohort_definition_id": 1,
+                    "subject_id": pid,
+                    "cohort_start_date": event_date,
+                    "cohort_end_date": event_date,
+                }
+            )
 
     # Build DataFrames with proper types
-    target_df = pl.DataFrame(target_rows).cast({
-        "cohort_definition_id": pl.Int64,
-        "subject_id": pl.Int64,
-        "cohort_start_date": pl.Date,
-        "cohort_end_date": pl.Date,
-    })
-    outcome_df = pl.DataFrame(
-        outcome_rows,
-        schema={
+    target_df = pl.DataFrame(target_rows).cast(
+        {
             "cohort_definition_id": pl.Int64,
             "subject_id": pl.Int64,
             "cohort_start_date": pl.Date,
             "cohort_end_date": pl.Date,
-        },
-    ) if outcome_rows else pl.DataFrame({
-        "cohort_definition_id": pl.Series([], dtype=pl.Int64),
-        "subject_id": pl.Series([], dtype=pl.Int64),
-        "cohort_start_date": pl.Series([], dtype=pl.Date),
-        "cohort_end_date": pl.Series([], dtype=pl.Date),
-    })
-    competing_df = pl.DataFrame(
-        competing_rows,
-        schema={
-            "cohort_definition_id": pl.Int64,
-            "subject_id": pl.Int64,
-            "cohort_start_date": pl.Date,
-            "cohort_end_date": pl.Date,
-        },
-    ) if competing_rows else pl.DataFrame({
-        "cohort_definition_id": pl.Series([], dtype=pl.Int64),
-        "subject_id": pl.Series([], dtype=pl.Int64),
-        "cohort_start_date": pl.Series([], dtype=pl.Date),
-        "cohort_end_date": pl.Series([], dtype=pl.Date),
-    })
-    person_df = pl.DataFrame(persons).cast({
-        "person_id": pl.Int64,
-        "year_of_birth": pl.Int32,
-        "month_of_birth": pl.Int32,
-        "day_of_birth": pl.Int32,
-        "gender_concept_id": pl.Int32,
-        "race_concept_id": pl.Int32,
-        "ethnicity_concept_id": pl.Int32,
-    })
-    obs_df = pl.DataFrame(obs_rows).cast({
-        "person_id": pl.Int64,
-        "observation_period_id": pl.Int64,
-        "observation_period_start_date": pl.Date,
-        "observation_period_end_date": pl.Date,
-        "period_type_concept_id": pl.Int64,
-    })
+        }
+    )
+    outcome_df = (
+        pl.DataFrame(
+            outcome_rows,
+            schema={
+                "cohort_definition_id": pl.Int64,
+                "subject_id": pl.Int64,
+                "cohort_start_date": pl.Date,
+                "cohort_end_date": pl.Date,
+            },
+        )
+        if outcome_rows
+        else pl.DataFrame(
+            {
+                "cohort_definition_id": pl.Series([], dtype=pl.Int64),
+                "subject_id": pl.Series([], dtype=pl.Int64),
+                "cohort_start_date": pl.Series([], dtype=pl.Date),
+                "cohort_end_date": pl.Series([], dtype=pl.Date),
+            }
+        )
+    )
+    competing_df = (
+        pl.DataFrame(
+            competing_rows,
+            schema={
+                "cohort_definition_id": pl.Int64,
+                "subject_id": pl.Int64,
+                "cohort_start_date": pl.Date,
+                "cohort_end_date": pl.Date,
+            },
+        )
+        if competing_rows
+        else pl.DataFrame(
+            {
+                "cohort_definition_id": pl.Series([], dtype=pl.Int64),
+                "subject_id": pl.Series([], dtype=pl.Int64),
+                "cohort_start_date": pl.Series([], dtype=pl.Date),
+                "cohort_end_date": pl.Series([], dtype=pl.Date),
+            }
+        )
+    )
+    person_df = pl.DataFrame(persons).cast(
+        {
+            "person_id": pl.Int64,
+            "year_of_birth": pl.Int32,
+            "month_of_birth": pl.Int32,
+            "day_of_birth": pl.Int32,
+            "gender_concept_id": pl.Int32,
+            "race_concept_id": pl.Int32,
+            "ethnicity_concept_id": pl.Int32,
+        }
+    )
+    obs_df = pl.DataFrame(obs_rows).cast(
+        {
+            "person_id": pl.Int64,
+            "observation_period_id": pl.Int64,
+            "observation_period_start_date": pl.Date,
+            "observation_period_end_date": pl.Date,
+            "period_type_concept_id": pl.Int64,
+        }
+    )
 
     # Settings
-    settings_target = pl.DataFrame({
-        "cohort_definition_id": [1],
-        "cohort_name": [target_name],
-    }).cast({"cohort_definition_id": pl.Int64})
+    settings_target = pl.DataFrame(
+        {
+            "cohort_definition_id": [1],
+            "cohort_name": [target_name],
+        }
+    ).cast({"cohort_definition_id": pl.Int64})
 
-    settings_outcome = pl.DataFrame({
-        "cohort_definition_id": [1],
-        "cohort_name": [outcome_name],
-    }).cast({"cohort_definition_id": pl.Int64})
+    settings_outcome = pl.DataFrame(
+        {
+            "cohort_definition_id": [1],
+            "cohort_name": [outcome_name],
+        }
+    ).cast({"cohort_definition_id": pl.Int64})
 
-    settings_competing = pl.DataFrame({
-        "cohort_definition_id": [1],
-        "cohort_name": [competing_name],
-    }).cast({"cohort_definition_id": pl.Int64})
+    settings_competing = pl.DataFrame(
+        {
+            "cohort_definition_id": [1],
+            "cohort_name": [competing_name],
+        }
+    ).cast({"cohort_definition_id": pl.Int64})
 
     # Build CdmReference
     cdm = CdmReference(
@@ -232,13 +260,19 @@ def mock_survival(
     )
 
     cdm[target_name] = CohortTable(
-        target_df, tbl_name=target_name, settings=settings_target,
+        target_df,
+        tbl_name=target_name,
+        settings=settings_target,
     )
     cdm[outcome_name] = CohortTable(
-        outcome_df, tbl_name=outcome_name, settings=settings_outcome,
+        outcome_df,
+        tbl_name=outcome_name,
+        settings=settings_outcome,
     )
     cdm[competing_name] = CohortTable(
-        competing_df, tbl_name=competing_name, settings=settings_competing,
+        competing_df,
+        tbl_name=competing_name,
+        settings=settings_competing,
     )
 
     return cdm

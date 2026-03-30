@@ -79,10 +79,7 @@ def _run_hip(
     persons = hip_records["person_id"].unique().sort().to_list()
 
     for pid in persons:
-        person_recs = (
-            hip_records.filter(pl.col("person_id") == pid)
-            .sort("record_date")
-        )
+        person_recs = hip_records.filter(pl.col("person_id") == pid).sort("record_date")
         n = person_recs.height
         if n == 0:
             continue
@@ -93,9 +90,7 @@ def _run_hip(
         # Get global row indices for tracking assignment
         global_mask = hip_records["person_id"] == pid
         global_sorted = (
-            hip_records.with_row_index("_global_idx")
-            .filter(global_mask)
-            .sort("record_date")
+            hip_records.with_row_index("_global_idx").filter(global_mask).sort("record_date")
         )
         global_indices = global_sorted["_global_idx"].to_list()
 
@@ -113,9 +108,7 @@ def _run_hip(
             # Check Matcho spacing
             if last_outcome_date is not None and last_outcome_cat is not None:
                 days_gap = (last_outcome_date - dt).days
-                min_days = MATCHO_OUTCOME_LIMITS.get(
-                    (cat, last_outcome_cat), _DEFAULT_MIN_SPACING
-                )
+                min_days = MATCHO_OUTCOME_LIMITS.get((cat, last_outcome_cat), _DEFAULT_MIN_SPACING)
                 if days_gap < min_days:
                     # Too close to previous outcome — skip this record
                     assigned_indices.add(global_indices[i])
@@ -129,15 +122,17 @@ def _run_hip(
             ep_start = dt - timedelta(days=term_max)
             ep_end = dt
 
-            episodes.append({
-                "person_id": pid,
-                "episode_id": episode_counter,
-                "category": cat,
-                "episode_start_date": ep_start,
-                "episode_end_date": ep_end,
-                "outcome_date": dt,
-                "outcome_concept_id": concept_ids[i],
-            })
+            episodes.append(
+                {
+                    "person_id": pid,
+                    "episode_id": episode_counter,
+                    "category": cat,
+                    "episode_start_date": ep_start,
+                    "episode_end_date": ep_end,
+                    "outcome_date": dt,
+                    "outcome_concept_id": concept_ids[i],
+                }
+            )
 
             assigned_indices.add(global_indices[i])
             last_outcome_cat = cat
@@ -169,10 +164,7 @@ def _run_hip(
 
         if unassigned.height > 0:
             for pid in unassigned["person_id"].unique().sort().to_list():
-                precs = (
-                    unassigned.filter(pl.col("person_id") == pid)
-                    .sort("record_date")
-                )
+                precs = unassigned.filter(pl.col("person_id") == pid).sort("record_date")
                 if precs.height == 0:
                     continue
 
@@ -191,15 +183,17 @@ def _run_hip(
                     if gap > 305:
                         # Emit episode for current group
                         episode_counter += 1
-                        episodes.append({
-                            "person_id": pid,
-                            "episode_id": episode_counter,
-                            "category": "PREG",
-                            "episode_start_date": group_dates[0],
-                            "episode_end_date": group_dates[-1],
-                            "outcome_date": None,
-                            "outcome_concept_id": group_concepts[0],
-                        })
+                        episodes.append(
+                            {
+                                "person_id": pid,
+                                "episode_id": episode_counter,
+                                "category": "PREG",
+                                "episode_start_date": group_dates[0],
+                                "episode_end_date": group_dates[-1],
+                                "outcome_date": None,
+                                "outcome_concept_id": group_concepts[0],
+                            }
+                        )
                         current_start = u_dates[j]
                         group_dates = [u_dates[j]]
                         group_concepts = [u_concepts[j]]
@@ -210,28 +204,32 @@ def _run_hip(
                 # Emit final group
                 if group_dates:
                     episode_counter += 1
-                    episodes.append({
-                        "person_id": pid,
-                        "episode_id": episode_counter,
-                        "category": "PREG",
-                        "episode_start_date": group_dates[0],
-                        "episode_end_date": group_dates[-1],
-                        "outcome_date": None,
-                        "outcome_concept_id": group_concepts[0],
-                    })
+                    episodes.append(
+                        {
+                            "person_id": pid,
+                            "episode_id": episode_counter,
+                            "category": "PREG",
+                            "episode_start_date": group_dates[0],
+                            "episode_end_date": group_dates[-1],
+                            "outcome_date": None,
+                            "outcome_concept_id": group_concepts[0],
+                        }
+                    )
 
     if not episodes:
         return pl.DataFrame(schema=result_schema)
 
-    result = pl.DataFrame(episodes).cast({
-        "person_id": pl.Int64,
-        "episode_id": pl.Int64,
-        "category": pl.Utf8,
-        "episode_start_date": pl.Date,
-        "episode_end_date": pl.Date,
-        "outcome_date": pl.Date,
-        "outcome_concept_id": pl.Int64,
-    })
+    result = pl.DataFrame(episodes).cast(
+        {
+            "person_id": pl.Int64,
+            "episode_id": pl.Int64,
+            "category": pl.Utf8,
+            "episode_start_date": pl.Date,
+            "episode_end_date": pl.Date,
+            "outcome_date": pl.Date,
+            "outcome_concept_id": pl.Int64,
+        }
+    )
 
     log.info("HIP produced %d episodes.", result.height)
     return result

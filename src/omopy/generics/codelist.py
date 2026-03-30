@@ -83,8 +83,7 @@ class Codelist(dict[str, list[int]]):
             for i, cid in enumerate(ids):
                 if not isinstance(cid, int):
                     msg = (
-                        f"Concept IDs must be integers, got {type(cid).__name__} "
-                        f"at {name!r}[{i}]"
+                        f"Concept IDs must be integers, got {type(cid).__name__} at {name!r}[{i}]"
                     )
                     raise TypeError(msg)
 

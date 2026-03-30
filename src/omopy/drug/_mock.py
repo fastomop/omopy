@@ -105,26 +105,30 @@ def mock_drug_utilisation(
             }
 
             # Count rows
-            rows.append({
-                **base,
-                "additional_name": OVERALL,
-                "additional_level": OVERALL,
-                "variable_name": "Number records",
-                "variable_level": "",
-                "estimate_name": "count",
-                "estimate_type": "integer",
-                "estimate_value": str(n_records),
-            })
-            rows.append({
-                **base,
-                "additional_name": OVERALL,
-                "additional_level": OVERALL,
-                "variable_name": "Number subjects",
-                "variable_level": "",
-                "estimate_name": "count",
-                "estimate_type": "integer",
-                "estimate_value": str(n_subjects),
-            })
+            rows.append(
+                {
+                    **base,
+                    "additional_name": OVERALL,
+                    "additional_level": OVERALL,
+                    "variable_name": "Number records",
+                    "variable_level": "",
+                    "estimate_name": "count",
+                    "estimate_type": "integer",
+                    "estimate_value": str(n_records),
+                }
+            )
+            rows.append(
+                {
+                    **base,
+                    "additional_name": OVERALL,
+                    "additional_level": OVERALL,
+                    "variable_name": "Number subjects",
+                    "variable_level": "",
+                    "estimate_name": "count",
+                    "estimate_type": "integer",
+                    "estimate_value": str(n_subjects),
+                }
+            )
 
             for cs_name in concept_set_names:
                 for metric_name, low, high in metrics:
@@ -158,20 +162,24 @@ def mock_drug_utilisation(
                             f"{rng.uniform(0, 5):.2f}",
                         ),
                     ]:
-                        rows.append({
-                            **metric_base,
-                            "estimate_name": est_name,
-                            "estimate_type": est_type,
-                            "estimate_value": est_val,
-                        })
+                        rows.append(
+                            {
+                                **metric_base,
+                                "estimate_name": est_name,
+                                "estimate_type": est_type,
+                                "estimate_value": est_val,
+                            }
+                        )
 
     data = pl.DataFrame(rows)
-    settings = pl.DataFrame({
-        "result_id": [result_id],
-        "result_type": ["summarise_drug_utilisation"],
-        "package_name": [_PACKAGE_NAME],
-        "package_version": [_PACKAGE_VERSION],
-    })
+    settings = pl.DataFrame(
+        {
+            "result_id": [result_id],
+            "result_type": ["summarise_drug_utilisation"],
+            "package_name": [_PACKAGE_NAME],
+            "package_version": [_PACKAGE_VERSION],
+        }
+    )
 
     return SummarisedResult(data, settings=settings)
 
@@ -203,6 +211,7 @@ def benchmark_drug_utilisation(
     """
     if verbose:
         import warnings
+
         warnings.warn(
             "benchmark_drug_utilisation is a placeholder — not yet implemented",
             stacklevel=2,

@@ -31,6 +31,7 @@ def synthea_con() -> ibis.BaseBackend:
 def synthea_db_source(synthea_con: ibis.BaseBackend):
     """Session-scoped DbSource wrapping the Synthea test database."""
     from omopy.connector.db_source import DbSource
+
     return DbSource(synthea_con, cdm_schema="base")
 
 
@@ -38,4 +39,5 @@ def synthea_db_source(synthea_con: ibis.BaseBackend):
 def synthea_cdm(synthea_con: ibis.BaseBackend):
     """Session-scoped CdmReference from the Synthea test database."""
     from omopy.connector.cdm_from_con import cdm_from_con
+
     return cdm_from_con(synthea_con, cdm_schema="base")

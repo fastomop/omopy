@@ -64,13 +64,9 @@ class TestCdmSubsetCohort:
 
     def test_subset_person_ids_match(self, cdm_with_cohort):
         """Person IDs in subset should match the cohort subject IDs."""
-        cohort_subjects = sorted(
-            cdm_with_cohort["hypertension"].collect()["subject_id"].to_list()
-        )
+        cohort_subjects = sorted(cdm_with_cohort["hypertension"].collect()["subject_id"].to_list())
         subset = cdm_subset_cohort(cdm_with_cohort, "hypertension")
-        subset_persons = sorted(
-            subset["person"].collect()["person_id"].to_list()
-        )
+        subset_persons = sorted(subset["person"].collect()["person_id"].to_list())
         assert subset_persons == cohort_subjects
 
     def test_subset_reduces_condition_occurrence(self, cdm_with_cohort):
@@ -113,16 +109,12 @@ class TestCdmSubsetCohort:
 
     def test_subset_with_specific_cohort_id(self, cdm_with_cohort):
         """Filter to specific cohort_definition_id."""
-        subset = cdm_subset_cohort(
-            cdm_with_cohort, "hypertension", cohort_id=[1]
-        )
+        subset = cdm_subset_cohort(cdm_with_cohort, "hypertension", cohort_id=[1])
         assert subset["person"].count() == 6
 
     def test_subset_with_empty_cohort_id_list(self, cdm_with_cohort):
         """Empty cohort_id list → no subjects → empty tables."""
-        subset = cdm_subset_cohort(
-            cdm_with_cohort, "hypertension", cohort_id=[999]
-        )
+        subset = cdm_subset_cohort(cdm_with_cohort, "hypertension", cohort_id=[999])
         assert subset["person"].count() == 0
 
     def test_subset_observation_period_filtered(self, cdm_with_cohort):
@@ -187,15 +179,15 @@ class TestCdmSample:
         """Local CDM should raise TypeError."""
         from omopy.generics.cdm_table import CdmTable
 
-        person_df = pl.DataFrame({
-            "person_id": [1, 2, 3],
-            "gender_concept_id": [0, 0, 0],
-            "year_of_birth": [1990, 1991, 1992],
-            "race_concept_id": [0, 0, 0],
-            "ethnicity_concept_id": [0, 0, 0],
-        })
-        local_cdm = CdmReference(
-            tables={"person": CdmTable(data=person_df, tbl_name="person")}
+        person_df = pl.DataFrame(
+            {
+                "person_id": [1, 2, 3],
+                "gender_concept_id": [0, 0, 0],
+                "year_of_birth": [1990, 1991, 1992],
+                "race_concept_id": [0, 0, 0],
+                "ethnicity_concept_id": [0, 0, 0],
+            }
         )
+        local_cdm = CdmReference(tables={"person": CdmTable(data=person_df, tbl_name="person")})
         with pytest.raises(TypeError, match="DbSource"):
             cdm_sample(local_cdm, 2)

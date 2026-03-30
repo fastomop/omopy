@@ -39,6 +39,7 @@ from omopy.generics.summarised_result import (
 def mock_cdm():
     """Create a mock CDM for survival testing."""
     from omopy.survival import mock_survival
+
     return mock_survival(n_persons=100, seed=42)
 
 
@@ -46,6 +47,7 @@ def mock_cdm():
 def mock_cdm_small():
     """Small mock CDM for quick tests."""
     from omopy.survival import mock_survival
+
     return mock_survival(n_persons=30, seed=123)
 
 
@@ -53,6 +55,7 @@ def mock_cdm_small():
 def mock_cdm_no_events():
     """Mock CDM with no events."""
     from omopy.survival import mock_survival
+
     return mock_survival(n_persons=50, seed=99, event_rate=0.0, competing_rate=0.0)
 
 
@@ -60,6 +63,7 @@ def mock_cdm_no_events():
 def single_event_result(mock_cdm):
     """Pre-computed single event survival result."""
     from omopy.survival import estimate_single_event_survival
+
     return estimate_single_event_survival(
         mock_cdm,
         target_cohort_table="target",
@@ -72,6 +76,7 @@ def single_event_result(mock_cdm):
 def competing_risk_result(mock_cdm):
     """Pre-computed competing risk result."""
     from omopy.survival import estimate_competing_risk_survival
+
     return estimate_competing_risk_survival(
         mock_cdm,
         target_cohort_table="target",
@@ -91,14 +96,17 @@ class TestModuleImports:
 
     def test_import_module(self):
         import omopy.survival
+
         assert hasattr(omopy.survival, "__all__")
 
     def test_export_count(self):
         import omopy.survival
+
         assert len(omopy.survival.__all__) == 11
 
     def test_all_exports_callable(self):
         import omopy.survival
+
         for name in omopy.survival.__all__:
             obj = getattr(omopy.survival, name)
             assert callable(obj), f"{name} is not callable"
@@ -117,6 +125,7 @@ class TestModuleImports:
             table_survival_attrition,
             table_survival_events,
         )
+
         assert callable(estimate_single_event_survival)
         assert callable(estimate_competing_risk_survival)
         assert callable(add_cohort_survival)
@@ -140,6 +149,7 @@ class TestMockSurvival:
 
     def test_returns_cdm_reference(self):
         from omopy.survival import mock_survival
+
         cdm = mock_survival(n_persons=20, seed=1)
         assert isinstance(cdm, CdmReference)
 
@@ -180,6 +190,7 @@ class TestMockSurvival:
 
     def test_deterministic(self):
         from omopy.survival import mock_survival
+
         cdm1 = mock_survival(n_persons=20, seed=42)
         cdm2 = mock_survival(n_persons=20, seed=42)
         t1 = cdm1["target"].collect()
@@ -188,6 +199,7 @@ class TestMockSurvival:
 
     def test_no_strata(self):
         from omopy.survival import mock_survival
+
         cdm = mock_survival(n_persons=20, seed=42, include_strata=False)
         target = cdm["target"].collect()
         assert "sex" not in target.columns
@@ -195,8 +207,10 @@ class TestMockSurvival:
 
     def test_custom_names(self):
         from omopy.survival import mock_survival
+
         cdm = mock_survival(
-            n_persons=20, seed=42,
+            n_persons=20,
+            seed=42,
             target_name="exposure",
             outcome_name="death",
             competing_name="transplant",
@@ -220,9 +234,11 @@ class TestAddCohortSurvival:
 
     def test_basic_usage(self, mock_cdm):
         from omopy.survival import add_cohort_survival
+
         target = mock_cdm["target"]
         result = add_cohort_survival(
-            target, mock_cdm,
+            target,
+            mock_cdm,
             outcome_cohort_table="outcome",
             outcome_cohort_id=1,
         )
@@ -232,8 +248,10 @@ class TestAddCohortSurvival:
 
     def test_custom_column_names(self, mock_cdm):
         from omopy.survival import add_cohort_survival
+
         result = add_cohort_survival(
-            mock_cdm["target"], mock_cdm,
+            mock_cdm["target"],
+            mock_cdm,
             outcome_cohort_table="outcome",
             outcome_cohort_id=1,
             time_column="follow_up_time",
@@ -245,8 +263,10 @@ class TestAddCohortSurvival:
 
     def test_status_values(self, mock_cdm):
         from omopy.survival import add_cohort_survival
+
         result = add_cohort_survival(
-            mock_cdm["target"], mock_cdm,
+            mock_cdm["target"],
+            mock_cdm,
             outcome_cohort_table="outcome",
             outcome_cohort_id=1,
         )
@@ -258,8 +278,10 @@ class TestAddCohortSurvival:
 
     def test_time_non_negative(self, mock_cdm):
         from omopy.survival import add_cohort_survival
+
         result = add_cohort_survival(
-            mock_cdm["target"], mock_cdm,
+            mock_cdm["target"],
+            mock_cdm,
             outcome_cohort_table="outcome",
             outcome_cohort_id=1,
         )
@@ -269,10 +291,12 @@ class TestAddCohortSurvival:
 
     def test_preserves_original_columns(self, mock_cdm):
         from omopy.survival import add_cohort_survival
+
         target = mock_cdm["target"]
         original_cols = set(target.collect().columns)
         result = add_cohort_survival(
-            target, mock_cdm,
+            target,
+            mock_cdm,
             outcome_cohort_table="outcome",
             outcome_cohort_id=1,
         )
@@ -282,8 +306,10 @@ class TestAddCohortSurvival:
 
     def test_censor_on_cohort_exit(self, mock_cdm):
         from omopy.survival import add_cohort_survival
+
         result = add_cohort_survival(
-            mock_cdm["target"], mock_cdm,
+            mock_cdm["target"],
+            mock_cdm,
             outcome_cohort_table="outcome",
             outcome_cohort_id=1,
             censor_on_cohort_exit=True,
@@ -294,8 +320,10 @@ class TestAddCohortSurvival:
 
     def test_follow_up_cap(self, mock_cdm):
         from omopy.survival import add_cohort_survival
+
         result = add_cohort_survival(
-            mock_cdm["target"], mock_cdm,
+            mock_cdm["target"],
+            mock_cdm,
             outcome_cohort_table="outcome",
             outcome_cohort_id=1,
             follow_up_days=365,
@@ -306,8 +334,10 @@ class TestAddCohortSurvival:
 
     def test_finite_washout(self, mock_cdm):
         from omopy.survival import add_cohort_survival
+
         result = add_cohort_survival(
-            mock_cdm["target"], mock_cdm,
+            mock_cdm["target"],
+            mock_cdm,
             outcome_cohort_table="outcome",
             outcome_cohort_id=1,
             outcome_washout=180,
@@ -317,8 +347,10 @@ class TestAddCohortSurvival:
 
     def test_returns_cohort_table(self, mock_cdm):
         from omopy.survival import add_cohort_survival
+
         result = add_cohort_survival(
-            mock_cdm["target"], mock_cdm,
+            mock_cdm["target"],
+            mock_cdm,
             outcome_cohort_table="outcome",
             outcome_cohort_id=1,
         )
@@ -327,9 +359,11 @@ class TestAddCohortSurvival:
 
     def test_cohort_table_object_as_outcome(self, mock_cdm):
         from omopy.survival import add_cohort_survival
+
         outcome_ct = mock_cdm["outcome"]
         result = add_cohort_survival(
-            mock_cdm["target"], mock_cdm,
+            mock_cdm["target"],
+            mock_cdm,
             outcome_cohort_table=outcome_ct,
             outcome_cohort_id=1,
         )
@@ -369,23 +403,17 @@ class TestSingleEventSurvival:
 
     def test_has_summary_rows(self, single_event_result):
         data = single_event_result.data
-        summary_rows = data.filter(
-            pl.col("estimate_name") == "number_records"
-        )
+        summary_rows = data.filter(pl.col("estimate_name") == "number_records")
         assert len(summary_rows) > 0
 
     def test_has_attrition_rows(self, single_event_result):
         data = single_event_result.data
-        attrition_rows = data.filter(
-            pl.col("strata_name").str.contains("reason")
-        )
+        attrition_rows = data.filter(pl.col("strata_name").str.contains("reason"))
         assert len(attrition_rows) > 0
 
     def test_estimates_between_0_and_1(self, single_event_result):
         data = single_event_result.data
-        surv_rows = data.filter(
-            pl.col("estimate_name") == "estimate"
-        )
+        surv_rows = data.filter(pl.col("estimate_name") == "estimate")
         vals = surv_rows["estimate_value"].cast(pl.Float64)
         assert (vals >= 0).all()
         assert (vals <= 1.0001).all()  # small floating point tolerance
@@ -393,8 +421,7 @@ class TestSingleEventSurvival:
     def test_survival_monotonically_decreasing(self, single_event_result):
         data = single_event_result.data
         surv_rows = data.filter(
-            (pl.col("estimate_name") == "estimate")
-            & (pl.col("strata_name") == "overall")
+            (pl.col("estimate_name") == "estimate") & (pl.col("strata_name") == "overall")
         )
         if len(surv_rows) > 1:
             vals = surv_rows["estimate_value"].cast(pl.Float64).to_list()
@@ -404,6 +431,7 @@ class TestSingleEventSurvival:
 
     def test_with_strata(self, mock_cdm):
         from omopy.survival import estimate_single_event_survival
+
         result = estimate_single_event_survival(
             mock_cdm,
             target_cohort_table="target",
@@ -417,6 +445,7 @@ class TestSingleEventSurvival:
 
     def test_with_follow_up_cap(self, mock_cdm):
         from omopy.survival import estimate_single_event_survival
+
         result = estimate_single_event_survival(
             mock_cdm,
             target_cohort_table="target",
@@ -429,6 +458,7 @@ class TestSingleEventSurvival:
 
     def test_censor_on_cohort_exit(self, mock_cdm):
         from omopy.survival import estimate_single_event_survival
+
         result = estimate_single_event_survival(
             mock_cdm,
             target_cohort_table="target",
@@ -441,6 +471,7 @@ class TestSingleEventSurvival:
 
     def test_restricted_mean(self, mock_cdm):
         from omopy.survival import estimate_single_event_survival
+
         result = estimate_single_event_survival(
             mock_cdm,
             target_cohort_table="target",
@@ -449,13 +480,12 @@ class TestSingleEventSurvival:
             estimate_gap=30,
         )
         data = result.data
-        rmst_rows = data.filter(
-            pl.col("estimate_name") == "restricted_mean_survival"
-        )
+        rmst_rows = data.filter(pl.col("estimate_name") == "restricted_mean_survival")
         assert len(rmst_rows) > 0
 
     def test_custom_event_gap(self, mock_cdm):
         from omopy.survival import estimate_single_event_survival
+
         result = estimate_single_event_survival(
             mock_cdm,
             target_cohort_table="target",
@@ -467,6 +497,7 @@ class TestSingleEventSurvival:
 
     def test_minimum_survival_days(self, mock_cdm):
         from omopy.survival import estimate_single_event_survival
+
         result = estimate_single_event_survival(
             mock_cdm,
             target_cohort_table="target",
@@ -519,8 +550,7 @@ class TestCompetingRiskSurvival:
     def test_cif_monotonically_increasing(self, competing_risk_result):
         data = competing_risk_result.data
         cif_rows = data.filter(
-            (pl.col("estimate_name") == "estimate")
-            & (pl.col("strata_name") == "overall")
+            (pl.col("estimate_name") == "estimate") & (pl.col("strata_name") == "overall")
         )
         if len(cif_rows) > 1:
             vals = cif_rows["estimate_value"].cast(pl.Float64).to_list()
@@ -543,6 +573,7 @@ class TestAsSurvivalResult:
 
     def test_basic_conversion(self, single_event_result):
         from omopy.survival import as_survival_result
+
         result = as_survival_result(single_event_result)
         assert isinstance(result, dict)
         assert "estimates" in result
@@ -552,29 +583,34 @@ class TestAsSurvivalResult:
 
     def test_estimates_df(self, single_event_result):
         from omopy.survival import as_survival_result
+
         result = as_survival_result(single_event_result)
         assert isinstance(result["estimates"], pl.DataFrame)
         assert len(result["estimates"]) > 0
 
     def test_events_df(self, single_event_result):
         from omopy.survival import as_survival_result
+
         result = as_survival_result(single_event_result)
         assert isinstance(result["events"], pl.DataFrame)
 
     def test_summary_df(self, single_event_result):
         from omopy.survival import as_survival_result
+
         result = as_survival_result(single_event_result)
         assert isinstance(result["summary"], pl.DataFrame)
         assert len(result["summary"]) > 0
 
     def test_attrition_df(self, single_event_result):
         from omopy.survival import as_survival_result
+
         result = as_survival_result(single_event_result)
         assert isinstance(result["attrition"], pl.DataFrame)
         assert len(result["attrition"]) > 0
 
     def test_competing_risk_conversion(self, competing_risk_result):
         from omopy.survival import as_survival_result
+
         result = as_survival_result(competing_risk_result)
         assert isinstance(result, dict)
         assert len(result["estimates"]) > 0
@@ -590,6 +626,7 @@ class TestTableFunctions:
 
     def test_options_table_survival(self):
         from omopy.survival import options_table_survival
+
         opts = options_table_survival()
         assert isinstance(opts, dict)
         assert "header" in opts
@@ -597,12 +634,14 @@ class TestTableFunctions:
 
     def test_table_survival_returns_data(self, single_event_result):
         from omopy.survival import table_survival
+
         result = table_survival(single_event_result, type="polars")
         assert isinstance(result, pl.DataFrame)
         assert len(result) > 0
 
     def test_table_survival_with_times(self, single_event_result):
         from omopy.survival import table_survival
+
         result = table_survival(
             single_event_result,
             times=[30, 90, 180],
@@ -612,6 +651,7 @@ class TestTableFunctions:
 
     def test_table_survival_time_scale(self, single_event_result):
         from omopy.survival import table_survival
+
         result = table_survival(
             single_event_result,
             time_scale="months",
@@ -621,11 +661,13 @@ class TestTableFunctions:
 
     def test_table_survival_events_returns_data(self, single_event_result):
         from omopy.survival import table_survival_events
+
         result = table_survival_events(single_event_result, type="polars")
         assert isinstance(result, pl.DataFrame)
 
     def test_table_survival_attrition_returns_data(self, single_event_result):
         from omopy.survival import table_survival_attrition
+
         result = table_survival_attrition(single_event_result, type="polars")
         assert isinstance(result, pl.DataFrame)
         assert len(result) > 0
@@ -641,6 +683,7 @@ class TestPlotFunction:
 
     def test_basic_plot(self, single_event_result):
         from omopy.survival import plot_survival
+
         fig = plot_survival(single_event_result)
         assert fig is not None
         # Should have data
@@ -648,26 +691,31 @@ class TestPlotFunction:
 
     def test_plot_no_ribbon(self, single_event_result):
         from omopy.survival import plot_survival
+
         fig = plot_survival(single_event_result, ribbon=False)
         assert fig is not None
 
     def test_plot_cumulative_failure(self, single_event_result):
         from omopy.survival import plot_survival
+
         fig = plot_survival(single_event_result, cumulative_failure=True)
         assert fig is not None
 
     def test_plot_time_scale_months(self, single_event_result):
         from omopy.survival import plot_survival
+
         fig = plot_survival(single_event_result, time_scale="months")
         assert fig is not None
 
     def test_plot_time_scale_years(self, single_event_result):
         from omopy.survival import plot_survival
+
         fig = plot_survival(single_event_result, time_scale="years")
         assert fig is not None
 
     def test_plot_competing_risk(self, competing_risk_result):
         from omopy.survival import plot_survival
+
         fig = plot_survival(competing_risk_result)
         assert fig is not None
 
@@ -682,18 +730,19 @@ class TestAvailableGrouping:
 
     def test_basic(self, single_event_result):
         from omopy.survival import available_survival_grouping
+
         grouping = available_survival_grouping(single_event_result)
         assert isinstance(grouping, list)
 
     def test_varying_only(self, single_event_result):
         from omopy.survival import available_survival_grouping
-        grouping = available_survival_grouping(
-            single_event_result, varying=True
-        )
+
+        grouping = available_survival_grouping(single_event_result, varying=True)
         assert isinstance(grouping, list)
 
     def test_returns_settings_columns(self, single_event_result):
         from omopy.survival import available_survival_grouping
+
         grouping = available_survival_grouping(single_event_result)
         # Should include some settings columns
         assert len(grouping) > 0
@@ -709,6 +758,7 @@ class TestEdgeCases:
 
     def test_no_events_still_produces_result(self, mock_cdm_no_events):
         from omopy.survival import estimate_single_event_survival
+
         result = estimate_single_event_survival(
             mock_cdm_no_events,
             target_cohort_table="target",
@@ -721,6 +771,7 @@ class TestEdgeCases:
 
     def test_small_sample(self, mock_cdm_small):
         from omopy.survival import estimate_single_event_survival
+
         result = estimate_single_event_survival(
             mock_cdm_small,
             target_cohort_table="target",
@@ -744,6 +795,7 @@ class TestEdgeCases:
     def test_estimate_gap_1(self, mock_cdm_small):
         """Test with estimate_gap=1 (fine granularity)."""
         from omopy.survival import estimate_single_event_survival
+
         result = estimate_single_event_survival(
             mock_cdm_small,
             target_cohort_table="target",
@@ -759,6 +811,7 @@ class TestEdgeCases:
     def test_large_estimate_gap(self, mock_cdm_small):
         """Test with large estimate_gap."""
         from omopy.survival import estimate_single_event_survival
+
         result = estimate_single_event_survival(
             mock_cdm_small,
             target_cohort_table="target",
@@ -770,6 +823,7 @@ class TestEdgeCases:
     def test_multiple_strata(self, mock_cdm):
         """Test with multiple strata columns."""
         from omopy.survival import estimate_single_event_survival
+
         result = estimate_single_event_survival(
             mock_cdm,
             target_cohort_table="target",
@@ -794,6 +848,7 @@ class TestFullPipeline:
 
     def test_estimate_then_table(self, mock_cdm):
         from omopy.survival import estimate_single_event_survival, table_survival
+
         result = estimate_single_event_survival(
             mock_cdm,
             target_cohort_table="target",
@@ -806,6 +861,7 @@ class TestFullPipeline:
 
     def test_estimate_then_plot(self, mock_cdm):
         from omopy.survival import estimate_single_event_survival, plot_survival
+
         result = estimate_single_event_survival(
             mock_cdm,
             target_cohort_table="target",
@@ -822,6 +878,7 @@ class TestFullPipeline:
             estimate_single_event_survival,
             table_survival,
         )
+
         result = estimate_single_event_survival(
             mock_cdm,
             target_cohort_table="target",
@@ -838,6 +895,7 @@ class TestFullPipeline:
             plot_survival,
             table_survival,
         )
+
         result = estimate_competing_risk_survival(
             mock_cdm,
             target_cohort_table="target",

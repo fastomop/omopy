@@ -84,7 +84,9 @@ def copy_cdm_to(
 
     # Create a DbSource for the target
     target_source = DbSource(
-        con, cdm_schema=schema, write_schema=schema,
+        con,
+        cdm_schema=schema,
+        write_schema=schema,
         cdm_version=cdm.cdm_version,
         cdm_name=cdm.cdm_name,
     )
@@ -106,7 +108,10 @@ def copy_cdm_to(
         nrows = len(df)
         logger.info(
             "Uploading table %s (%d rows) [%d/%d]",
-            table_name, nrows, idx, total,
+            table_name,
+            nrows,
+            idx,
+            total,
         )
 
         # Upload to target
@@ -170,10 +175,7 @@ def _upload_dataframe(
         existing = con.list_tables(database=(catalog, schema))
         if table_name in existing:
             if not overwrite:
-                msg = (
-                    f"Table {fqn} already exists in target. "
-                    f"Set overwrite=True to replace."
-                )
+                msg = f"Table {fqn} already exists in target. Set overwrite=True to replace."
                 raise ValueError(msg)
             con.raw_sql(f"DROP TABLE IF EXISTS {fqn}")
     except ValueError:

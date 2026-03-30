@@ -205,33 +205,30 @@ def _resolve_descendants(
     concept_tbl = con.table("concept", database=(catalog, schema))
 
     # Upload the single concept ID as a temp table
-    arrow_ids = pa.table({
-        "concept_id": pa.array([ingredient_concept_id], type=pa.int64()),
-    })
+    arrow_ids = pa.table(
+        {
+            "concept_id": pa.array([ingredient_concept_id], type=pa.int64()),
+        }
+    )
     tmp_name = f"__omopy_diag_ids_{ingredient_concept_id}"
     con.con.register(tmp_name, arrow_ids)
 
     ids_tbl = con.table(tmp_name)
 
     # Expand via concept_ancestor
-    descendants = (
-        ids_tbl
-        .join(
-            concept_ancestor,
-            ids_tbl.concept_id == concept_ancestor.ancestor_concept_id,
-        )
-        .select(concept_id=concept_ancestor.descendant_concept_id.cast("int64"))
-    )
+    descendants = ids_tbl.join(
+        concept_ancestor,
+        ids_tbl.concept_id == concept_ancestor.ancestor_concept_id,
+    ).select(concept_id=concept_ancestor.descendant_concept_id.cast("int64"))
     all_resolved = (
-        ids_tbl.select(concept_id=ids_tbl.concept_id.cast("int64"))
-        .union(descendants)
-        .distinct()
+        ids_tbl.select(concept_id=ids_tbl.concept_id.cast("int64")).union(descendants).distinct()
     )
 
     # Filter to standard Drug concepts only
     drug_concepts = (
-        all_resolved
-        .join(concept_tbl, all_resolved.concept_id == concept_tbl.concept_id.cast("int64"))
+        all_resolved.join(
+            concept_tbl, all_resolved.concept_id == concept_tbl.concept_id.cast("int64")
+        )
         .filter(concept_tbl.standard_concept == "S")
         .filter(concept_tbl.domain_id == "Drug")
         .select(concept_id=all_resolved.concept_id)
@@ -250,8 +247,7 @@ def _get_ingredient_name(
     """Look up the concept_name for an ingredient concept ID."""
     concept_tbl = con.table("concept", database=(catalog, schema))
     name_row = (
-        concept_tbl
-        .filter(concept_tbl.concept_id == ingredient_concept_id)
+        concept_tbl.filter(concept_tbl.concept_id == ingredient_concept_id)
         .select("concept_name")
         .limit(1)
         .to_pyarrow()
@@ -362,17 +358,22 @@ def _obscure_df(
         if col not in df.columns:
             continue
         dtype = df[col].dtype
-        if dtype in (pl.Int8, pl.Int16, pl.Int32, pl.Int64, pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64):
+        if dtype in (
+            pl.Int8,
+            pl.Int16,
+            pl.Int32,
+            pl.Int64,
+            pl.UInt8,
+            pl.UInt16,
+            pl.UInt32,
+            pl.UInt64,
+        ):
             mask = ((pl.col(col) > 0) & (pl.col(col) < min_cell_count)).fill_null(False)
-            exprs.append(
-                pl.when(mask).then(pl.lit(None)).otherwise(pl.col(col)).alias(col)
-            )
+            exprs.append(pl.when(mask).then(pl.lit(None)).otherwise(pl.col(col)).alias(col))
             obscured = obscured | mask
         elif dtype in (pl.Float32, pl.Float64):
             mask = ((pl.col(col) > 0) & (pl.col(col) < min_cell_count)).fill_null(False)
-            exprs.append(
-                pl.when(mask).then(pl.lit(None)).otherwise(pl.col(col)).alias(col)
-            )
+            exprs.append(pl.when(mask).then(pl.lit(None)).otherwise(pl.col(col)).alias(col))
             obscured = obscured | mask
 
     if exprs:
@@ -401,16 +402,18 @@ def _check_missing(
     """
     n_records = df.height
     if n_records == 0:
-        return pl.DataFrame(schema={
-            "ingredient_concept_id": pl.Int64,
-            "ingredient": pl.Utf8,
-            "variable": pl.Utf8,
-            "n_records": pl.Int64,
-            "n_sample": pl.Int64,
-            "n_missing": pl.Int64,
-            "n_not_missing": pl.Int64,
-            "proportion_missing": pl.Float64,
-        })
+        return pl.DataFrame(
+            schema={
+                "ingredient_concept_id": pl.Int64,
+                "ingredient": pl.Utf8,
+                "variable": pl.Utf8,
+                "n_records": pl.Int64,
+                "n_sample": pl.Int64,
+                "n_missing": pl.Int64,
+                "n_not_missing": pl.Int64,
+                "proportion_missing": pl.Float64,
+            }
+        )
 
     rows: list[dict[str, Any]] = []
     for col in _MISSING_COLUMNS:
@@ -419,16 +422,18 @@ def _check_missing(
         else:
             n_missing = n_records  # column doesn't exist = all missing
 
-        rows.append({
-            "ingredient_concept_id": ingredient_concept_id,
-            "ingredient": ingredient_name,
-            "variable": col,
-            "n_records": n_records,
-            "n_sample": n_records,
-            "n_missing": n_missing,
-            "n_not_missing": n_records - n_missing,
-            "proportion_missing": n_missing / n_records if n_records > 0 else None,
-        })
+        rows.append(
+            {
+                "ingredient_concept_id": ingredient_concept_id,
+                "ingredient": ingredient_name,
+                "variable": col,
+                "n_records": n_records,
+                "n_sample": n_records,
+                "n_missing": n_missing,
+                "n_not_missing": n_records - n_missing,
+                "proportion_missing": n_missing / n_records if n_records > 0 else None,
+            }
+        )
 
     return pl.DataFrame(rows)
 
@@ -446,21 +451,23 @@ def _check_exposure_duration(
     """
     n_records = df.height
     if n_records == 0:
-        return pl.DataFrame(schema={
-            "ingredient_concept_id": pl.Int64,
-            "ingredient": pl.Utf8,
-            "n_records": pl.Int64,
-            "n_sample": pl.Int64,
-            "n_negative_duration": pl.Int64,
-            "proportion_negative_duration": pl.Float64,
-            **{f"duration_{qn}": pl.Float64 for qn in _QUANTILE_NAMES},
-            "duration_mean": pl.Float64,
-            "duration_sd": pl.Float64,
-            "duration_min": pl.Float64,
-            "duration_max": pl.Float64,
-            "duration_count": pl.Int64,
-            "duration_count_missing": pl.Int64,
-        })
+        return pl.DataFrame(
+            schema={
+                "ingredient_concept_id": pl.Int64,
+                "ingredient": pl.Utf8,
+                "n_records": pl.Int64,
+                "n_sample": pl.Int64,
+                "n_negative_duration": pl.Int64,
+                "proportion_negative_duration": pl.Float64,
+                **{f"duration_{qn}": pl.Float64 for qn in _QUANTILE_NAMES},
+                "duration_mean": pl.Float64,
+                "duration_sd": pl.Float64,
+                "duration_min": pl.Float64,
+                "duration_max": pl.Float64,
+                "duration_count": pl.Int64,
+                "duration_count_missing": pl.Int64,
+            }
+        )
 
     # Calculate duration
     has_start = "drug_exposure_start_date" in df.columns
@@ -468,9 +475,8 @@ def _check_exposure_duration(
 
     if has_start and has_end:
         duration = (
-            (df["drug_exposure_end_date"] - df["drug_exposure_start_date"])
-            .dt.total_days() + 1
-        )
+            df["drug_exposure_end_date"] - df["drug_exposure_start_date"]
+        ).dt.total_days() + 1
     else:
         duration = pl.Series("duration", [None] * n_records, dtype=pl.Int64)
 
@@ -508,29 +514,33 @@ def _check_type(
     """
     n_records = df.height
     if n_records == 0:
-        return pl.DataFrame(schema={
-            "ingredient_concept_id": pl.Int64,
-            "ingredient": pl.Utf8,
-            "drug_type_concept_id": pl.Int64,
-            "drug_type": pl.Utf8,
-            "n_records": pl.Int64,
-            "n_sample": pl.Int64,
-            "count": pl.Int64,
-            "proportion": pl.Float64,
-        })
+        return pl.DataFrame(
+            schema={
+                "ingredient_concept_id": pl.Int64,
+                "ingredient": pl.Utf8,
+                "drug_type_concept_id": pl.Int64,
+                "drug_type": pl.Utf8,
+                "n_records": pl.Int64,
+                "n_sample": pl.Int64,
+                "count": pl.Int64,
+                "proportion": pl.Float64,
+            }
+        )
 
     col = "drug_type_concept_id"
     if col not in df.columns:
-        return pl.DataFrame(schema={
-            "ingredient_concept_id": pl.Int64,
-            "ingredient": pl.Utf8,
-            "drug_type_concept_id": pl.Int64,
-            "drug_type": pl.Utf8,
-            "n_records": pl.Int64,
-            "n_sample": pl.Int64,
-            "count": pl.Int64,
-            "proportion": pl.Float64,
-        })
+        return pl.DataFrame(
+            schema={
+                "ingredient_concept_id": pl.Int64,
+                "ingredient": pl.Utf8,
+                "drug_type_concept_id": pl.Int64,
+                "drug_type": pl.Utf8,
+                "n_records": pl.Int64,
+                "n_sample": pl.Int64,
+                "count": pl.Int64,
+                "proportion": pl.Float64,
+            }
+        )
 
     grouped = (
         df.group_by(col)
@@ -561,8 +571,14 @@ def _check_type(
         grouped = grouped.with_columns(pl.lit("Unknown").alias("drug_type"))
 
     return grouped.select(
-        "ingredient_concept_id", "ingredient", col, "drug_type",
-        "n_records", "n_sample", "count", "proportion",
+        "ingredient_concept_id",
+        "ingredient",
+        col,
+        "drug_type",
+        "n_records",
+        "n_sample",
+        "count",
+        "proportion",
     ).sort("count", descending=True)
 
 
@@ -625,8 +641,14 @@ def _check_route(
         grouped = grouped.with_columns(pl.lit("Unknown").alias("route"))
 
     return grouped.select(
-        "ingredient_concept_id", "ingredient", col, "route",
-        "n_records", "n_sample", "count", "proportion",
+        "ingredient_concept_id",
+        "ingredient",
+        col,
+        "route",
+        "n_records",
+        "n_sample",
+        "count",
+        "proportion",
     ).sort("count", descending=True)
 
 
@@ -688,9 +710,15 @@ def _check_source_concept(
                 grouped = grouped.with_columns(pl.lit(None).cast(pl.Int64).alias(col))
 
     return grouped.select(
-        "ingredient_concept_id", "ingredient",
-        "drug_concept_id", "drug_source_concept_id", "drug_source_value",
-        "n_records", "n_sample", "count", "proportion",
+        "ingredient_concept_id",
+        "ingredient",
+        "drug_concept_id",
+        "drug_source_concept_id",
+        "drug_source_value",
+        "n_records",
+        "n_sample",
+        "count",
+        "proportion",
     ).sort("count", descending=True)
 
 
@@ -714,22 +742,28 @@ def _check_days_supply(
     }
 
     if n_records == 0:
-        return pl.DataFrame(schema={
-            **base_schema,
-            **{f"days_supply_{qn}": pl.Float64 for qn in _QUANTILE_NAMES},
-            "days_supply_mean": pl.Float64,
-            "days_supply_sd": pl.Float64,
-            "days_supply_min": pl.Float64,
-            "days_supply_max": pl.Float64,
-            "days_supply_count": pl.Int64,
-            "days_supply_count_missing": pl.Int64,
-            "n_days_supply_match_date_diff": pl.Int64,
-            "n_days_supply_differ_date_diff": pl.Int64,
-            "n_days_supply_or_dates_missing": pl.Int64,
-        })
+        return pl.DataFrame(
+            schema={
+                **base_schema,
+                **{f"days_supply_{qn}": pl.Float64 for qn in _QUANTILE_NAMES},
+                "days_supply_mean": pl.Float64,
+                "days_supply_sd": pl.Float64,
+                "days_supply_min": pl.Float64,
+                "days_supply_max": pl.Float64,
+                "days_supply_count": pl.Int64,
+                "days_supply_count_missing": pl.Int64,
+                "n_days_supply_match_date_diff": pl.Int64,
+                "n_days_supply_differ_date_diff": pl.Int64,
+                "n_days_supply_or_dates_missing": pl.Int64,
+            }
+        )
 
     # Quantile stats for days_supply
-    ds_col = df["days_supply"] if "days_supply" in df.columns else pl.Series("ds", [None] * n_records, dtype=pl.Int64)
+    ds_col = (
+        df["days_supply"]
+        if "days_supply" in df.columns
+        else pl.Series("ds", [None] * n_records, dtype=pl.Int64)
+    )
     stats = _quantile_stats(ds_col, name_prefix="days_supply")
 
     # Compare days_supply with date diff
@@ -737,7 +771,9 @@ def _check_days_supply(
     has_ds = "days_supply" in df.columns
 
     if has_dates and has_ds:
-        date_diff = (df["drug_exposure_end_date"] - df["drug_exposure_start_date"]).dt.total_days() + 1
+        date_diff = (
+            df["drug_exposure_end_date"] - df["drug_exposure_start_date"]
+        ).dt.total_days() + 1
         ds = df["days_supply"].cast(pl.Int64, strict=False)
 
         both_present = ds.is_not_null() & date_diff.is_not_null()
@@ -859,15 +895,19 @@ def _check_dose(
 
         ds = cdm["drug_strength"].collect()
         if ds.height == 0:
-            return pl.DataFrame([{
-                "ingredient_concept_id": ingredient_concept_id,
-                "ingredient": ingredient_name,
-                "n_records": 0,
-                "n_sample": 0,
-                "n_with_dose": 0,
-                "n_without_dose": 0,
-                "proportion_with_dose": 0.0,
-            }])
+            return pl.DataFrame(
+                [
+                    {
+                        "ingredient_concept_id": ingredient_concept_id,
+                        "ingredient": ingredient_name,
+                        "n_records": 0,
+                        "n_sample": 0,
+                        "n_with_dose": 0,
+                        "n_without_dose": 0,
+                        "proportion_with_dose": 0.0,
+                    }
+                ]
+            )
 
         # Count drug_exposure records that have matching drug_strength entries
         de = cdm["drug_exposure"].collect()
@@ -902,35 +942,39 @@ def _check_dose_from_records(
     }
 
     if n_records == 0 or drug_strength_df is None:
-        return pl.DataFrame([{
-            "ingredient_concept_id": ingredient_concept_id,
-            "ingredient": ingredient_name,
-            "n_records": n_records,
-            "n_sample": n_records,
-            "n_with_dose": 0,
-            "n_without_dose": n_records,
-            "proportion_with_dose": 0.0,
-        }])
+        return pl.DataFrame(
+            [
+                {
+                    "ingredient_concept_id": ingredient_concept_id,
+                    "ingredient": ingredient_name,
+                    "n_records": n_records,
+                    "n_sample": n_records,
+                    "n_with_dose": 0,
+                    "n_without_dose": n_records,
+                    "proportion_with_dose": 0.0,
+                }
+            ]
+        )
 
     if drug_strength_df.height == 0:
-        return pl.DataFrame([{
-            "ingredient_concept_id": ingredient_concept_id,
-            "ingredient": ingredient_name,
-            "n_records": n_records,
-            "n_sample": n_records,
-            "n_with_dose": 0,
-            "n_without_dose": n_records,
-            "proportion_with_dose": 0.0,
-        }])
+        return pl.DataFrame(
+            [
+                {
+                    "ingredient_concept_id": ingredient_concept_id,
+                    "ingredient": ingredient_name,
+                    "n_records": n_records,
+                    "n_sample": n_records,
+                    "n_with_dose": 0,
+                    "n_without_dose": n_records,
+                    "proportion_with_dose": 0.0,
+                }
+            ]
+        )
 
     # Join drug_exposure with drug_strength on drug_concept_id
-    ds_concepts = drug_strength_df.select(
-        pl.col("drug_concept_id").cast(pl.Int64)
-    ).unique()
+    ds_concepts = drug_strength_df.select(pl.col("drug_concept_id").cast(pl.Int64)).unique()
 
-    de_concepts = df.select(
-        pl.col("drug_concept_id").cast(pl.Int64)
-    )
+    de_concepts = df.select(pl.col("drug_concept_id").cast(pl.Int64))
 
     matched = de_concepts.join(
         ds_concepts,
@@ -941,15 +985,19 @@ def _check_dose_from_records(
     n_with_dose = matched.height
     n_without_dose = n_records - n_with_dose
 
-    return pl.DataFrame([{
-        "ingredient_concept_id": ingredient_concept_id,
-        "ingredient": ingredient_name,
-        "n_records": n_records,
-        "n_sample": n_records,
-        "n_with_dose": n_with_dose,
-        "n_without_dose": n_without_dose,
-        "proportion_with_dose": n_with_dose / n_records if n_records > 0 else 0.0,
-    }])
+    return pl.DataFrame(
+        [
+            {
+                "ingredient_concept_id": ingredient_concept_id,
+                "ingredient": ingredient_name,
+                "n_records": n_records,
+                "n_sample": n_records,
+                "n_with_dose": n_with_dose,
+                "n_without_dose": n_without_dose,
+                "proportion_with_dose": n_with_dose / n_records if n_records > 0 else 0.0,
+            }
+        ]
+    )
 
 
 def _check_sig(
@@ -981,9 +1029,7 @@ def _check_sig(
         return pl.DataFrame(schema=empty_schema)
 
     # Replace nulls with a label for grouping
-    sig_df = df.select(
-        pl.col(col).fill_null("<missing>").alias(col)
-    )
+    sig_df = df.select(pl.col(col).fill_null("<missing>").alias(col))
 
     grouped = (
         sig_df.group_by(col)
@@ -998,8 +1044,13 @@ def _check_sig(
     )
 
     return grouped.select(
-        "ingredient_concept_id", "ingredient", col,
-        "n_records", "n_sample", "count", "proportion",
+        "ingredient_concept_id",
+        "ingredient",
+        col,
+        "n_records",
+        "n_sample",
+        "count",
+        "proportion",
     ).sort("count", descending=True)
 
 
@@ -1015,21 +1066,27 @@ def _check_quantity(
     """
     n_records = df.height
     if n_records == 0:
-        return pl.DataFrame(schema={
-            "ingredient_concept_id": pl.Int64,
-            "ingredient": pl.Utf8,
-            "n_records": pl.Int64,
-            "n_sample": pl.Int64,
-            **{f"quantity_{qn}": pl.Float64 for qn in _QUANTILE_NAMES},
-            "quantity_mean": pl.Float64,
-            "quantity_sd": pl.Float64,
-            "quantity_min": pl.Float64,
-            "quantity_max": pl.Float64,
-            "quantity_count": pl.Int64,
-            "quantity_count_missing": pl.Int64,
-        })
+        return pl.DataFrame(
+            schema={
+                "ingredient_concept_id": pl.Int64,
+                "ingredient": pl.Utf8,
+                "n_records": pl.Int64,
+                "n_sample": pl.Int64,
+                **{f"quantity_{qn}": pl.Float64 for qn in _QUANTILE_NAMES},
+                "quantity_mean": pl.Float64,
+                "quantity_sd": pl.Float64,
+                "quantity_min": pl.Float64,
+                "quantity_max": pl.Float64,
+                "quantity_count": pl.Int64,
+                "quantity_count_missing": pl.Int64,
+            }
+        )
 
-    qty_col = df["quantity"] if "quantity" in df.columns else pl.Series("q", [None] * n_records, dtype=pl.Float64)
+    qty_col = (
+        df["quantity"]
+        if "quantity" in df.columns
+        else pl.Series("q", [None] * n_records, dtype=pl.Float64)
+    )
     stats = _quantile_stats(qty_col, name_prefix="quantity")
 
     row = {
@@ -1084,7 +1141,9 @@ def _check_days_between(
         (
             pl.col("drug_exposure_start_date")
             - pl.col("drug_exposure_start_date").shift(1).over("person_id")
-        ).dt.total_days().alias("days_between")
+        )
+        .dt.total_days()
+        .alias("days_between")
     )
 
     # Only keep rows where days_between is not null (i.e., not the first record per person)
@@ -1137,15 +1196,23 @@ def _check_diagnostics_summary(
         missing_df = check_results["missing"]
         if missing_df.height > 0:
             avg_missing = missing_df["proportion_missing"].mean()
-            row["mean_proportion_missing"] = float(avg_missing) if avg_missing is not None else None
+            row["mean_proportion_missing"] = (
+                float(avg_missing) if avg_missing is not None else None
+            )
         else:
             row["mean_proportion_missing"] = None
 
     if "exposure_duration" in check_results:
         dur_df = check_results["exposure_duration"]
         if dur_df.height > 0:
-            row["median_duration_days"] = dur_df["duration_median"][0] if "duration_median" in dur_df.columns else None
-            row["n_negative_duration"] = dur_df["n_negative_duration"][0] if "n_negative_duration" in dur_df.columns else None
+            row["median_duration_days"] = (
+                dur_df["duration_median"][0] if "duration_median" in dur_df.columns else None
+            )
+            row["n_negative_duration"] = (
+                dur_df["n_negative_duration"][0]
+                if "n_negative_duration" in dur_df.columns
+                else None
+            )
         else:
             row["median_duration_days"] = None
             row["n_negative_duration"] = None
@@ -1153,14 +1220,18 @@ def _check_diagnostics_summary(
     if "days_supply" in check_results:
         ds_df = check_results["days_supply"]
         if ds_df.height > 0:
-            row["median_days_supply"] = ds_df["days_supply_median"][0] if "days_supply_median" in ds_df.columns else None
+            row["median_days_supply"] = (
+                ds_df["days_supply_median"][0] if "days_supply_median" in ds_df.columns else None
+            )
         else:
             row["median_days_supply"] = None
 
     if "quantity" in check_results:
         qty_df = check_results["quantity"]
         if qty_df.height > 0:
-            row["median_quantity"] = qty_df["quantity_median"][0] if "quantity_median" in qty_df.columns else None
+            row["median_quantity"] = (
+                qty_df["quantity_median"][0] if "quantity_median" in qty_df.columns else None
+            )
         else:
             row["median_quantity"] = None
 
@@ -1282,9 +1353,7 @@ def execute_checks(
 
     # Pre-fetch concept table for name lookups (once)
     concept_tbl = con.table("concept", database=(catalog, schema))
-    concept_df = pl.from_arrow(
-        concept_tbl.select("concept_id", "concept_name").to_pyarrow()
-    )
+    concept_df = pl.from_arrow(concept_tbl.select("concept_id", "concept_name").to_pyarrow())
 
     # Pre-fetch drug_strength if dose check is enabled
     drug_strength_df: pl.DataFrame | None = None
@@ -1309,12 +1378,17 @@ def execute_checks(
 
         # Fetch records
         df = _fetch_drug_records(
-            con, catalog, schema, drug_concepts,
+            con,
+            catalog,
+            schema,
+            drug_concepts,
             sample_size=sample_size,
         )
 
         n_records = df.height
-        n_persons = int(df["person_id"].n_unique()) if n_records > 0 and "person_id" in df.columns else 0
+        n_persons = (
+            int(df["person_id"].n_unique()) if n_records > 0 and "person_id" in df.columns else 0
+        )
 
         # Per-ingredient check results (for diagnostics_summary)
         ingredient_check_results: dict[str, pl.DataFrame] = {}
@@ -1326,7 +1400,9 @@ def execute_checks(
             ingredient_check_results["missing"] = r
 
         if "exposure_duration" in checks:
-            r = _check_exposure_duration(df, ingredient_concept_id=ing_id, ingredient_name=ing_name)
+            r = _check_exposure_duration(
+                df, ingredient_concept_id=ing_id, ingredient_name=ing_name
+            )
             all_results["exposure_duration"].append(r)
             ingredient_check_results["exposure_duration"] = r
 
@@ -1336,7 +1412,9 @@ def execute_checks(
             ingredient_check_results["type"] = r
 
         if "route" in checks:
-            r = _check_route(df, concept_df, ingredient_concept_id=ing_id, ingredient_name=ing_name)
+            r = _check_route(
+                df, concept_df, ingredient_concept_id=ing_id, ingredient_name=ing_name
+            )
             all_results["route"].append(r)
             ingredient_check_results["route"] = r
 
@@ -1351,14 +1429,18 @@ def execute_checks(
             ingredient_check_results["days_supply"] = r
 
         if "verbatim_end_date" in checks:
-            r = _check_verbatim_end_date(df, ingredient_concept_id=ing_id, ingredient_name=ing_name)
+            r = _check_verbatim_end_date(
+                df, ingredient_concept_id=ing_id, ingredient_name=ing_name
+            )
             all_results["verbatim_end_date"].append(r)
             ingredient_check_results["verbatim_end_date"] = r
 
         if "dose" in checks:
             r = _check_dose_from_records(
-                df, drug_strength_df,
-                ingredient_concept_id=ing_id, ingredient_name=ing_name,
+                df,
+                drug_strength_df,
+                ingredient_concept_id=ing_id,
+                ingredient_name=ing_name,
             )
             all_results["dose"].append(r)
             ingredient_check_results["dose"] = r
@@ -1418,8 +1500,16 @@ def execute_checks(
             "type": ["count"],
             "route": ["count"],
             "source_concept": ["count"],
-            "days_supply": ["n_days_supply_match_date_diff", "n_days_supply_differ_date_diff", "n_days_supply_or_dates_missing"],
-            "verbatim_end_date": ["n_verbatim_end_date_missing", "n_verbatim_end_date_equal", "n_verbatim_end_date_differ"],
+            "days_supply": [
+                "n_days_supply_match_date_diff",
+                "n_days_supply_differ_date_diff",
+                "n_days_supply_or_dates_missing",
+            ],
+            "verbatim_end_date": [
+                "n_verbatim_end_date_missing",
+                "n_verbatim_end_date_equal",
+                "n_verbatim_end_date_differ",
+            ],
             "dose": ["n_with_dose", "n_without_dose"],
             "sig": ["count"],
             "quantity": [],

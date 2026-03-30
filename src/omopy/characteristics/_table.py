@@ -279,7 +279,7 @@ def table_cohort_timing(
                 try:
                     val = float(r["estimate_value"]) / 365.25
                     r["estimate_value"] = f"{val:.2f}"
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
             rows.append(r)
         data = pl.DataFrame(rows)
@@ -419,10 +419,21 @@ def table_top_large_scale_characteristics(
     pct_data = pct_data.sort("_pct", descending=True).head(top_concepts)
 
     # Build display DataFrame
-    display_cols = [c for c in pct_data.columns if c not in (
-        "estimate_name", "estimate_type", "estimate_value", "_pct",
-        "result_id", "result_type", "package_name", "package_version",
-    )]
+    display_cols = [
+        c
+        for c in pct_data.columns
+        if c
+        not in (
+            "estimate_name",
+            "estimate_type",
+            "estimate_value",
+            "_pct",
+            "result_id",
+            "result_type",
+            "package_name",
+            "package_version",
+        )
+    ]
     display = pct_data.select(display_cols + ["_pct"]).rename({"_pct": "Frequency (%)"})
 
     return vis_table(
@@ -473,8 +484,12 @@ def table_large_scale_characteristics(
 
     # Select display columns
     exclude = {
-        "estimate_name", "estimate_type", "result_id",
-        "result_type", "package_name", "package_version",
+        "estimate_name",
+        "estimate_type",
+        "result_id",
+        "result_type",
+        "package_name",
+        "package_version",
     }
     if hide:
         exclude.update(hide)
@@ -512,6 +527,7 @@ def available_table_columns(result: SummarisedResult) -> list[str]:
 
     # Group columns
     from omopy.generics._types import NAME_LEVEL_SEP, OVERALL
+
     for name in result.data["group_name"].unique().to_list():
         if name != OVERALL:
             for part in name.split(NAME_LEVEL_SEP):

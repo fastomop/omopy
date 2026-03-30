@@ -289,9 +289,9 @@ def _filter_result_type(
         result_type = (result_type,)
 
     settings = result.settings
-    matching_ids = settings.filter(
-        pl.col("result_type").is_in(list(result_type))
-    )["result_id"].to_list()
+    matching_ids = settings.filter(pl.col("result_type").is_in(list(result_type)))[
+        "result_id"
+    ].to_list()
 
     if not matching_ids:
         return result

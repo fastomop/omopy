@@ -107,17 +107,22 @@ def get_drug_ingredient_codes(
                 ca = _get_ibis_table(cdm["concept_ancestor"])
                 desc = ca.filter(
                     ca["ancestor_concept_id"].cast("int64") == ibis.literal(cid)
-                ).select(
-                    concept_id=ca["descendant_concept_id"].cast("int64")
-                )
+                ).select(concept_id=ca["descendant_concept_id"].cast("int64"))
                 # Filter to standard Drug concepts
-                desc_with_info = desc.inner_join(
-                    concept,
-                    desc["concept_id"] == concept["concept_id"].cast("int64"),
-                ).filter(
-                    lambda t: (t["standard_concept"] == ibis.literal("S"))
-                    & (t["domain_id"] == ibis.literal("Drug"))
-                ).select("concept_id").distinct()
+                desc_with_info = (
+                    desc.inner_join(
+                        concept,
+                        desc["concept_id"] == concept["concept_id"].cast("int64"),
+                    )
+                    .filter(
+                        lambda t: (
+                            (t["standard_concept"] == ibis.literal("S"))
+                            & (t["domain_id"] == ibis.literal("Drug"))
+                        )
+                    )
+                    .select("concept_id")
+                    .distinct()
+                )
 
                 desc_df = desc_with_info.execute()
                 all_ids = sorted(desc_df["concept_id"].tolist())
@@ -161,9 +166,7 @@ def get_atc_codes(
     concept = _get_ibis_table(cdm["concept"])
 
     # Base filter: ATC vocabulary
-    result = concept.filter(
-        concept["vocabulary_id"] == ibis.literal("ATC")
-    )
+    result = concept.filter(concept["vocabulary_id"] == ibis.literal("ATC"))
 
     if atc_name is not None:
         pattern = f"%{atc_name.lower()}%"

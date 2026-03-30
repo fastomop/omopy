@@ -64,60 +64,92 @@ class TestFormatEstimateValue:
 
     def test_big_mark(self):
         # Create a result with a large number
-        data = pl.DataFrame({
-            "result_id": [1], "cdm_name": ["test"],
-            "group_name": ["overall"], "group_level": ["overall"],
-            "strata_name": ["overall"], "strata_level": ["overall"],
-            "variable_name": ["population"], "variable_level": ["pop"],
-            "estimate_name": ["count"], "estimate_type": ["integer"],
-            "estimate_value": ["1234567"],
-            "additional_name": ["overall"], "additional_level": ["overall"],
-        })
+        data = pl.DataFrame(
+            {
+                "result_id": [1],
+                "cdm_name": ["test"],
+                "group_name": ["overall"],
+                "group_level": ["overall"],
+                "strata_name": ["overall"],
+                "strata_level": ["overall"],
+                "variable_name": ["population"],
+                "variable_level": ["pop"],
+                "estimate_name": ["count"],
+                "estimate_type": ["integer"],
+                "estimate_value": ["1234567"],
+                "additional_name": ["overall"],
+                "additional_level": ["overall"],
+            }
+        )
         sr = SummarisedResult(data)
         result = format_estimate_value(sr, big_mark=",")
         val = result.data["estimate_value"][0]
         assert val == "1,234,567"
 
     def test_no_big_mark(self):
-        data = pl.DataFrame({
-            "result_id": [1], "cdm_name": ["test"],
-            "group_name": ["overall"], "group_level": ["overall"],
-            "strata_name": ["overall"], "strata_level": ["overall"],
-            "variable_name": ["population"], "variable_level": ["pop"],
-            "estimate_name": ["count"], "estimate_type": ["integer"],
-            "estimate_value": ["1234567"],
-            "additional_name": ["overall"], "additional_level": ["overall"],
-        })
+        data = pl.DataFrame(
+            {
+                "result_id": [1],
+                "cdm_name": ["test"],
+                "group_name": ["overall"],
+                "group_level": ["overall"],
+                "strata_name": ["overall"],
+                "strata_level": ["overall"],
+                "variable_name": ["population"],
+                "variable_level": ["pop"],
+                "estimate_name": ["count"],
+                "estimate_type": ["integer"],
+                "estimate_value": ["1234567"],
+                "additional_name": ["overall"],
+                "additional_level": ["overall"],
+            }
+        )
         sr = SummarisedResult(data)
         result = format_estimate_value(sr, big_mark="")
         val = result.data["estimate_value"][0]
         assert val == "1234567"
 
     def test_decimal_mark(self):
-        data = pl.DataFrame({
-            "result_id": [1], "cdm_name": ["test"],
-            "group_name": ["overall"], "group_level": ["overall"],
-            "strata_name": ["overall"], "strata_level": ["overall"],
-            "variable_name": ["age"], "variable_level": ["age"],
-            "estimate_name": ["mean"], "estimate_type": ["numeric"],
-            "estimate_value": ["45.67"],
-            "additional_name": ["overall"], "additional_level": ["overall"],
-        })
+        data = pl.DataFrame(
+            {
+                "result_id": [1],
+                "cdm_name": ["test"],
+                "group_name": ["overall"],
+                "group_level": ["overall"],
+                "strata_name": ["overall"],
+                "strata_level": ["overall"],
+                "variable_name": ["age"],
+                "variable_level": ["age"],
+                "estimate_name": ["mean"],
+                "estimate_type": ["numeric"],
+                "estimate_value": ["45.67"],
+                "additional_name": ["overall"],
+                "additional_level": ["overall"],
+            }
+        )
         sr = SummarisedResult(data)
         result = format_estimate_value(sr, decimal_mark=",", big_mark=".")
         val = result.data["estimate_value"][0]
         assert "," in val  # comma as decimal mark
 
     def test_suppressed_values_preserved(self):
-        data = pl.DataFrame({
-            "result_id": [1], "cdm_name": ["test"],
-            "group_name": ["overall"], "group_level": ["overall"],
-            "strata_name": ["overall"], "strata_level": ["overall"],
-            "variable_name": ["count"], "variable_level": ["count"],
-            "estimate_name": ["count"], "estimate_type": ["integer"],
-            "estimate_value": ["-"],
-            "additional_name": ["overall"], "additional_level": ["overall"],
-        })
+        data = pl.DataFrame(
+            {
+                "result_id": [1],
+                "cdm_name": ["test"],
+                "group_name": ["overall"],
+                "group_level": ["overall"],
+                "strata_name": ["overall"],
+                "strata_level": ["overall"],
+                "variable_name": ["count"],
+                "variable_level": ["count"],
+                "estimate_name": ["count"],
+                "estimate_type": ["integer"],
+                "estimate_value": ["-"],
+                "additional_name": ["overall"],
+                "additional_level": ["overall"],
+            }
+        )
         sr = SummarisedResult(data)
         result = format_estimate_value(sr)
         assert result.data["estimate_value"][0] == "-"
@@ -173,9 +205,7 @@ class TestFormatEstimateName:
         assert "N" in names
 
     def test_combined_pattern(self, sr: SummarisedResult):
-        result = format_estimate_name(
-            sr, estimate_name={"N (%)": "<count> (<percentage>%)"}
-        )
+        result = format_estimate_name(sr, estimate_name={"N (%)": "<count> (<percentage>%)"})
         names = result.data["estimate_name"].unique().to_list()
         assert "N (%)" in names
         # Check that the value contains both pieces
@@ -185,16 +215,15 @@ class TestFormatEstimateName:
             assert "%" in val
 
     def test_keep_not_formatted(self, sr: SummarisedResult):
-        result = format_estimate_name(
-            sr, estimate_name={"N": "<count>"}, keep_not_formatted=True
-        )
+        result = format_estimate_name(sr, estimate_name={"N": "<count>"}, keep_not_formatted=True)
         names = set(result.data["estimate_name"].unique().to_list())
         # mean, sd should still be there
         assert "mean" in names or "sd" in names
 
     def test_drop_not_formatted(self, sr: SummarisedResult):
         result = format_estimate_name(
-            sr, estimate_name={"N (%)": "<count> (<percentage>%)"},
+            sr,
+            estimate_name={"N (%)": "<count> (<percentage>%)"},
             keep_not_formatted=False,
         )
         names = set(result.data["estimate_name"].unique().to_list())
@@ -231,20 +260,32 @@ class TestFormatHeader:
 
 class TestFormatMinCellCount:
     def test_replaces_dash_with_less_than(self):
-        data = pl.DataFrame({
-            "result_id": [1, 1], "cdm_name": ["test", "test"],
-            "group_name": ["overall", "overall"], "group_level": ["overall", "overall"],
-            "strata_name": ["overall", "overall"], "strata_level": ["overall", "overall"],
-            "variable_name": ["n", "n"], "variable_level": ["n", "n"],
-            "estimate_name": ["count", "pct"], "estimate_type": ["integer", "percentage"],
-            "estimate_value": ["-", "50.0"],
-            "additional_name": ["overall", "overall"], "additional_level": ["overall", "overall"],
-        })
-        settings = pl.DataFrame({
-            "result_id": [1], "result_type": ["test"],
-            "package_name": ["omopy"], "package_version": ["0.1.0"],
-            "min_cell_count": ["5"],
-        })
+        data = pl.DataFrame(
+            {
+                "result_id": [1, 1],
+                "cdm_name": ["test", "test"],
+                "group_name": ["overall", "overall"],
+                "group_level": ["overall", "overall"],
+                "strata_name": ["overall", "overall"],
+                "strata_level": ["overall", "overall"],
+                "variable_name": ["n", "n"],
+                "variable_level": ["n", "n"],
+                "estimate_name": ["count", "pct"],
+                "estimate_type": ["integer", "percentage"],
+                "estimate_value": ["-", "50.0"],
+                "additional_name": ["overall", "overall"],
+                "additional_level": ["overall", "overall"],
+            }
+        )
+        settings = pl.DataFrame(
+            {
+                "result_id": [1],
+                "result_type": ["test"],
+                "package_name": ["omopy"],
+                "package_version": ["0.1.0"],
+                "min_cell_count": ["5"],
+            }
+        )
         sr = SummarisedResult(data, settings=settings)
         result = format_min_cell_count(sr)
         values = result.data["estimate_value"].to_list()
@@ -252,20 +293,32 @@ class TestFormatMinCellCount:
         assert values[1] == "50.0"
 
     def test_custom_min_cell_count(self):
-        data = pl.DataFrame({
-            "result_id": [1], "cdm_name": ["test"],
-            "group_name": ["overall"], "group_level": ["overall"],
-            "strata_name": ["overall"], "strata_level": ["overall"],
-            "variable_name": ["n"], "variable_level": ["n"],
-            "estimate_name": ["count"], "estimate_type": ["integer"],
-            "estimate_value": ["-"],
-            "additional_name": ["overall"], "additional_level": ["overall"],
-        })
-        settings = pl.DataFrame({
-            "result_id": [1], "result_type": ["test"],
-            "package_name": ["omopy"], "package_version": ["0.1.0"],
-            "min_cell_count": ["10"],
-        })
+        data = pl.DataFrame(
+            {
+                "result_id": [1],
+                "cdm_name": ["test"],
+                "group_name": ["overall"],
+                "group_level": ["overall"],
+                "strata_name": ["overall"],
+                "strata_level": ["overall"],
+                "variable_name": ["n"],
+                "variable_level": ["n"],
+                "estimate_name": ["count"],
+                "estimate_type": ["integer"],
+                "estimate_value": ["-"],
+                "additional_name": ["overall"],
+                "additional_level": ["overall"],
+            }
+        )
+        settings = pl.DataFrame(
+            {
+                "result_id": [1],
+                "result_type": ["test"],
+                "package_name": ["omopy"],
+                "package_version": ["0.1.0"],
+                "min_cell_count": ["10"],
+            }
+        )
         sr = SummarisedResult(data, settings=settings)
         result = format_min_cell_count(sr)
         assert result.data["estimate_value"][0] == "<10"

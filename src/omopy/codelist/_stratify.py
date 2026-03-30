@@ -38,9 +38,7 @@ def _stratify_by_attribute(
 
         # Get attribute values for these concepts
         concept_attrs = concept.filter(
-            concept["concept_id"].cast("int64").isin(
-                [ibis.literal(int(c)) for c in ids]
-            )
+            concept["concept_id"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
         ).select(
             concept_id=concept["concept_id"].cast("int64"),
             attr_val=concept[attribute],

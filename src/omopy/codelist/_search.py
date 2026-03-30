@@ -102,9 +102,9 @@ def get_candidate_codes(
         for f in syn_filters[1:]:
             syn_combined = syn_combined | f
 
-        syn_matches = syn_tbl.filter(syn_combined).select(
-            concept_id=syn_tbl["concept_id"]
-        ).distinct()
+        syn_matches = (
+            syn_tbl.filter(syn_combined).select(concept_id=syn_tbl["concept_id"]).distinct()
+        )
 
         # Get full concept rows for synonym matches
         syn_concepts = concept_tbl.inner_join(
@@ -114,9 +114,7 @@ def get_candidate_codes(
 
         # Union with direct keyword matches
         shared_cols = [c for c in result.columns if c in syn_concepts.columns]
-        result = result.select(*shared_cols).union(
-            syn_concepts.select(*shared_cols)
-        ).distinct()
+        result = result.select(*shared_cols).union(syn_concepts.select(*shared_cols)).distinct()
 
     # Apply optional filters
     if domains is not None:
@@ -124,7 +122,9 @@ def get_candidate_codes(
         result = result.filter(result["domain_id"].isin(dom_list))
 
     if standard_concept is not None:
-        sc_list = [standard_concept] if isinstance(standard_concept, str) else list(standard_concept)
+        sc_list = (
+            [standard_concept] if isinstance(standard_concept, str) else list(standard_concept)
+        )
         result = result.filter(result["standard_concept"].isin(sc_list))
 
     if vocabulary_id is not None:
@@ -132,7 +132,9 @@ def get_candidate_codes(
         result = result.filter(result["vocabulary_id"].isin(v_list))
 
     if concept_class_id is not None:
-        cc_list = [concept_class_id] if isinstance(concept_class_id, str) else list(concept_class_id)
+        cc_list = (
+            [concept_class_id] if isinstance(concept_class_id, str) else list(concept_class_id)
+        )
         result = result.filter(result["concept_class_id"].isin(cc_list))
 
     # Apply exclude keywords
@@ -143,19 +145,19 @@ def get_candidate_codes(
             result = result.filter(~result["concept_name"].lower().like(pattern))
 
     # Get concept IDs
-    matched_ids = result.select(
-        concept_id=result["concept_id"].cast("int64")
-    ).distinct()
+    matched_ids = result.select(concept_id=result["concept_id"].cast("int64")).distinct()
 
     # Include descendants if requested
     if include_descendants and "concept_ancestor" in cdm:
         ca = _get_ibis_table(cdm["concept_ancestor"])
-        desc = ca.inner_join(
-            matched_ids,
-            ca["ancestor_concept_id"].cast("int64") == matched_ids["concept_id"],
-        ).select(
-            concept_id=ca["descendant_concept_id"].cast("int64")
-        ).distinct()
+        desc = (
+            ca.inner_join(
+                matched_ids,
+                ca["ancestor_concept_id"].cast("int64") == matched_ids["concept_id"],
+            )
+            .select(concept_id=ca["descendant_concept_id"].cast("int64"))
+            .distinct()
+        )
 
         matched_ids = matched_ids.union(desc).distinct()
 
@@ -208,14 +210,14 @@ def get_mappings(
             continue
 
         # Filter concept_relationship to these concept IDs and relationship
-        matches = cr.filter(
-            cr["concept_id_1"].cast("int64").isin(
-                [ibis.literal(int(c)) for c in concept_ids]
+        matches = (
+            cr.filter(
+                cr["concept_id_1"].cast("int64").isin([ibis.literal(int(c)) for c in concept_ids])
+                & cr["relationship_id"].isin(rel_list)
             )
-            & cr["relationship_id"].isin(rel_list)
-        ).select(
-            concept_id=cr["concept_id_2"].cast("int64")
-        ).distinct()
+            .select(concept_id=cr["concept_id_2"].cast("int64"))
+            .distinct()
+        )
 
         result_df = matches.execute()
         mapped_ids = sorted(result_df["concept_id"].tolist())

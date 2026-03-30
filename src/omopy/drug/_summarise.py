@@ -73,8 +73,15 @@ def summarise_drug_utilisation(
     initial_daily_dose: bool = True,
     cumulative_dose: bool = True,
     estimates: tuple[str, ...] = (
-        "min", "q25", "median", "q75", "max", "mean", "sd",
-        "count_missing", "percentage_missing",
+        "min",
+        "q25",
+        "median",
+        "q75",
+        "max",
+        "mean",
+        "sd",
+        "count_missing",
+        "percentage_missing",
     ),
 ) -> SummarisedResult:
     """Summarise drug utilisation metrics as a SummarisedResult.
@@ -145,9 +152,16 @@ def summarise_drug_utilisation(
     metric_cols = [c for c in df.columns if c not in base_cols and not c.startswith("_")]
     # Filter to actual metric columns (number_*, days_*, time_*, initial_*, cumulative_*)
     metric_prefixes = (
-        "number_exposures_", "number_eras_", "days_exposed_", "days_prescribed_",
-        "time_to_exposure_", "initial_exposure_duration_", "initial_quantity_",
-        "cumulative_quantity_", "initial_daily_dose_", "cumulative_dose_",
+        "number_exposures_",
+        "number_eras_",
+        "days_exposed_",
+        "days_prescribed_",
+        "time_to_exposure_",
+        "initial_exposure_duration_",
+        "initial_quantity_",
+        "cumulative_quantity_",
+        "initial_daily_dose_",
+        "cumulative_dose_",
     )
     metric_cols = [c for c in metric_cols if any(c.startswith(p) for p in metric_prefixes)]
 
@@ -156,10 +170,12 @@ def summarise_drug_utilisation(
 
     # Get cohort metadata
     settings = enriched.settings
-    id_to_name = dict(zip(
-        settings["cohort_definition_id"].to_list(),
-        settings["cohort_name"].to_list(),
-    ))
+    id_to_name = dict(
+        zip(
+            settings["cohort_definition_id"].to_list(),
+            settings["cohort_name"].to_list(),
+        )
+    )
     cdm = enriched.cdm
     cdm_name = cdm.cdm_name if cdm else "unknown"
 
@@ -170,7 +186,7 @@ def summarise_drug_utilisation(
         """Parse 'number_exposures_aspirin' → ('number exposures', 'aspirin')."""
         for prefix in metric_prefixes:
             if col.startswith(prefix):
-                concept_name = col[len(prefix):]
+                concept_name = col[len(prefix) :]
                 metric_name = prefix.rstrip("_").replace("_", " ")
                 return metric_name, concept_name
         return col.replace("_", " "), ""
@@ -185,11 +201,17 @@ def summarise_drug_utilisation(
 
         for sname, slevel, sdf in strata_groups:
             # Add count rows
-            all_rows.extend(_add_count_rows(
-                sdf, cdm_name=cdm_name, result_id=result_id,
-                group_name="cohort_name", group_level=cname,
-                strata_name=sname, strata_level=slevel,
-            ))
+            all_rows.extend(
+                _add_count_rows(
+                    sdf,
+                    cdm_name=cdm_name,
+                    result_id=result_id,
+                    group_name="cohort_name",
+                    group_level=cname,
+                    strata_name=sname,
+                    strata_level=slevel,
+                )
+            )
 
             for col in metric_cols:
                 metric_display, concept_name = _parse_metric_col(col)
@@ -197,20 +219,24 @@ def summarise_drug_utilisation(
                 additional_level = concept_name if concept_name else OVERALL
 
                 est_rows = _compute_numeric_estimates(
-                    sdf[col], metric_display, estimates,
+                    sdf[col],
+                    metric_display,
+                    estimates,
                 )
                 for row in est_rows:
-                    all_rows.append({
-                        "result_id": result_id,
-                        "cdm_name": cdm_name,
-                        "group_name": "cohort_name",
-                        "group_level": cname,
-                        "strata_name": sname,
-                        "strata_level": slevel,
-                        "additional_name": additional_name,
-                        "additional_level": additional_level,
-                        **row,
-                    })
+                    all_rows.append(
+                        {
+                            "result_id": result_id,
+                            "cdm_name": cdm_name,
+                            "group_name": "cohort_name",
+                            "group_level": cname,
+                            "strata_name": sname,
+                            "strata_level": slevel,
+                            "additional_name": additional_name,
+                            "additional_level": additional_level,
+                            **row,
+                        }
+                    )
 
     if not all_rows:
         return _empty_result("summarise_drug_utilisation")
@@ -296,7 +322,11 @@ def summarise_indication(
     indication_cols = [c for c in df.columns if c.startswith("indication_")]
 
     return _summarise_categorical_intersect(
-        enriched, df, indication_cols, windows, strata,
+        enriched,
+        df,
+        indication_cols,
+        windows,
+        strata,
         result_type="summarise_indication",
         window_name_fn=window_name,
         variable_prefix="Indication",
@@ -374,7 +404,11 @@ def summarise_treatment(
     treatment_cols = [c for c in df.columns if c.startswith("treatment_")]
 
     return _summarise_categorical_intersect(
-        enriched, df, treatment_cols, windows, strata,
+        enriched,
+        df,
+        treatment_cols,
+        windows,
+        strata,
         result_type="summarise_treatment",
         window_name_fn=window_name,
         variable_prefix="Medication",
@@ -456,10 +490,12 @@ def summarise_drug_restart(
 
     # Get cohort metadata
     settings = enriched.settings
-    id_to_name = dict(zip(
-        settings["cohort_definition_id"].to_list(),
-        settings["cohort_name"].to_list(),
-    ))
+    id_to_name = dict(
+        zip(
+            settings["cohort_definition_id"].to_list(),
+            settings["cohort_name"].to_list(),
+        )
+    )
     cdm_ref = enriched.cdm
     cdm_name = cdm_ref.cdm_name if cdm_ref else "unknown"
 
@@ -472,11 +508,17 @@ def summarise_drug_restart(
 
         for sname, slevel, sdf in strata_groups:
             # Add count rows
-            all_rows.extend(_add_count_rows(
-                sdf, cdm_name=cdm_name, result_id=result_id,
-                group_name="cohort_name", group_level=cname,
-                strata_name=sname, strata_level=slevel,
-            ))
+            all_rows.extend(
+                _add_count_rows(
+                    sdf,
+                    cdm_name=cdm_name,
+                    result_id=result_id,
+                    group_name="cohort_name",
+                    group_level=cname,
+                    strata_name=sname,
+                    strata_level=slevel,
+                )
+            )
 
             for fud, col in zip(fud_list, restart_cols):
                 if col not in sdf.columns:
@@ -503,22 +545,26 @@ def summarise_drug_restart(
                         "additional_name": "follow_up_days",
                         "additional_level": fud_label,
                     }
-                    all_rows.append({
-                        **base,
-                        "variable_name": variable_name,
-                        "variable_level": level,
-                        "estimate_name": "count",
-                        "estimate_type": "integer",
-                        "estimate_value": str(count),
-                    })
-                    all_rows.append({
-                        **base,
-                        "variable_name": variable_name,
-                        "variable_level": level,
-                        "estimate_name": "percentage",
-                        "estimate_type": "percentage",
-                        "estimate_value": f"{pct:.2f}",
-                    })
+                    all_rows.append(
+                        {
+                            **base,
+                            "variable_name": variable_name,
+                            "variable_level": level,
+                            "estimate_name": "count",
+                            "estimate_type": "integer",
+                            "estimate_value": str(count),
+                        }
+                    )
+                    all_rows.append(
+                        {
+                            **base,
+                            "variable_name": variable_name,
+                            "variable_level": level,
+                            "estimate_name": "percentage",
+                            "estimate_type": "percentage",
+                            "estimate_value": f"{pct:.2f}",
+                        }
+                    )
 
     if not all_rows:
         return _empty_result("summarise_drug_restart")
@@ -540,8 +586,15 @@ def summarise_dose_coverage(
     concept_set: Codelist | dict[str, list[int]] | None = None,
     strata: list[str | list[str]] | None = None,
     estimates: tuple[str, ...] = (
-        "min", "q25", "median", "q75", "max", "mean", "sd",
-        "count_missing", "percentage_missing",
+        "min",
+        "q25",
+        "median",
+        "q75",
+        "max",
+        "mean",
+        "sd",
+        "count_missing",
+        "percentage_missing",
     ),
 ) -> SummarisedResult:
     """Summarise dose coverage (daily dose distribution and missing rate).
@@ -588,7 +641,9 @@ def summarise_dose_coverage(
     try:
         concept_tbl = cdm["concept"].collect()
         match = concept_tbl.filter(pl.col("concept_id") == ingredient_concept_id)
-        ingredient_name = match["concept_name"][0] if len(match) > 0 else str(ingredient_concept_id)
+        ingredient_name = (
+            match["concept_name"][0] if len(match) > 0 else str(ingredient_concept_id)
+        )
     except Exception:
         ingredient_name = str(ingredient_concept_id)
 
@@ -609,17 +664,19 @@ def summarise_dose_coverage(
 
         est_rows = _compute_numeric_estimates(dose_series, "daily_dose", estimates)
         for row in est_rows:
-            all_rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": "ingredient_name",
-                "group_level": ingredient_name,
-                "strata_name": sname,
-                "strata_level": slevel,
-                "additional_name": OVERALL,
-                "additional_level": OVERALL,
-                **row,
-            })
+            all_rows.append(
+                {
+                    "result_id": result_id,
+                    "cdm_name": cdm_name,
+                    "group_name": "ingredient_name",
+                    "group_level": ingredient_name,
+                    "strata_name": sname,
+                    "strata_level": slevel,
+                    "additional_name": OVERALL,
+                    "additional_level": OVERALL,
+                    **row,
+                }
+            )
 
         # Missing dose count
         if "daily_dose" in sdf.columns:
@@ -639,22 +696,26 @@ def summarise_dose_coverage(
             "additional_name": OVERALL,
             "additional_level": OVERALL,
         }
-        all_rows.append({
-            **base,
-            "variable_name": "Missing dose",
-            "variable_level": "",
-            "estimate_name": "count",
-            "estimate_type": "integer",
-            "estimate_value": str(n_missing),
-        })
-        all_rows.append({
-            **base,
-            "variable_name": "Missing dose",
-            "variable_level": "",
-            "estimate_name": "percentage",
-            "estimate_type": "percentage",
-            "estimate_value": f"{pct_missing:.2f}",
-        })
+        all_rows.append(
+            {
+                **base,
+                "variable_name": "Missing dose",
+                "variable_level": "",
+                "estimate_name": "count",
+                "estimate_type": "integer",
+                "estimate_value": str(n_missing),
+            }
+        )
+        all_rows.append(
+            {
+                **base,
+                "variable_name": "Missing dose",
+                "variable_level": "",
+                "estimate_name": "percentage",
+                "estimate_type": "percentage",
+                "estimate_value": f"{pct_missing:.2f}",
+            }
+        )
 
     if not all_rows:
         return _empty_result("summarise_dose_coverage")
@@ -734,10 +795,12 @@ def summarise_proportion_of_patients_covered(
     df = cohort.collect() if not isinstance(cohort.data, pl.DataFrame) else cohort.data
 
     settings = cohort.settings
-    id_to_name = dict(zip(
-        settings["cohort_definition_id"].to_list(),
-        settings["cohort_name"].to_list(),
-    ))
+    id_to_name = dict(
+        zip(
+            settings["cohort_definition_id"].to_list(),
+            settings["cohort_name"].to_list(),
+        )
+    )
 
     all_rows: list[dict[str, Any]] = []
     result_id = 1
@@ -759,10 +822,16 @@ def summarise_proportion_of_patients_covered(
             temp = CdmTable(data=sdf, tbl_name="_temp_ppc")
             temp.cdm = cdm
             enriched = add_future_observation(
-                temp, cdm, index_date=index_date,
+                temp,
+                cdm,
+                index_date=index_date,
                 future_observation_name="_max_followup",
             )
-            edf = enriched.collect() if not isinstance(enriched.data, pl.DataFrame) else enriched.data
+            edf = (
+                enriched.collect()
+                if not isinstance(enriched.data, pl.DataFrame)
+                else enriched.data
+            )
 
             # For each subject, compute:
             # - coverage_days: cohort_end_date - index_date (days covered by drug)
@@ -776,12 +845,7 @@ def summarise_proportion_of_patients_covered(
             # For PPC, we need subject-level summary (first entry per subject)
             # If multiple entries, take the union of coverage
             # Simplified: use first entry (consistent with R)
-            subject_df = (
-                edf
-                .sort(index_date)
-                .group_by("subject_id")
-                .first()
-            )
+            subject_df = edf.sort(index_date).group_by("subject_id").first()
 
             n_total = len(subject_df)
 
@@ -814,36 +878,46 @@ def summarise_proportion_of_patients_covered(
                     "variable_level": "",
                 }
 
-                all_rows.append({
-                    **base,
-                    "estimate_name": "outcome_count",
-                    "estimate_type": "integer",
-                    "estimate_value": str(n_covered),
-                })
-                all_rows.append({
-                    **base,
-                    "estimate_name": "denominator_count",
-                    "estimate_type": "integer",
-                    "estimate_value": str(n_at_risk),
-                })
-                all_rows.append({
-                    **base,
-                    "estimate_name": "ppc",
-                    "estimate_type": "numeric",
-                    "estimate_value": f"{ppc:.6f}",
-                })
-                all_rows.append({
-                    **base,
-                    "estimate_name": "ppc_lower",
-                    "estimate_type": "numeric",
-                    "estimate_value": f"{ppc_lower:.6f}",
-                })
-                all_rows.append({
-                    **base,
-                    "estimate_name": "ppc_upper",
-                    "estimate_type": "numeric",
-                    "estimate_value": f"{ppc_upper:.6f}",
-                })
+                all_rows.append(
+                    {
+                        **base,
+                        "estimate_name": "outcome_count",
+                        "estimate_type": "integer",
+                        "estimate_value": str(n_covered),
+                    }
+                )
+                all_rows.append(
+                    {
+                        **base,
+                        "estimate_name": "denominator_count",
+                        "estimate_type": "integer",
+                        "estimate_value": str(n_at_risk),
+                    }
+                )
+                all_rows.append(
+                    {
+                        **base,
+                        "estimate_name": "ppc",
+                        "estimate_type": "numeric",
+                        "estimate_value": f"{ppc:.6f}",
+                    }
+                )
+                all_rows.append(
+                    {
+                        **base,
+                        "estimate_name": "ppc_lower",
+                        "estimate_type": "numeric",
+                        "estimate_value": f"{ppc_lower:.6f}",
+                    }
+                )
+                all_rows.append(
+                    {
+                        **base,
+                        "estimate_name": "ppc_upper",
+                        "estimate_type": "numeric",
+                        "estimate_value": f"{ppc_upper:.6f}",
+                    }
+                )
 
     if not all_rows:
         return _empty_result("summarise_proportion_of_patients_covered")
@@ -882,21 +956,23 @@ def _make_settings(
 
 def _empty_result(result_type: str) -> SummarisedResult:
     """Create an empty SummarisedResult with the given result_type."""
-    data = pl.DataFrame(schema={
-        "result_id": pl.Int64,
-        "cdm_name": pl.Utf8,
-        "group_name": pl.Utf8,
-        "group_level": pl.Utf8,
-        "strata_name": pl.Utf8,
-        "strata_level": pl.Utf8,
-        "variable_name": pl.Utf8,
-        "variable_level": pl.Utf8,
-        "estimate_name": pl.Utf8,
-        "estimate_type": pl.Utf8,
-        "estimate_value": pl.Utf8,
-        "additional_name": pl.Utf8,
-        "additional_level": pl.Utf8,
-    })
+    data = pl.DataFrame(
+        schema={
+            "result_id": pl.Int64,
+            "cdm_name": pl.Utf8,
+            "group_name": pl.Utf8,
+            "group_level": pl.Utf8,
+            "strata_name": pl.Utf8,
+            "strata_level": pl.Utf8,
+            "variable_name": pl.Utf8,
+            "variable_level": pl.Utf8,
+            "estimate_name": pl.Utf8,
+            "estimate_type": pl.Utf8,
+            "estimate_value": pl.Utf8,
+            "additional_name": pl.Utf8,
+            "additional_level": pl.Utf8,
+        }
+    )
     settings_df = _make_settings(1, result_type)
     return SummarisedResult(data, settings=settings_df)
 
@@ -997,112 +1073,136 @@ def _compute_numeric_estimates(
     for est in estimates:
         if est == "count_missing":
             n_missing = total - n
-            rows.append({
-                "variable_name": variable_name,
-                "variable_level": "",
-                "estimate_name": "count_missing",
-                "estimate_type": "integer",
-                "estimate_value": str(n_missing),
-            })
+            rows.append(
+                {
+                    "variable_name": variable_name,
+                    "variable_level": "",
+                    "estimate_name": "count_missing",
+                    "estimate_type": "integer",
+                    "estimate_value": str(n_missing),
+                }
+            )
         elif est == "percentage_missing":
             n_missing = total - n
             pct = (n_missing / total * 100.0) if total > 0 else 0.0
-            rows.append({
-                "variable_name": variable_name,
-                "variable_level": "",
-                "estimate_name": "percentage_missing",
-                "estimate_type": "percentage",
-                "estimate_value": f"{pct:.2f}",
-            })
+            rows.append(
+                {
+                    "variable_name": variable_name,
+                    "variable_level": "",
+                    "estimate_name": "percentage_missing",
+                    "estimate_type": "percentage",
+                    "estimate_value": f"{pct:.2f}",
+                }
+            )
         elif est == "mean":
             val = non_null.mean() if n > 0 else None
-            rows.append({
-                "variable_name": variable_name,
-                "variable_level": "",
-                "estimate_name": "mean",
-                "estimate_type": "numeric",
-                "estimate_value": f"{val:.2f}" if val is not None else "NA",
-            })
+            rows.append(
+                {
+                    "variable_name": variable_name,
+                    "variable_level": "",
+                    "estimate_name": "mean",
+                    "estimate_type": "numeric",
+                    "estimate_value": f"{val:.2f}" if val is not None else "NA",
+                }
+            )
         elif est == "sd":
             if n > 1:
                 val = non_null.std()
-                rows.append({
-                    "variable_name": variable_name,
-                    "variable_level": "",
-                    "estimate_name": "sd",
-                    "estimate_type": "numeric",
-                    "estimate_value": f"{val:.2f}" if val is not None else "NA",
-                })
+                rows.append(
+                    {
+                        "variable_name": variable_name,
+                        "variable_level": "",
+                        "estimate_name": "sd",
+                        "estimate_type": "numeric",
+                        "estimate_value": f"{val:.2f}" if val is not None else "NA",
+                    }
+                )
             else:
-                rows.append({
-                    "variable_name": variable_name,
-                    "variable_level": "",
-                    "estimate_name": "sd",
-                    "estimate_type": "numeric",
-                    "estimate_value": "NA",
-                })
+                rows.append(
+                    {
+                        "variable_name": variable_name,
+                        "variable_level": "",
+                        "estimate_name": "sd",
+                        "estimate_type": "numeric",
+                        "estimate_value": "NA",
+                    }
+                )
         elif est == "median":
             val = non_null.median() if n > 0 else None
-            rows.append({
-                "variable_name": variable_name,
-                "variable_level": "",
-                "estimate_name": "median",
-                "estimate_type": "numeric",
-                "estimate_value": f"{val:.2f}" if val is not None else "NA",
-            })
+            rows.append(
+                {
+                    "variable_name": variable_name,
+                    "variable_level": "",
+                    "estimate_name": "median",
+                    "estimate_type": "numeric",
+                    "estimate_value": f"{val:.2f}" if val is not None else "NA",
+                }
+            )
         elif est == "q25":
             val = non_null.quantile(0.25, interpolation="nearest") if n > 0 else None
-            rows.append({
-                "variable_name": variable_name,
-                "variable_level": "",
-                "estimate_name": "q25",
-                "estimate_type": "numeric",
-                "estimate_value": f"{val:.2f}" if val is not None else "NA",
-            })
+            rows.append(
+                {
+                    "variable_name": variable_name,
+                    "variable_level": "",
+                    "estimate_name": "q25",
+                    "estimate_type": "numeric",
+                    "estimate_value": f"{val:.2f}" if val is not None else "NA",
+                }
+            )
         elif est == "q75":
             val = non_null.quantile(0.75, interpolation="nearest") if n > 0 else None
-            rows.append({
-                "variable_name": variable_name,
-                "variable_level": "",
-                "estimate_name": "q75",
-                "estimate_type": "numeric",
-                "estimate_value": f"{val:.2f}" if val is not None else "NA",
-            })
+            rows.append(
+                {
+                    "variable_name": variable_name,
+                    "variable_level": "",
+                    "estimate_name": "q75",
+                    "estimate_type": "numeric",
+                    "estimate_value": f"{val:.2f}" if val is not None else "NA",
+                }
+            )
         elif est == "min":
             val = non_null.min() if n > 0 else None
-            rows.append({
-                "variable_name": variable_name,
-                "variable_level": "",
-                "estimate_name": "min",
-                "estimate_type": "numeric",
-                "estimate_value": f"{val}" if val is not None else "NA",
-            })
+            rows.append(
+                {
+                    "variable_name": variable_name,
+                    "variable_level": "",
+                    "estimate_name": "min",
+                    "estimate_type": "numeric",
+                    "estimate_value": f"{val}" if val is not None else "NA",
+                }
+            )
         elif est == "max":
             val = non_null.max() if n > 0 else None
-            rows.append({
-                "variable_name": variable_name,
-                "variable_level": "",
-                "estimate_name": "max",
-                "estimate_type": "numeric",
-                "estimate_value": f"{val}" if val is not None else "NA",
-            })
+            rows.append(
+                {
+                    "variable_name": variable_name,
+                    "variable_level": "",
+                    "estimate_name": "max",
+                    "estimate_type": "numeric",
+                    "estimate_value": f"{val}" if val is not None else "NA",
+                }
+            )
         elif est == "count":
-            rows.append({
-                "variable_name": variable_name,
-                "variable_level": "",
-                "estimate_name": "count",
-                "estimate_type": "integer",
-                "estimate_value": str(n),
-            })
+            rows.append(
+                {
+                    "variable_name": variable_name,
+                    "variable_level": "",
+                    "estimate_name": "count",
+                    "estimate_type": "integer",
+                    "estimate_value": str(n),
+                }
+            )
         elif est == "percentage":
             pct = (n / total * 100.0) if total > 0 else 0.0
-            rows.append({
-                "variable_name": variable_name,
-                "variable_level": "",
-                "estimate_name": "percentage",
-                "estimate_type": "percentage",
-                "estimate_value": f"{pct:.2f}",
-            })
+            rows.append(
+                {
+                    "variable_name": variable_name,
+                    "variable_level": "",
+                    "estimate_name": "percentage",
+                    "estimate_type": "percentage",
+                    "estimate_value": f"{pct:.2f}",
+                }
+            )
 
     return rows
 
@@ -1125,10 +1225,12 @@ def _summarise_categorical_intersect(
     computes count/percentage per level per cohort × strata.
     """
     settings = enriched.settings
-    id_to_name = dict(zip(
-        settings["cohort_definition_id"].to_list(),
-        settings["cohort_name"].to_list(),
-    ))
+    id_to_name = dict(
+        zip(
+            settings["cohort_definition_id"].to_list(),
+            settings["cohort_name"].to_list(),
+        )
+    )
     cdm = enriched.cdm
     cdm_name = cdm.cdm_name if cdm else "unknown"
 
@@ -1143,11 +1245,17 @@ def _summarise_categorical_intersect(
             total = len(sdf)
 
             # Add count rows
-            all_rows.extend(_add_count_rows(
-                sdf, cdm_name=cdm_name, result_id=result_id,
-                group_name="cohort_name", group_level=cname,
-                strata_name=sname, strata_level=slevel,
-            ))
+            all_rows.extend(
+                _add_count_rows(
+                    sdf,
+                    cdm_name=cdm_name,
+                    result_id=result_id,
+                    group_name="cohort_name",
+                    group_level=cname,
+                    strata_name=sname,
+                    strata_level=slevel,
+                )
+            )
 
             for w in windows:
                 wn = window_name_fn(w)
@@ -1180,22 +1288,26 @@ def _summarise_categorical_intersect(
                         "additional_name": additional_key,
                         "additional_level": wn,
                     }
-                    all_rows.append({
-                        **base,
-                        "variable_name": variable_name,
-                        "variable_level": level,
-                        "estimate_name": "count",
-                        "estimate_type": "integer",
-                        "estimate_value": str(count),
-                    })
-                    all_rows.append({
-                        **base,
-                        "variable_name": variable_name,
-                        "variable_level": level,
-                        "estimate_name": "percentage",
-                        "estimate_type": "percentage",
-                        "estimate_value": f"{pct:.2f}",
-                    })
+                    all_rows.append(
+                        {
+                            **base,
+                            "variable_name": variable_name,
+                            "variable_level": level,
+                            "estimate_name": "count",
+                            "estimate_type": "integer",
+                            "estimate_value": str(count),
+                        }
+                    )
+                    all_rows.append(
+                        {
+                            **base,
+                            "variable_name": variable_name,
+                            "variable_level": level,
+                            "estimate_name": "percentage",
+                            "estimate_type": "percentage",
+                            "estimate_value": f"{pct:.2f}",
+                        }
+                    )
 
     if not all_rows:
         return _empty_result(result_type)
@@ -1221,6 +1333,7 @@ def _wilson_ci(
 
     try:
         from scipy.stats import norm as _norm
+
         z = _norm.ppf(1 - (1 - confidence) / 2)
     except ImportError:
         # Fallback: z ≈ 1.96 for 95%

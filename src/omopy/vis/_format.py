@@ -94,7 +94,7 @@ def _format_single_value(
 
     try:
         num = float(val)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         return val
 
     n_dec = decimals.get(etype or "numeric", 2)
@@ -177,7 +177,8 @@ def format_estimate_name(
 
     # Key columns for grouping (everything except the 3 estimate columns)
     key_cols = [
-        c for c in SUMMARISED_RESULT_COLUMNS
+        c
+        for c in SUMMARISED_RESULT_COLUMNS
         if c not in ("estimate_name", "estimate_type", "estimate_value")
     ]
 
@@ -218,7 +219,12 @@ def format_estimate_name(
                 formatted_value = formatted_value.replace(f"<{ph}>", est_lookup[ph])
                 used_estimate_names.add(ph)
 
-            row = {**key_dict, "estimate_name": display_label, "estimate_type": "character", "estimate_value": formatted_value}
+            row = {
+                **key_dict,
+                "estimate_name": display_label,
+                "estimate_type": "character",
+                "estimate_value": formatted_value,
+            }
             result_rows.append(row)
 
         # Keep unformatted rows if requested
@@ -242,9 +248,7 @@ def format_estimate_name(
         # Add unformatted at the end
         max_order = len(order)
         new_df = new_df.with_columns(
-            pl.col("estimate_name")
-            .replace_strict(order, default=max_order)
-            .alias("_sort_order")
+            pl.col("estimate_name").replace_strict(order, default=max_order).alias("_sort_order")
         )
         new_df = new_df.sort("_sort_order").drop("_sort_order")
 
@@ -379,7 +383,7 @@ def parse_header_keys(col_name: str, *, delim: str = HEADER_DELIM) -> dict[str, 
         for key in ("header", "header_name", "header_level"):
             prefix = f"[{key}]"
             if part.startswith(prefix):
-                result[key] = part[len(prefix):]
+                result[key] = part[len(prefix) :]
                 break
     return result
 
@@ -412,7 +416,7 @@ def format_min_cell_count(
         for row in settings.iter_rows(named=True):
             try:
                 min_counts[row["result_id"]] = int(row["min_cell_count"])
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 min_counts[row["result_id"]] = 5
     else:
         for rid in df["result_id"].unique().to_list():

@@ -13,7 +13,8 @@ class TestAddCategories:
         obs = synthea_cdm["observation_period"]
         # First add age
         with_age = add_age(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         # Then categorize
@@ -31,7 +32,8 @@ class TestAddCategories:
         """Test auto-labelling with list input."""
         obs = synthea_cdm["observation_period"]
         with_age = add_age(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         result = add_categories(
@@ -48,7 +50,8 @@ class TestAddCategories:
         """Overlapping ranges should raise without overlap=True."""
         obs = synthea_cdm["observation_period"]
         with_age = add_age(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         with pytest.raises(ValueError, match="Overlapping"):
@@ -62,7 +65,8 @@ class TestAddCategories:
         """With overlap=True, overlapping ranges are OK."""
         obs = synthea_cdm["observation_period"]
         with_age = add_age(
-            obs, synthea_cdm,
+            obs,
+            synthea_cdm,
             index_date="observation_period_start_date",
         )
         result = add_categories(

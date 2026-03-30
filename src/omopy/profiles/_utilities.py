@@ -105,9 +105,7 @@ def add_concept_name(
         )
 
         # Left join
-        tbl = tbl.left_join(
-            concept_lookup, tbl[col].cast("int64") == concept_lookup["_cid"]
-        )
+        tbl = tbl.left_join(concept_lookup, tbl[col].cast("int64") == concept_lookup["_cid"])
         tbl = tbl.mutate(**{out_name: tbl["_cname"]})
         # Drop helper columns
         keep = [c for c in tbl.columns if c not in ("_cid", "_cname")]
@@ -177,9 +175,11 @@ def filter_in_observation(
         _fio_end=obs["observation_period_end_date"],
     )
 
-    result = tbl.join(obs_sub, tbl[pid] == obs_sub["_fio_pid"]).filter(
-        lambda t: (t["_fio_start"] <= t[index_date]) & (t[index_date] <= t["_fio_end"])
-    ).select(*orig_cols)
+    result = (
+        tbl.join(obs_sub, tbl[pid] == obs_sub["_fio_pid"])
+        .filter(lambda t: (t["_fio_start"] <= t[index_date]) & (t[index_date] <= t["_fio_end"]))
+        .select(*orig_cols)
+    )
 
     return x._with_data(result)
 

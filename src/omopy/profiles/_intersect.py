@@ -157,7 +157,8 @@ def _add_intersect(
 
             # LEFT JOIN input (with row_id) to overlap on person_id
             joined = tbl_with_id.left_join(
-                ov, tbl_with_id[pid] == ov["_ov_pid"],
+                ov,
+                tbl_with_id[pid] == ov["_ov_pid"],
             )
 
             # Compute day offsets
@@ -170,8 +171,7 @@ def _add_intersect(
             # Apply censor date filter
             if censor_date is not None:
                 joined = joined.filter(
-                    joined["_ov_start"].isnull()
-                    | (joined["_ov_start"] <= joined[censor_date])
+                    joined["_ov_start"].isnull() | (joined["_ov_start"] <= joined[censor_date])
                 )
 
             # Apply in-observation filter
@@ -192,7 +192,12 @@ def _add_intersect(
                 )
 
                 computed = _compute_value(
-                    joined, pid, index_date, v, col_name, order,
+                    joined,
+                    pid,
+                    index_date,
+                    v,
+                    col_name,
+                    order,
                 )
                 # computed has columns: _ROW_ID, col_name
                 result_tbl = _left_join_column(result_tbl, computed, col_name, v)
@@ -242,9 +247,7 @@ def _prepare_overlap_table(
         ]
         select_dict["_id_name"] = ibis.cases(*cases, else_=ibis.null().cast("string"))
 
-        result = target_table.select(**select_dict).filter(
-            lambda t: t["_id_name"].notnull()
-        )
+        result = target_table.select(**select_dict).filter(lambda t: t["_id_name"].notnull())
     else:
         select_dict["_id_name"] = ibis.literal(id_name[0] if id_name else "all")
         result = target_table.select(**select_dict)
@@ -269,14 +272,10 @@ def _apply_window_day_filter(
     filters = []
     if not math.isinf(lo):
         lo_lit = ibis.literal(int(lo))
-        filters.append(
-            joined["_ov_pid"].isnull() | (end_diff >= lo_lit)
-        )
+        filters.append(joined["_ov_pid"].isnull() | (end_diff >= lo_lit))
     if not math.isinf(hi):
         hi_lit = ibis.literal(int(hi))
-        filters.append(
-            joined["_ov_pid"].isnull() | (start_diff <= hi_lit)
-        )
+        filters.append(joined["_ov_pid"].isnull() | (start_diff <= hi_lit))
 
     if filters:
         combined = filters[0]
@@ -346,9 +345,7 @@ def _compute_value(
             (joined["_ov_pid"].notnull(), ibis.literal(1)),
             else_=ibis.literal(0),
         )
-        result = joined.group_by(_ROW_ID).agg(
-            **{col_name: flag_expr.max()}
-        )
+        result = joined.group_by(_ROW_ID).agg(**{col_name: flag_expr.max()})
         return result
 
     elif value_type == "count":
@@ -357,9 +354,7 @@ def _compute_value(
             (joined["_ov_pid"].notnull(), ibis.literal(1)),
             else_=ibis.literal(0),
         )
-        result = joined.group_by(_ROW_ID).agg(
-            **{col_name: has_match.sum()}
-        )
+        result = joined.group_by(_ROW_ID).agg(**{col_name: has_match.sum()})
         return result
 
     elif value_type == "date":
@@ -392,11 +387,17 @@ def _compute_value(
             _idx_date=joined[index_date].max(),  # all same value per group
         )
         result2 = result2.mutate(
-            **{col_name: ibis.cases(
-                (result2["_date_diff"].notnull(),
-                 (result2["_idx_date"] + result2["_date_diff"] * ibis.interval(days=1)).cast("date")),
-                else_=ibis.null().cast("date"),
-            )}
+            **{
+                col_name: ibis.cases(
+                    (
+                        result2["_date_diff"].notnull(),
+                        (
+                            result2["_idx_date"] + result2["_date_diff"] * ibis.interval(days=1)
+                        ).cast("date"),
+                    ),
+                    else_=ibis.null().cast("date"),
+                )
+            }
         )
         return result2.select(_ROW_ID, col_name)
 
@@ -412,9 +413,7 @@ def _compute_value(
         else:
             agg_expr = diff_when_matched.max()
 
-        result = joined.group_by(_ROW_ID).agg(
-            **{col_name: agg_expr}
-        )
+        result = joined.group_by(_ROW_ID).agg(**{col_name: agg_expr})
         return result
 
     else:

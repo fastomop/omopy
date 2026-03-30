@@ -45,10 +45,12 @@ class TestStratifyByDomain:
 
     def test_multiple_concept_sets(self, synthea_cdm):
         """Each concept set is stratified independently."""
-        cl = Codelist({
-            "set1": [40481087],
-            "set2": [1177480],
-        })
+        cl = Codelist(
+            {
+                "set1": [40481087],
+                "set2": [1177480],
+            }
+        )
         result = stratify_by_domain(cl, synthea_cdm)
         assert "set1_condition" in result
         assert "set2_drug" in result

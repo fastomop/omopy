@@ -16,36 +16,42 @@ from omopy.generics.cohort_table import CohortTable
 
 def _person_table() -> CdmTable:
     return CdmTable(
-        pl.DataFrame({
-            "person_id": [1, 2, 3],
-            "gender_concept_id": [8507, 8532, 8507],
-            "year_of_birth": [1990, 1985, 2000],
-        }),
+        pl.DataFrame(
+            {
+                "person_id": [1, 2, 3],
+                "gender_concept_id": [8507, 8532, 8507],
+                "year_of_birth": [1990, 1985, 2000],
+            }
+        ),
         tbl_name="person",
     )
 
 
 def _obs_period_table() -> CdmTable:
     return CdmTable(
-        pl.DataFrame({
-            "observation_period_id": [1, 2, 3],
-            "person_id": [1, 2, 3],
-            "observation_period_start_date": ["2020-01-01"] * 3,
-            "observation_period_end_date": ["2024-12-31"] * 3,
-            "period_type_concept_id": [44814724] * 3,
-        }),
+        pl.DataFrame(
+            {
+                "observation_period_id": [1, 2, 3],
+                "person_id": [1, 2, 3],
+                "observation_period_start_date": ["2020-01-01"] * 3,
+                "observation_period_end_date": ["2024-12-31"] * 3,
+                "period_type_concept_id": [44814724] * 3,
+            }
+        ),
         tbl_name="observation_period",
     )
 
 
 def _cohort_table() -> CohortTable:
     return CohortTable(
-        pl.DataFrame({
-            "cohort_definition_id": [1, 1, 2],
-            "subject_id": [1, 2, 1],
-            "cohort_start_date": ["2020-01-01"] * 3,
-            "cohort_end_date": ["2020-12-31"] * 3,
-        }),
+        pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1, 2],
+                "subject_id": [1, 2, 1],
+                "cohort_start_date": ["2020-01-01"] * 3,
+                "cohort_end_date": ["2020-12-31"] * 3,
+            }
+        ),
         tbl_name="my_cohort",
     )
 
@@ -119,10 +125,12 @@ class TestCdmReferenceAccess:
         assert "missing" not in cdm
 
     def test_iter(self):
-        cdm = CdmReference(tables={
-            "person": _person_table(),
-            "observation_period": _obs_period_table(),
-        })
+        cdm = CdmReference(
+            tables={
+                "person": _person_table(),
+                "observation_period": _obs_period_table(),
+            }
+        )
         names = list(cdm)
         assert set(names) == {"person", "observation_period"}
 
@@ -144,10 +152,12 @@ class TestCdmReferenceAccess:
 
 class TestCdmReferenceProperties:
     def test_table_names(self):
-        cdm = CdmReference(tables={
-            "person": _person_table(),
-            "observation_period": _obs_period_table(),
-        })
+        cdm = CdmReference(
+            tables={
+                "person": _person_table(),
+                "observation_period": _obs_period_table(),
+            }
+        )
         assert set(cdm.table_names) == {"person", "observation_period"}
 
     def test_cdm_name_setter(self):
@@ -160,10 +170,12 @@ class TestCdmReferenceProperties:
         assert cdm.cdm_source is None
 
     def test_cohort_tables(self):
-        cdm = CdmReference(tables={
-            "person": _person_table(),
-            "my_cohort": _cohort_table(),
-        })
+        cdm = CdmReference(
+            tables={
+                "person": _person_table(),
+                "my_cohort": _cohort_table(),
+            }
+        )
         cohorts = cdm.cohort_tables
         assert "my_cohort" in cohorts
         assert "person" not in cohorts
@@ -196,10 +208,12 @@ class TestCdmReferenceSnapshot:
 
 class TestSelectTables:
     def test_select_existing(self):
-        cdm = CdmReference(tables={
-            "person": _person_table(),
-            "observation_period": _obs_period_table(),
-        })
+        cdm = CdmReference(
+            tables={
+                "person": _person_table(),
+                "observation_period": _obs_period_table(),
+            }
+        )
         subset = cdm.select_tables(["person"])
         assert len(subset) == 1
         assert "person" in subset

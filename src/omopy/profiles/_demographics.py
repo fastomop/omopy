@@ -203,9 +203,11 @@ def add_age(
         Input table with the age column added.
     """
     return add_demographics(
-        x, cdm,
+        x,
+        cdm,
         index_date=index_date,
-        age=True, age_name=age_name,
+        age=True,
+        age_name=age_name,
         age_missing_month=age_missing_month,
         age_missing_day=age_missing_day,
         age_impose_month=age_impose_month,
@@ -249,8 +251,10 @@ def add_sex(
         Input table with the sex column added.
     """
     return add_demographics(
-        x, cdm,
-        sex=True, sex_name=sex_name,
+        x,
+        cdm,
+        sex=True,
+        sex_name=sex_name,
         missing_sex_value=missing_sex_value,
         age=False,
         prior_observation=False,
@@ -291,12 +295,14 @@ def add_prior_observation(
         Input table with prior observation added.
     """
     return add_demographics(
-        x, cdm,
+        x,
+        cdm,
         index_date=index_date,
         prior_observation=True,
         prior_observation_name=prior_observation_name,
         prior_observation_type=prior_observation_type,
-        age=False, sex=False,
+        age=False,
+        sex=False,
         future_observation=False,
         date_of_birth=False,
     )
@@ -334,12 +340,14 @@ def add_future_observation(
         Input table with future observation added.
     """
     return add_demographics(
-        x, cdm,
+        x,
+        cdm,
         index_date=index_date,
         future_observation=True,
         future_observation_name=future_observation_name,
         future_observation_type=future_observation_type,
-        age=False, sex=False,
+        age=False,
+        sex=False,
         prior_observation=False,
         date_of_birth=False,
     )
@@ -379,14 +387,16 @@ def add_date_of_birth(
         Input table with date of birth added.
     """
     return add_demographics(
-        x, cdm,
+        x,
+        cdm,
         date_of_birth=True,
         date_of_birth_name=date_of_birth_name,
         age_missing_month=missing_month,
         age_missing_day=missing_day,
         age_impose_month=impose_month,
         age_impose_day=impose_day,
-        age=False, sex=False,
+        age=False,
+        sex=False,
         prior_observation=False,
         future_observation=False,
     )
@@ -460,7 +470,11 @@ def add_in_observation(
     new_cols = {}
     for w in windows:
         wn = window_name(w)
-        col_name = name_style.replace("{window_name}", wn) if "{window_name}" in name_style else name_style
+        col_name = (
+            name_style.replace("{window_name}", wn)
+            if "{window_name}" in name_style
+            else name_style
+        )
 
         lo, hi = w
 
@@ -551,15 +565,21 @@ def add_in_observation(
 
     # Re-do: compute flags directly with a left join approach
     tbl_with_obs = tbl.left_join(obs, tbl[pid] == obs["obs_pid"]).filter(
-        lambda t: t["obs_start"].isnull()
-        | ((t["obs_start"] <= t[index_date]) & (t[index_date] <= t["obs_end"]))
+        lambda t: (
+            t["obs_start"].isnull()
+            | ((t["obs_start"] <= t[index_date]) & (t[index_date] <= t["obs_end"]))
+        )
     )
 
     # Re-compute flags on the left-joined table (obs columns may be null)
     final_cols = {}
     for w in windows:
         wn = window_name(w)
-        col_name = name_style.replace("{window_name}", wn) if "{window_name}" in name_style else name_style
+        col_name = (
+            name_style.replace("{window_name}", wn)
+            if "{window_name}" in name_style
+            else name_style
+        )
 
         lo, hi = w
 
@@ -573,7 +593,9 @@ def add_in_observation(
             if math.isinf(lo) or math.isinf(hi):
                 flag_expr = ibis.literal(0)
             else:
-                obs_start_diff = (tbl_with_obs["obs_start"] - tbl_with_obs[index_date]).cast("int64")
+                obs_start_diff = (tbl_with_obs["obs_start"] - tbl_with_obs[index_date]).cast(
+                    "int64"
+                )
                 obs_end_diff = (tbl_with_obs["obs_end"] - tbl_with_obs[index_date]).cast("int64")
                 flag_expr = ibis.cases(
                     (
@@ -659,6 +681,7 @@ def _get_ibis_table(x: CdmTable | object) -> ir.Table:
         # Handle Polars DataFrames (e.g. generated cohort tables)
         try:
             import polars as pl
+
             if isinstance(data, pl.DataFrame):
                 return ibis.memtable(data.to_arrow())
             if isinstance(data, pl.LazyFrame):
@@ -700,24 +723,26 @@ def _add_observation_period(
 
     # Left join + filter to enclosing observation period
     joined = tbl.left_join(obs, tbl[pid] == obs["_obs_pid"]).filter(
-        lambda t: t["_obs_start"].isnull()
-        | ((t["_obs_start"] <= t[index_date]) & (t[index_date] <= t["_obs_end"]))
+        lambda t: (
+            t["_obs_start"].isnull()
+            | ((t["_obs_start"] <= t[index_date]) & (t[index_date] <= t["_obs_end"]))
+        )
     )
 
     # Compute requested columns
     new_mutate = {}
     if prior_observation:
         if prior_observation_type == "days":
-            new_mutate[prior_observation_name] = (
-                (joined[index_date] - joined["_obs_start"]).cast("int64")
+            new_mutate[prior_observation_name] = (joined[index_date] - joined["_obs_start"]).cast(
+                "int64"
             )
         else:
             new_mutate[prior_observation_name] = joined["_obs_start"]
 
     if future_observation:
         if future_observation_type == "days":
-            new_mutate[future_observation_name] = (
-                (joined["_obs_end"] - joined[index_date]).cast("int64")
+            new_mutate[future_observation_name] = (joined["_obs_end"] - joined[index_date]).cast(
+                "int64"
             )
         else:
             new_mutate[future_observation_name] = joined["_obs_end"]
@@ -767,7 +792,9 @@ def _add_person_info(
             person_select["_month_of_birth"] = ibis.literal(age_missing_month).cast("int64")
         else:
             person_select["_month_of_birth"] = (
-                person["month_of_birth"].cast("int64").fill_null(ibis.literal(age_missing_month).cast("int64"))
+                person["month_of_birth"]
+                .cast("int64")
+                .fill_null(ibis.literal(age_missing_month).cast("int64"))
             )
 
         # Day of birth
@@ -775,7 +802,9 @@ def _add_person_info(
             person_select["_day_of_birth"] = ibis.literal(age_missing_day).cast("int64")
         else:
             person_select["_day_of_birth"] = (
-                person["day_of_birth"].cast("int64").fill_null(ibis.literal(age_missing_day).cast("int64"))
+                person["day_of_birth"]
+                .cast("int64")
+                .fill_null(ibis.literal(age_missing_day).cast("int64"))
             )
 
     if sex:
@@ -797,13 +826,15 @@ def _add_person_info(
                 joined["_year_of_birth"].isnull(),
                 ibis.null().cast("date"),
             ),
-            else_=ibis.literal("").concat(
+            else_=ibis.literal("")
+            .concat(
                 joined["_year_of_birth"].cast("string"),
                 ibis.literal("-"),
                 joined["_month_of_birth"].cast("string").lpad(2, "0"),
                 ibis.literal("-"),
                 joined["_day_of_birth"].cast("string").lpad(2, "0"),
-            ).cast("date"),
+            )
+            .cast("date"),
         )
         new_cols["_dob"] = dob_expr
 
@@ -943,9 +974,11 @@ def _age_group_case_expr(
         elif math.isinf(hi):
             cases.append((age_expr >= ibis.literal(int(lo)), label))
         else:
-            cases.append((
-                (age_expr >= ibis.literal(int(lo))) & (age_expr <= ibis.literal(int(hi))),
-                label,
-            ))
+            cases.append(
+                (
+                    (age_expr >= ibis.literal(int(lo))) & (age_expr <= ibis.literal(int(hi))),
+                    label,
+                )
+            )
 
     return ibis.cases(*cases, else_=missing_value)

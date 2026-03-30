@@ -48,9 +48,18 @@ class TestAvailableChecks:
 
     def test_expected_checks_present(self):
         expected = {
-            "missing", "exposure_duration", "type", "route",
-            "source_concept", "days_supply", "verbatim_end_date",
-            "dose", "sig", "quantity", "days_between", "diagnostics_summary",
+            "missing",
+            "exposure_duration",
+            "type",
+            "route",
+            "source_concept",
+            "days_supply",
+            "verbatim_end_date",
+            "dose",
+            "sig",
+            "quantity",
+            "days_between",
+            "diagnostics_summary",
         }
         assert set(AVAILABLE_CHECKS) == expected
 
@@ -167,10 +176,12 @@ class TestObscureDf:
     """Tests for the _obscure_df helper."""
 
     def test_obscures_small_counts(self):
-        df = pl.DataFrame({
-            "name": ["a", "b", "c"],
-            "count": [3, 10, 1],
-        })
+        df = pl.DataFrame(
+            {
+                "name": ["a", "b", "c"],
+                "count": [3, 10, 1],
+            }
+        )
         result = _obscure_df(df, min_cell_count=5, count_columns=["count"])
         assert result["count"][0] is None  # 3 < 5
         assert result["count"][1] == 10
@@ -199,23 +210,25 @@ class TestCheckMissing:
     """Tests for _check_missing."""
 
     def test_basic(self):
-        df = pl.DataFrame({
-            "drug_exposure_id": [1, 2, 3],
-            "person_id": [10, 20, 30],
-            "drug_concept_id": [100, 200, 300],
-            "drug_exposure_start_date": [None, "2020-01-01", "2020-02-01"],
-            "drug_exposure_end_date": ["2020-01-10", None, "2020-02-10"],
-            "drug_type_concept_id": [32817, 32817, 32817],
-            "stop_reason": [None, None, None],
-            "refills": [None, None, None],
-            "quantity": [10.0, None, 30.0],
-            "days_supply": [10, 20, None],
-            "sig": [None, None, None],
-            "route_concept_id": [0, 0, 0],
-            "route_source_value": [None, None, None],
-            "dose_unit_source_value": [None, None, None],
-            "verbatim_end_date": [None, None, "2020-02-10"],
-        })
+        df = pl.DataFrame(
+            {
+                "drug_exposure_id": [1, 2, 3],
+                "person_id": [10, 20, 30],
+                "drug_concept_id": [100, 200, 300],
+                "drug_exposure_start_date": [None, "2020-01-01", "2020-02-01"],
+                "drug_exposure_end_date": ["2020-01-10", None, "2020-02-10"],
+                "drug_type_concept_id": [32817, 32817, 32817],
+                "stop_reason": [None, None, None],
+                "refills": [None, None, None],
+                "quantity": [10.0, None, 30.0],
+                "days_supply": [10, 20, None],
+                "sig": [None, None, None],
+                "route_concept_id": [0, 0, 0],
+                "route_source_value": [None, None, None],
+                "dose_unit_source_value": [None, None, None],
+                "verbatim_end_date": [None, None, "2020-02-10"],
+            }
+        )
         result = _check_missing(df, ingredient_concept_id=1, ingredient_name="Test")
         assert result.height == len(_MISSING_COLUMNS)
         assert "proportion_missing" in result.columns
@@ -226,10 +239,12 @@ class TestCheckMissing:
         assert start_row["n_missing"][0] == 1
 
     def test_empty_df(self):
-        df = pl.DataFrame(schema={
-            "drug_exposure_id": pl.Int64,
-            "person_id": pl.Int64,
-        })
+        df = pl.DataFrame(
+            schema={
+                "drug_exposure_id": pl.Int64,
+                "person_id": pl.Int64,
+            }
+        )
         result = _check_missing(df, ingredient_concept_id=1, ingredient_name="Test")
         assert result.height == 0
 
@@ -239,10 +254,21 @@ class TestCheckExposureDuration:
 
     def test_basic(self):
         import datetime as dt
-        df = pl.DataFrame({
-            "drug_exposure_start_date": [dt.date(2020, 1, 1), dt.date(2020, 2, 1), dt.date(2020, 3, 1)],
-            "drug_exposure_end_date": [dt.date(2020, 1, 10), dt.date(2020, 2, 28), dt.date(2020, 3, 5)],
-        })
+
+        df = pl.DataFrame(
+            {
+                "drug_exposure_start_date": [
+                    dt.date(2020, 1, 1),
+                    dt.date(2020, 2, 1),
+                    dt.date(2020, 3, 1),
+                ],
+                "drug_exposure_end_date": [
+                    dt.date(2020, 1, 10),
+                    dt.date(2020, 2, 28),
+                    dt.date(2020, 3, 5),
+                ],
+            }
+        )
         result = _check_exposure_duration(df, ingredient_concept_id=1, ingredient_name="Test")
         assert result.height == 1
         assert result["n_records"][0] == 3
@@ -251,10 +277,13 @@ class TestCheckExposureDuration:
 
     def test_negative_duration(self):
         import datetime as dt
-        df = pl.DataFrame({
-            "drug_exposure_start_date": [dt.date(2020, 1, 10), dt.date(2020, 2, 1)],
-            "drug_exposure_end_date": [dt.date(2020, 1, 1), dt.date(2020, 2, 28)],
-        })
+
+        df = pl.DataFrame(
+            {
+                "drug_exposure_start_date": [dt.date(2020, 1, 10), dt.date(2020, 2, 1)],
+                "drug_exposure_end_date": [dt.date(2020, 1, 1), dt.date(2020, 2, 28)],
+            }
+        )
         result = _check_exposure_duration(df, ingredient_concept_id=1, ingredient_name="Test")
         assert result["n_negative_duration"][0] == 1
 
@@ -268,13 +297,17 @@ class TestCheckType:
     """Tests for _check_type."""
 
     def test_basic(self):
-        df = pl.DataFrame({
-            "drug_type_concept_id": [32817, 32817, 32818],
-        })
-        concept_df = pl.DataFrame({
-            "concept_id": [32817, 32818],
-            "concept_name": ["EHR", "EHR administration"],
-        })
+        df = pl.DataFrame(
+            {
+                "drug_type_concept_id": [32817, 32817, 32818],
+            }
+        )
+        concept_df = pl.DataFrame(
+            {
+                "concept_id": [32817, 32818],
+                "concept_name": ["EHR", "EHR administration"],
+            }
+        )
         result = _check_type(df, concept_df, ingredient_concept_id=1, ingredient_name="Test")
         assert result.height == 2
         assert "drug_type" in result.columns
@@ -291,13 +324,17 @@ class TestCheckRoute:
     """Tests for _check_route."""
 
     def test_basic(self):
-        df = pl.DataFrame({
-            "route_concept_id": [4128794, 4128794, 0],
-        })
-        concept_df = pl.DataFrame({
-            "concept_id": [4128794, 0],
-            "concept_name": ["Oral", "No matching concept"],
-        })
+        df = pl.DataFrame(
+            {
+                "route_concept_id": [4128794, 4128794, 0],
+            }
+        )
+        concept_df = pl.DataFrame(
+            {
+                "concept_id": [4128794, 0],
+                "concept_name": ["Oral", "No matching concept"],
+            }
+        )
         result = _check_route(df, concept_df, ingredient_concept_id=1, ingredient_name="Test")
         assert result.height == 2
 
@@ -306,11 +343,13 @@ class TestCheckSourceConcept:
     """Tests for _check_source_concept."""
 
     def test_basic(self):
-        df = pl.DataFrame({
-            "drug_concept_id": [100, 100, 200],
-            "drug_source_concept_id": [1001, 1001, 1002],
-            "drug_source_value": ["tab100mg", "tab100mg", "cap200mg"],
-        })
+        df = pl.DataFrame(
+            {
+                "drug_concept_id": [100, 100, 200],
+                "drug_source_concept_id": [1001, 1001, 1002],
+                "drug_source_value": ["tab100mg", "tab100mg", "cap200mg"],
+            }
+        )
         result = _check_source_concept(df, ingredient_concept_id=1, ingredient_name="Test")
         assert result.height == 2
         assert "drug_source_value" in result.columns
@@ -321,11 +360,14 @@ class TestCheckDaysSupply:
 
     def test_basic(self):
         import datetime as dt
-        df = pl.DataFrame({
-            "drug_exposure_start_date": [dt.date(2020, 1, 1), dt.date(2020, 2, 1)],
-            "drug_exposure_end_date": [dt.date(2020, 1, 10), dt.date(2020, 2, 28)],
-            "days_supply": [10, 28],
-        })
+
+        df = pl.DataFrame(
+            {
+                "drug_exposure_start_date": [dt.date(2020, 1, 1), dt.date(2020, 2, 1)],
+                "drug_exposure_end_date": [dt.date(2020, 1, 10), dt.date(2020, 2, 28)],
+                "days_supply": [10, 28],
+            }
+        )
         result = _check_days_supply(df, ingredient_concept_id=1, ingredient_name="Test")
         assert result.height == 1
         assert "days_supply_median" in result.columns
@@ -338,10 +380,17 @@ class TestCheckVerbatimEndDate:
 
     def test_basic(self):
         import datetime as dt
-        df = pl.DataFrame({
-            "drug_exposure_end_date": [dt.date(2020, 1, 10), dt.date(2020, 2, 28), dt.date(2020, 3, 5)],
-            "verbatim_end_date": [dt.date(2020, 1, 10), None, dt.date(2020, 3, 1)],
-        })
+
+        df = pl.DataFrame(
+            {
+                "drug_exposure_end_date": [
+                    dt.date(2020, 1, 10),
+                    dt.date(2020, 2, 28),
+                    dt.date(2020, 3, 5),
+                ],
+                "verbatim_end_date": [dt.date(2020, 1, 10), None, dt.date(2020, 3, 1)],
+            }
+        )
         result = _check_verbatim_end_date(df, ingredient_concept_id=1, ingredient_name="Test")
         assert result.height == 1
         assert result["n_verbatim_end_date_missing"][0] == 1
@@ -353,14 +402,21 @@ class TestCheckDoseFromRecords:
     """Tests for _check_dose_from_records."""
 
     def test_with_matching_strength(self):
-        df = pl.DataFrame({
-            "drug_concept_id": [100, 200, 300],
-        })
-        strength = pl.DataFrame({
-            "drug_concept_id": [100, 200],
-        })
+        df = pl.DataFrame(
+            {
+                "drug_concept_id": [100, 200, 300],
+            }
+        )
+        strength = pl.DataFrame(
+            {
+                "drug_concept_id": [100, 200],
+            }
+        )
         result = _check_dose_from_records(
-            df, strength, ingredient_concept_id=1, ingredient_name="Test",
+            df,
+            strength,
+            ingredient_concept_id=1,
+            ingredient_name="Test",
         )
         assert result["n_with_dose"][0] == 2
         assert result["n_without_dose"][0] == 1
@@ -368,7 +424,10 @@ class TestCheckDoseFromRecords:
     def test_no_strength_table(self):
         df = pl.DataFrame({"drug_concept_id": [100, 200]})
         result = _check_dose_from_records(
-            df, None, ingredient_concept_id=1, ingredient_name="Test",
+            df,
+            None,
+            ingredient_concept_id=1,
+            ingredient_name="Test",
         )
         assert result["n_with_dose"][0] == 0
         assert result["n_without_dose"][0] == 2
@@ -378,9 +437,11 @@ class TestCheckSig:
     """Tests for _check_sig."""
 
     def test_basic(self):
-        df = pl.DataFrame({
-            "sig": ["Take 1 daily", None, "Take 1 daily"],
-        })
+        df = pl.DataFrame(
+            {
+                "sig": ["Take 1 daily", None, "Take 1 daily"],
+            }
+        )
         result = _check_sig(df, ingredient_concept_id=1, ingredient_name="Test")
         assert result.height == 2  # "Take 1 daily" and "<missing>"
         assert result["count"].sum() == 3
@@ -390,18 +451,23 @@ class TestCheckQuantity:
     """Tests for _check_quantity."""
 
     def test_basic(self):
-        df = pl.DataFrame({
-            "quantity": [10.0, 20.0, 30.0, None],
-        })
+        df = pl.DataFrame(
+            {
+                "quantity": [10.0, 20.0, 30.0, None],
+            }
+        )
         result = _check_quantity(df, ingredient_concept_id=1, ingredient_name="Test")
         assert result.height == 1
         assert result["quantity_count"][0] == 3
         assert result["quantity_count_missing"][0] == 1
 
     def test_all_null(self):
-        df = pl.DataFrame({
-            "quantity": [None, None, None],
-        }, schema={"quantity": pl.Float64})
+        df = pl.DataFrame(
+            {
+                "quantity": [None, None, None],
+            },
+            schema={"quantity": pl.Float64},
+        )
         result = _check_quantity(df, ingredient_concept_id=1, ingredient_name="Test")
         assert result["quantity_count"][0] == 0
         assert result["quantity_count_missing"][0] == 3
@@ -412,13 +478,19 @@ class TestCheckDaysBetween:
 
     def test_basic(self):
         import datetime as dt
-        df = pl.DataFrame({
-            "person_id": [1, 1, 1, 2, 2],
-            "drug_exposure_start_date": [
-                dt.date(2020, 1, 1), dt.date(2020, 2, 1), dt.date(2020, 4, 1),
-                dt.date(2020, 3, 1), dt.date(2020, 6, 1),
-            ],
-        })
+
+        df = pl.DataFrame(
+            {
+                "person_id": [1, 1, 1, 2, 2],
+                "drug_exposure_start_date": [
+                    dt.date(2020, 1, 1),
+                    dt.date(2020, 2, 1),
+                    dt.date(2020, 4, 1),
+                    dt.date(2020, 3, 1),
+                    dt.date(2020, 6, 1),
+                ],
+            }
+        )
         result = _check_days_between(df, ingredient_concept_id=1, ingredient_name="Test")
         assert result.height == 1
         assert result["n_persons"][0] == 2
@@ -431,13 +503,17 @@ class TestCheckDiagnosticsSummary:
 
     def test_basic(self):
         check_results = {
-            "missing": pl.DataFrame({
-                "proportion_missing": [0.1, 0.2, 0.3],
-            }),
-            "exposure_duration": pl.DataFrame({
-                "duration_median": [30.0],
-                "n_negative_duration": [2],
-            }),
+            "missing": pl.DataFrame(
+                {
+                    "proportion_missing": [0.1, 0.2, 0.3],
+                }
+            ),
+            "exposure_duration": pl.DataFrame(
+                {
+                    "duration_median": [30.0],
+                    "n_negative_duration": [2],
+                }
+            ),
         }
         result = _check_diagnostics_summary(
             check_results,
@@ -545,6 +621,7 @@ class TestSummariseDrugDiagnostics:
 
     def test_all_13_columns(self):
         from omopy.generics.summarised_result import SUMMARISED_RESULT_COLUMNS
+
         diag = mock_drug_exposure()
         sr = summarise_drug_diagnostics(diag)
         for col in SUMMARISED_RESULT_COLUMNS:
@@ -581,6 +658,7 @@ class TestTableDrugDiagnostics:
 
     def test_returns_polars_by_default(self):
         from omopy.drug_diagnostics import table_drug_diagnostics
+
         diag = mock_drug_exposure()
         sr = summarise_drug_diagnostics(diag)
         table = table_drug_diagnostics(sr, type="polars")
@@ -588,6 +666,7 @@ class TestTableDrugDiagnostics:
 
     def test_filter_by_check(self):
         from omopy.drug_diagnostics import table_drug_diagnostics
+
         diag = mock_drug_exposure()
         sr = summarise_drug_diagnostics(diag)
         table = table_drug_diagnostics(sr, check="missing", type="polars")
@@ -604,6 +683,7 @@ class TestPlotDrugDiagnostics:
 
     def test_missing_plot(self):
         from omopy.drug_diagnostics import plot_drug_diagnostics
+
         diag = mock_drug_exposure()
         sr = summarise_drug_diagnostics(diag)
         fig = plot_drug_diagnostics(sr, check="missing")
@@ -611,6 +691,7 @@ class TestPlotDrugDiagnostics:
 
     def test_categorical_plot(self):
         from omopy.drug_diagnostics import plot_drug_diagnostics
+
         diag = mock_drug_exposure()
         sr = summarise_drug_diagnostics(diag)
         fig = plot_drug_diagnostics(sr, check="type")
@@ -618,6 +699,7 @@ class TestPlotDrugDiagnostics:
 
     def test_quantile_plot(self):
         from omopy.drug_diagnostics import plot_drug_diagnostics
+
         diag = mock_drug_exposure()
         sr = summarise_drug_diagnostics(diag)
         fig = plot_drug_diagnostics(sr, check="exposure_duration")
@@ -625,6 +707,7 @@ class TestPlotDrugDiagnostics:
 
     def test_invalid_check_raises(self):
         from omopy.drug_diagnostics import plot_drug_diagnostics
+
         diag = mock_drug_exposure()
         sr = summarise_drug_diagnostics(diag)
         with pytest.raises(ValueError, match="Cannot plot check"):
@@ -632,6 +715,7 @@ class TestPlotDrugDiagnostics:
 
     def test_custom_title(self):
         from omopy.drug_diagnostics import plot_drug_diagnostics
+
         diag = mock_drug_exposure()
         sr = summarise_drug_diagnostics(diag)
         fig = plot_drug_diagnostics(sr, check="missing", title="Custom Title")

@@ -112,9 +112,7 @@ def snapshot(cdm: CdmReference) -> CdmSnapshot:
         cdm_name=cdm.cdm_name,
         cdm_source_name=src_info.get("cdm_source_name", ""),
         cdm_description=src_info.get("source_description", ""),
-        cdm_documentation_reference=src_info.get(
-            "source_documentation_reference", ""
-        ),
+        cdm_documentation_reference=src_info.get("source_documentation_reference", ""),
         cdm_version=src_info.get("cdm_version", str(cdm.cdm_version)),
         cdm_holder=src_info.get("cdm_holder", ""),
         cdm_release_date=src_info.get("cdm_release_date", ""),
@@ -189,12 +187,12 @@ def _observation_period_range(
     if earliest is not None and not isinstance(earliest, datetime.date):
         try:
             earliest = datetime.date.fromisoformat(str(earliest)[:10])
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             earliest = None
     if latest is not None and not isinstance(latest, datetime.date):
         try:
             latest = datetime.date.fromisoformat(str(latest)[:10])
-        except (ValueError, TypeError):
+        except ValueError, TypeError:
             latest = None
 
     return (earliest, latest)

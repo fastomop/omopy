@@ -63,7 +63,9 @@ def _collect_concept_records(
         if cid_col not in df.columns or date_col not in df.columns:
             log.debug(
                 "Table %s missing column(s) %s/%s, skipping.",
-                tbl_name, cid_col, date_col,
+                tbl_name,
+                cid_col,
+                date_col,
             )
             continue
 
@@ -133,10 +135,12 @@ def _init_pregnancies(
 
     # Add category information to HIP records
     if hip_records.height > 0:
-        cat_map = pl.DataFrame({
-            "concept_id": list(HIP_CONCEPT_CATEGORIES.keys()),
-            "category": list(HIP_CONCEPT_CATEGORIES.values()),
-        }).cast({"concept_id": pl.Int64})
+        cat_map = pl.DataFrame(
+            {
+                "concept_id": list(HIP_CONCEPT_CATEGORIES.keys()),
+                "category": list(HIP_CONCEPT_CATEGORIES.values()),
+            }
+        ).cast({"concept_id": pl.Int64})
         hip_records = hip_records.join(cat_map, on="concept_id", how="left")
 
         # Also add gest_value from HIP_CONCEPTS
@@ -144,10 +148,12 @@ def _init_pregnancies(
             {"concept_id": cid, "gest_value": info["gest_value"]}
             for cid, info in HIP_CONCEPTS.items()
         ]
-        gv_df = pl.DataFrame(gv_rows).cast({
-            "concept_id": pl.Int64,
-            "gest_value": pl.Int64,
-        })
+        gv_df = pl.DataFrame(gv_rows).cast(
+            {
+                "concept_id": pl.Int64,
+                "gest_value": pl.Int64,
+            }
+        )
         hip_records = hip_records.join(gv_df, on="concept_id", how="left")
     else:
         hip_records = hip_records.with_columns(
@@ -165,11 +171,13 @@ def _init_pregnancies(
             }
             for cid, info in PPS_CONCEPTS.items()
         ]
-        pps_meta = pl.DataFrame(pps_meta_rows).cast({
-            "concept_id": pl.Int64,
-            "min_month": pl.Int64,
-            "max_month": pl.Int64,
-        })
+        pps_meta = pl.DataFrame(pps_meta_rows).cast(
+            {
+                "concept_id": pl.Int64,
+                "min_month": pl.Int64,
+                "max_month": pl.Int64,
+            }
+        )
         pps_records = pps_records.join(pps_meta, on="concept_id", how="left")
     else:
         pps_records = pps_records.with_columns(
@@ -200,11 +208,13 @@ def _init_pregnancies(
     if "person" in cdm:
         person_df = cdm["person"].collect()
     else:
-        person_df = pl.DataFrame(schema={
-            "person_id": pl.Int64,
-            "year_of_birth": pl.Int32,
-            "gender_concept_id": pl.Int32,
-        })
+        person_df = pl.DataFrame(
+            schema={
+                "person_id": pl.Int64,
+                "year_of_birth": pl.Int32,
+                "gender_concept_id": pl.Int32,
+            }
+        )
 
     # Count distinct persons across all records
     all_person_ids: set[int] = set()

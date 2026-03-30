@@ -93,6 +93,7 @@ def window_name(window: Window) -> str:
     >>> window_name((float('-inf'), float('inf')))
     'minf_to_inf'
     """
+
     def _fmt(v: float) -> str:
         if math.isinf(v):
             return "minf" if v < 0 else "inf"

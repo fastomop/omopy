@@ -69,14 +69,14 @@ def subset_by_domain(
             result[name] = []
             continue
 
-        matching = concept.filter(
-            concept["concept_id"].cast("int64").isin(
-                [ibis.literal(int(c)) for c in ids]
+        matching = (
+            concept.filter(
+                concept["concept_id"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
+                & concept["domain_id"].isin(domains)
             )
-            & concept["domain_id"].isin(domains)
-        ).select(
-            concept_id=concept["concept_id"].cast("int64")
-        ).distinct()
+            .select(concept_id=concept["concept_id"].cast("int64"))
+            .distinct()
+        )
 
         df = matching.execute()
         result[name] = sorted(df["concept_id"].tolist())
@@ -114,14 +114,14 @@ def subset_by_vocabulary(
             result[name] = []
             continue
 
-        matching = concept.filter(
-            concept["concept_id"].cast("int64").isin(
-                [ibis.literal(int(c)) for c in ids]
+        matching = (
+            concept.filter(
+                concept["concept_id"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
+                & concept["vocabulary_id"].isin(vocabs)
             )
-            & concept["vocabulary_id"].isin(vocabs)
-        ).select(
-            concept_id=concept["concept_id"].cast("int64")
-        ).distinct()
+            .select(concept_id=concept["concept_id"].cast("int64"))
+            .distinct()
+        )
 
         df = matching.execute()
         result[name] = sorted(df["concept_id"].tolist())
@@ -160,9 +160,7 @@ def subset_to_codes_in_use(
 
         # Look up domain for each concept
         concept_domains = concept.filter(
-            concept["concept_id"].cast("int64").isin(
-                [ibis.literal(int(c)) for c in ids]
-            )
+            concept["concept_id"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
         ).select(
             concept_id=concept["concept_id"].cast("int64"),
             domain_id=concept["domain_id"].lower(),
@@ -189,13 +187,15 @@ def subset_to_codes_in_use(
             concept_col = col_info["concept_id"]
             domain_tbl = _get_ibis_table(cdm[table_name])
 
-            used = domain_tbl.filter(
-                domain_tbl[concept_col].cast("int64").isin(
-                    [ibis.literal(int(c)) for c in cids]
+            used = (
+                domain_tbl.filter(
+                    domain_tbl[concept_col]
+                    .cast("int64")
+                    .isin([ibis.literal(int(c)) for c in cids])
                 )
-            ).select(
-                concept_id=domain_tbl[concept_col].cast("int64")
-            ).distinct()
+                .select(concept_id=domain_tbl[concept_col].cast("int64"))
+                .distinct()
+            )
 
             used_df = used.execute()
             found_ids.update(used_df["concept_id"].tolist())

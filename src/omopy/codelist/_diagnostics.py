@@ -75,9 +75,7 @@ def summarise_code_use(
 
         # Get concept info (domain, name, vocabulary)
         concept_info = concept.filter(
-            concept["concept_id"].cast("int64").isin(
-                [ibis.literal(int(c)) for c in ids]
-            )
+            concept["concept_id"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
         ).select(
             concept_id=concept["concept_id"].cast("int64"),
             concept_name=concept["concept_name"],
@@ -107,14 +105,16 @@ def summarise_code_use(
                 # No usage possible
                 for cid in cids:
                     meta = concept_meta[cid]
-                    rows.append({
-                        "concept_set_name": set_name,
-                        "concept_id": cid,
-                        "concept_name": meta["concept_name"],
-                        "domain_id": meta["domain_id"],
-                        "vocabulary_id": meta["vocabulary_id"],
-                        "count": 0,
-                    })
+                    rows.append(
+                        {
+                            "concept_set_name": set_name,
+                            "concept_id": cid,
+                            "concept_name": meta["concept_name"],
+                            "domain_id": meta["domain_id"],
+                            "vocabulary_id": meta["vocabulary_id"],
+                            "count": 0,
+                        }
+                    )
                 continue
 
             if table_name not in _TABLE_COLUMNS:
@@ -126,24 +126,24 @@ def summarise_code_use(
 
             # Count per concept_id
             if count_by == "person":
-                counts = domain_tbl.filter(
-                    domain_tbl[concept_col].cast("int64").isin(
-                        [ibis.literal(int(c)) for c in cids]
+                counts = (
+                    domain_tbl.filter(
+                        domain_tbl[concept_col]
+                        .cast("int64")
+                        .isin([ibis.literal(int(c)) for c in cids])
                     )
-                ).group_by(
-                    concept_id=domain_tbl[concept_col].cast("int64")
-                ).agg(
-                    count=domain_tbl["person_id"].nunique()
+                    .group_by(concept_id=domain_tbl[concept_col].cast("int64"))
+                    .agg(count=domain_tbl["person_id"].nunique())
                 )
             else:
-                counts = domain_tbl.filter(
-                    domain_tbl[concept_col].cast("int64").isin(
-                        [ibis.literal(int(c)) for c in cids]
+                counts = (
+                    domain_tbl.filter(
+                        domain_tbl[concept_col]
+                        .cast("int64")
+                        .isin([ibis.literal(int(c)) for c in cids])
                     )
-                ).group_by(
-                    concept_id=domain_tbl[concept_col].cast("int64")
-                ).agg(
-                    count=domain_tbl[concept_col].count()
+                    .group_by(concept_id=domain_tbl[concept_col].cast("int64"))
+                    .agg(count=domain_tbl[concept_col].count())
                 )
 
             counts_df = counts.execute()
@@ -151,28 +151,32 @@ def summarise_code_use(
             for _, row in counts_df.iterrows():
                 cid = int(row["concept_id"])
                 meta = concept_meta[cid]
-                rows.append({
-                    "concept_set_name": set_name,
-                    "concept_id": cid,
-                    "concept_name": meta["concept_name"],
-                    "domain_id": meta["domain_id"],
-                    "vocabulary_id": meta["vocabulary_id"],
-                    "count": int(row["count"]),
-                })
+                rows.append(
+                    {
+                        "concept_set_name": set_name,
+                        "concept_id": cid,
+                        "concept_name": meta["concept_name"],
+                        "domain_id": meta["domain_id"],
+                        "vocabulary_id": meta["vocabulary_id"],
+                        "count": int(row["count"]),
+                    }
+                )
                 counted_ids.add(cid)
 
             # Concepts with zero count
             for cid in cids:
                 if cid not in counted_ids:
                     meta = concept_meta[cid]
-                    rows.append({
-                        "concept_set_name": set_name,
-                        "concept_id": cid,
-                        "concept_name": meta["concept_name"],
-                        "domain_id": meta["domain_id"],
-                        "vocabulary_id": meta["vocabulary_id"],
-                        "count": 0,
-                    })
+                    rows.append(
+                        {
+                            "concept_set_name": set_name,
+                            "concept_id": cid,
+                            "concept_name": meta["concept_name"],
+                            "domain_id": meta["domain_id"],
+                            "vocabulary_id": meta["vocabulary_id"],
+                            "count": 0,
+                        }
+                    )
 
     if not rows:
         return pl.DataFrame(
@@ -225,13 +229,15 @@ def summarise_orphan_codes(
         # 1. Find descendants not in codelist
         if "concept_ancestor" in cdm:
             ca = _get_ibis_table(cdm["concept_ancestor"])
-            desc = ca.filter(
-                ca["ancestor_concept_id"].cast("int64").isin(
-                    [ibis.literal(int(c)) for c in ids]
+            desc = (
+                ca.filter(
+                    ca["ancestor_concept_id"]
+                    .cast("int64")
+                    .isin([ibis.literal(int(c)) for c in ids])
                 )
-            ).select(
-                concept_id=ca["descendant_concept_id"].cast("int64")
-            ).distinct()
+                .select(concept_id=ca["descendant_concept_id"].cast("int64"))
+                .distinct()
+            )
             desc_df = desc.execute()
             descendant_ids = set(desc_df["concept_id"].tolist()) - codelist_set
         else:
@@ -240,14 +246,14 @@ def summarise_orphan_codes(
         # 2. Find mapped concepts not in codelist
         if "concept_relationship" in cdm:
             cr = _get_ibis_table(cdm["concept_relationship"])
-            mapped = cr.filter(
-                cr["concept_id_1"].cast("int64").isin(
-                    [ibis.literal(int(c)) for c in ids]
+            mapped = (
+                cr.filter(
+                    cr["concept_id_1"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
+                    & (cr["relationship_id"] == ibis.literal("Maps to"))
                 )
-                & (cr["relationship_id"] == ibis.literal("Maps to"))
-            ).select(
-                concept_id=cr["concept_id_2"].cast("int64")
-            ).distinct()
+                .select(concept_id=cr["concept_id_2"].cast("int64"))
+                .distinct()
+            )
             mapped_df = mapped.execute()
             mapped_ids = set(mapped_df["concept_id"].tolist()) - codelist_set
         else:
@@ -261,9 +267,9 @@ def summarise_orphan_codes(
         # Check which orphans are actually in use
         # Get concept info
         orphan_info = concept.filter(
-            concept["concept_id"].cast("int64").isin(
-                [ibis.literal(int(c)) for c in orphan_candidates]
-            )
+            concept["concept_id"]
+            .cast("int64")
+            .isin([ibis.literal(int(c)) for c in orphan_candidates])
         ).select(
             concept_id=concept["concept_id"].cast("int64"),
             concept_name=concept["concept_name"],
@@ -294,14 +300,14 @@ def summarise_orphan_codes(
             concept_col = col_info["concept_id"]
             domain_tbl = _get_ibis_table(cdm[table_name])
 
-            counts = domain_tbl.filter(
-                domain_tbl[concept_col].cast("int64").isin(
-                    [ibis.literal(int(c)) for c in cids]
+            counts = (
+                domain_tbl.filter(
+                    domain_tbl[concept_col]
+                    .cast("int64")
+                    .isin([ibis.literal(int(c)) for c in cids])
                 )
-            ).group_by(
-                concept_id=domain_tbl[concept_col].cast("int64")
-            ).agg(
-                count=domain_tbl[concept_col].count()
+                .group_by(concept_id=domain_tbl[concept_col].cast("int64"))
+                .agg(count=domain_tbl[concept_col].count())
             )
 
             counts_df = counts.execute()
@@ -311,14 +317,16 @@ def summarise_orphan_codes(
                 if count > 0:
                     meta = orphan_meta[cid]
                     relationship = "descendant" if cid in descendant_ids else "mapped"
-                    rows.append({
-                        "concept_set_name": set_name,
-                        "concept_id": cid,
-                        "concept_name": meta["concept_name"],
-                        "domain_id": meta["domain_id"],
-                        "relationship": relationship,
-                        "count": count,
-                    })
+                    rows.append(
+                        {
+                            "concept_set_name": set_name,
+                            "concept_id": cid,
+                            "concept_name": meta["concept_name"],
+                            "domain_id": meta["domain_id"],
+                            "relationship": relationship,
+                            "count": count,
+                        }
+                    )
 
     if not rows:
         return pl.DataFrame(

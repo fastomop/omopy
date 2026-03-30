@@ -141,10 +141,20 @@ class PlotStyle:
         show_legend: Whether to show the legend by default.
     """
 
-    color_palette: list[str] = field(default_factory=lambda: [
-        "#4361ee", "#3a86ff", "#8338ec", "#ff006e", "#fb5607",
-        "#ffbe0b", "#06d6a0", "#118ab2", "#073b4c", "#ef476f",
-    ])
+    color_palette: list[str] = field(
+        default_factory=lambda: [
+            "#4361ee",
+            "#3a86ff",
+            "#8338ec",
+            "#ff006e",
+            "#fb5607",
+            "#ffbe0b",
+            "#06d6a0",
+            "#118ab2",
+            "#073b4c",
+            "#ef476f",
+        ]
+    )
     background_color: str = "#ffffff"
     text_color: str = "#333333"
     grid_color: str = "#e0e0e0"

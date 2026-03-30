@@ -63,13 +63,19 @@ class CohortTable(CdmTable):
         super().__init__(data, tbl_name=tbl_name, tbl_source=tbl_source, cdm=cdm)
         self._settings = settings if settings is not None else self._default_settings()
         self._attrition = attrition if attrition is not None else self._default_attrition()
-        self._cohort_codelist = cohort_codelist if cohort_codelist is not None else (
-            pl.DataFrame(schema={
-                "cohort_definition_id": pl.Int64,
-                "codelist_name": pl.Utf8,
-                "concept_id": pl.Int64,
-                "codelist_type": pl.Utf8,
-            })
+        self._cohort_codelist = (
+            cohort_codelist
+            if cohort_codelist is not None
+            else (
+                pl.DataFrame(
+                    schema={
+                        "cohort_definition_id": pl.Int64,
+                        "codelist_name": pl.Utf8,
+                        "concept_id": pl.Int64,
+                        "codelist_type": pl.Utf8,
+                    }
+                )
+            )
         )
         self._validate_cohort()
 
@@ -94,22 +100,26 @@ class CohortTable(CdmTable):
                 ).alias("cohort_name"),
             )
         except Exception:
-            return pl.DataFrame(schema={
-                "cohort_definition_id": pl.Int64,
-                "cohort_name": pl.Utf8,
-            })
+            return pl.DataFrame(
+                schema={
+                    "cohort_definition_id": pl.Int64,
+                    "cohort_name": pl.Utf8,
+                }
+            )
 
     def _default_attrition(self) -> pl.DataFrame:
         """Create an empty default attrition table."""
-        return pl.DataFrame(schema={
-            "cohort_definition_id": pl.Int64,
-            "number_records": pl.Int64,
-            "number_subjects": pl.Int64,
-            "reason_id": pl.Int64,
-            "reason": pl.Utf8,
-            "excluded_records": pl.Int64,
-            "excluded_subjects": pl.Int64,
-        })
+        return pl.DataFrame(
+            schema={
+                "cohort_definition_id": pl.Int64,
+                "number_records": pl.Int64,
+                "number_subjects": pl.Int64,
+                "reason_id": pl.Int64,
+                "reason": pl.Utf8,
+                "excluded_records": pl.Int64,
+                "excluded_subjects": pl.Int64,
+            }
+        )
 
     # -- Properties ---------------------------------------------------------
 

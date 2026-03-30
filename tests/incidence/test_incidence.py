@@ -39,6 +39,7 @@ class TestModuleExports:
 
     def test_all_exports_count(self):
         import omopy.incidence
+
         assert len(omopy.incidence.__all__) == 21
 
     def test_import_denominator(self):
@@ -46,6 +47,7 @@ class TestModuleExports:
             generate_denominator_cohort_set,
             generate_target_denominator_cohort_set,
         )
+
         assert callable(generate_denominator_cohort_set)
         assert callable(generate_target_denominator_cohort_set)
 
@@ -55,12 +57,14 @@ class TestModuleExports:
             estimate_period_prevalence,
             estimate_point_prevalence,
         )
+
         assert callable(estimate_incidence)
         assert callable(estimate_period_prevalence)
         assert callable(estimate_point_prevalence)
 
     def test_import_result(self):
         from omopy.incidence import as_incidence_result, as_prevalence_result
+
         assert callable(as_incidence_result)
         assert callable(as_prevalence_result)
 
@@ -73,6 +77,7 @@ class TestModuleExports:
             table_prevalence,
             table_prevalence_attrition,
         )
+
         assert callable(table_incidence)
         assert callable(table_prevalence)
         assert callable(table_incidence_attrition)
@@ -89,6 +94,7 @@ class TestModuleExports:
             plot_prevalence,
             plot_prevalence_population,
         )
+
         assert callable(plot_incidence)
         assert callable(plot_prevalence)
         assert callable(plot_incidence_population)
@@ -101,6 +107,7 @@ class TestModuleExports:
             benchmark_incidence_prevalence,
             mock_incidence_prevalence,
         )
+
         assert callable(mock_incidence_prevalence)
         assert callable(benchmark_incidence_prevalence)
 
@@ -114,6 +121,7 @@ class TestModuleExports:
 def mock_cdm():
     """Create a mock CDM for testing."""
     from omopy.incidence import mock_incidence_prevalence
+
     return mock_incidence_prevalence(sample_size=50, seed=42)
 
 
@@ -121,6 +129,7 @@ def mock_cdm():
 def mock_cdm_with_denom(mock_cdm):
     """Create a mock CDM with denominator cohort generated."""
     from omopy.incidence import generate_denominator_cohort_set
+
     return generate_denominator_cohort_set(mock_cdm, name="denominator")
 
 
@@ -134,6 +143,7 @@ class TestMock:
 
     def test_basic_mock(self):
         from omopy.incidence import mock_incidence_prevalence
+
         cdm = mock_incidence_prevalence(sample_size=20, seed=42)
         assert isinstance(cdm, CdmReference)
         assert "person" in cdm.table_names
@@ -143,15 +153,15 @@ class TestMock:
 
     def test_mock_person_count(self):
         from omopy.incidence import mock_incidence_prevalence
+
         cdm = mock_incidence_prevalence(sample_size=30, seed=1)
         person = cdm["person"].collect()
         assert len(person) == 30
 
     def test_mock_outcome_prevalence(self):
         from omopy.incidence import mock_incidence_prevalence
-        cdm = mock_incidence_prevalence(
-            sample_size=1000, outcome_prevalence=0.5, seed=99
-        )
+
+        cdm = mock_incidence_prevalence(sample_size=1000, outcome_prevalence=0.5, seed=99)
         outcome = cdm["outcome"].collect()
         # With 50% prevalence and 1000 persons, expect ~500 outcomes
         # Allow wide range due to randomness
@@ -159,6 +169,7 @@ class TestMock:
 
     def test_mock_cohort_tables(self):
         from omopy.incidence import mock_incidence_prevalence
+
         cdm = mock_incidence_prevalence(sample_size=10, seed=42)
         target = cdm["target"]
         assert isinstance(target, CohortTable)
@@ -166,6 +177,7 @@ class TestMock:
 
     def test_mock_deterministic(self):
         from omopy.incidence import mock_incidence_prevalence
+
         cdm1 = mock_incidence_prevalence(sample_size=10, seed=42)
         cdm2 = mock_incidence_prevalence(sample_size=10, seed=42)
         p1 = cdm1["person"].collect()
@@ -174,6 +186,7 @@ class TestMock:
 
     def test_mock_custom_dates(self):
         from omopy.incidence import mock_incidence_prevalence
+
         cdm = mock_incidence_prevalence(
             sample_size=10,
             seed=42,
@@ -195,6 +208,7 @@ class TestDenominatorGeneration:
 
     def test_basic_denominator(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(mock_cdm)
         assert "denominator" in cdm.table_names
         denom = cdm["denominator"]
@@ -203,21 +217,26 @@ class TestDenominatorGeneration:
 
     def test_denominator_data_shape(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(mock_cdm)
         denom = cdm["denominator"].collect()
         assert set(denom.columns) == {
-            "cohort_definition_id", "subject_id",
-            "cohort_start_date", "cohort_end_date",
+            "cohort_definition_id",
+            "subject_id",
+            "cohort_start_date",
+            "cohort_end_date",
         }
         assert not denom.is_empty()
 
     def test_denominator_custom_name(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(mock_cdm, name="my_denom")
         assert "my_denom" in cdm.table_names
 
     def test_denominator_age_groups(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(
             mock_cdm,
             age_group=[(0, 40), (41, 80), (81, 150)],
@@ -229,6 +248,7 @@ class TestDenominatorGeneration:
 
     def test_denominator_sex_filter(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(
             mock_cdm,
             sex=["Male", "Female"],
@@ -238,18 +258,18 @@ class TestDenominatorGeneration:
 
     def test_denominator_sex_male_only(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(mock_cdm, sex="Male")
         denom = cdm["denominator"].collect()
         # All subjects should be male
         person = mock_cdm["person"].collect()
-        male_ids = set(
-            person.filter(pl.col("gender_concept_id") == 8507)["person_id"].to_list()
-        )
+        male_ids = set(person.filter(pl.col("gender_concept_id") == 8507)["person_id"].to_list())
         denom_ids = set(denom["subject_id"].to_list())
         assert denom_ids <= male_ids
 
     def test_denominator_interactions(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(
             mock_cdm,
             age_group=[(0, 50), (51, 150)],
@@ -262,6 +282,7 @@ class TestDenominatorGeneration:
 
     def test_denominator_no_interactions(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(
             mock_cdm,
             age_group=[(0, 50), (51, 150)],
@@ -274,6 +295,7 @@ class TestDenominatorGeneration:
 
     def test_denominator_prior_observation(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(
             mock_cdm,
             days_prior_observation=365,
@@ -283,6 +305,7 @@ class TestDenominatorGeneration:
 
     def test_denominator_study_window(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(
             mock_cdm,
             cohort_date_range=(datetime.date(2015, 1, 1), datetime.date(2018, 12, 31)),
@@ -294,6 +317,7 @@ class TestDenominatorGeneration:
 
     def test_denominator_attrition(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(mock_cdm)
         denom = cdm["denominator"]
         attrition = denom.attrition
@@ -303,6 +327,7 @@ class TestDenominatorGeneration:
 
     def test_denominator_settings_columns(self, mock_cdm):
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(mock_cdm)
         settings = cdm["denominator"].settings
         assert "cohort_definition_id" in settings.columns
@@ -322,6 +347,7 @@ class TestTargetDenominatorGeneration:
 
     def test_basic_target_denominator(self, mock_cdm):
         from omopy.incidence import generate_target_denominator_cohort_set
+
         cdm = generate_target_denominator_cohort_set(
             mock_cdm,
             target_cohort_table="target",
@@ -332,6 +358,7 @@ class TestTargetDenominatorGeneration:
 
     def test_target_denominator_not_cohort(self, mock_cdm):
         from omopy.incidence import generate_target_denominator_cohort_set
+
         with pytest.raises(TypeError, match="not a CohortTable"):
             generate_target_denominator_cohort_set(
                 mock_cdm,
@@ -340,6 +367,7 @@ class TestTargetDenominatorGeneration:
 
     def test_target_denominator_time_at_risk(self, mock_cdm):
         from omopy.incidence import generate_target_denominator_cohort_set
+
         cdm = generate_target_denominator_cohort_set(
             mock_cdm,
             target_cohort_table="target",
@@ -353,6 +381,7 @@ class TestTargetDenominatorGeneration:
 
     def test_target_denominator_settings(self, mock_cdm):
         from omopy.incidence import generate_target_denominator_cohort_set
+
         cdm = generate_target_denominator_cohort_set(
             mock_cdm,
             target_cohort_table="target",
@@ -362,6 +391,7 @@ class TestTargetDenominatorGeneration:
 
     def test_target_denominator_infinite_tar(self, mock_cdm):
         from omopy.incidence import generate_target_denominator_cohort_set
+
         cdm = generate_target_denominator_cohort_set(
             mock_cdm,
             target_cohort_table="target",
@@ -381,6 +411,7 @@ class TestEstimateIncidence:
 
     def test_basic_incidence(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence
+
         result = estimate_incidence(
             mock_cdm_with_denom,
             "denominator",
@@ -391,6 +422,7 @@ class TestEstimateIncidence:
 
     def test_incidence_has_rates(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence
+
         result = estimate_incidence(
             mock_cdm_with_denom,
             "denominator",
@@ -404,6 +436,7 @@ class TestEstimateIncidence:
 
     def test_incidence_has_ci(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence
+
         result = estimate_incidence(
             mock_cdm_with_denom,
             "denominator",
@@ -415,6 +448,7 @@ class TestEstimateIncidence:
 
     def test_incidence_settings(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence
+
         result = estimate_incidence(
             mock_cdm_with_denom,
             "denominator",
@@ -426,6 +460,7 @@ class TestEstimateIncidence:
 
     def test_incidence_overall_interval(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence
+
         result = estimate_incidence(
             mock_cdm_with_denom,
             "denominator",
@@ -437,6 +472,7 @@ class TestEstimateIncidence:
 
     def test_incidence_monthly_interval(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence
+
         result = estimate_incidence(
             mock_cdm_with_denom,
             "denominator",
@@ -449,6 +485,7 @@ class TestEstimateIncidence:
 
     def test_incidence_quarterly_interval(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence
+
         result = estimate_incidence(
             mock_cdm_with_denom,
             "denominator",
@@ -460,6 +497,7 @@ class TestEstimateIncidence:
 
     def test_incidence_no_complete_intervals(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence
+
         result = estimate_incidence(
             mock_cdm_with_denom,
             "denominator",
@@ -470,6 +508,7 @@ class TestEstimateIncidence:
 
     def test_incidence_group_names(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence
+
         result = estimate_incidence(
             mock_cdm_with_denom,
             "denominator",
@@ -491,6 +530,7 @@ class TestEstimatePointPrevalence:
 
     def test_basic_point_prevalence(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_point_prevalence
+
         result = estimate_point_prevalence(
             mock_cdm_with_denom,
             "denominator",
@@ -500,6 +540,7 @@ class TestEstimatePointPrevalence:
 
     def test_point_prevalence_estimates(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_point_prevalence
+
         result = estimate_point_prevalence(
             mock_cdm_with_denom,
             "denominator",
@@ -515,6 +556,7 @@ class TestEstimatePointPrevalence:
 
     def test_point_prevalence_settings(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_point_prevalence
+
         result = estimate_point_prevalence(
             mock_cdm_with_denom,
             "denominator",
@@ -526,6 +568,7 @@ class TestEstimatePointPrevalence:
 
     def test_point_prevalence_time_point_middle(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_point_prevalence
+
         result = estimate_point_prevalence(
             mock_cdm_with_denom,
             "denominator",
@@ -536,6 +579,7 @@ class TestEstimatePointPrevalence:
 
     def test_point_prevalence_overall(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_point_prevalence
+
         result = estimate_point_prevalence(
             mock_cdm_with_denom,
             "denominator",
@@ -557,6 +601,7 @@ class TestEstimatePeriodPrevalence:
 
     def test_basic_period_prevalence(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_period_prevalence
+
         result = estimate_period_prevalence(
             mock_cdm_with_denom,
             "denominator",
@@ -566,6 +611,7 @@ class TestEstimatePeriodPrevalence:
 
     def test_period_prevalence_estimates(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_period_prevalence
+
         result = estimate_period_prevalence(
             mock_cdm_with_denom,
             "denominator",
@@ -577,6 +623,7 @@ class TestEstimatePeriodPrevalence:
 
     def test_period_prevalence_full_contribution(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_period_prevalence
+
         result = estimate_period_prevalence(
             mock_cdm_with_denom,
             "denominator",
@@ -587,6 +634,7 @@ class TestEstimatePeriodPrevalence:
 
     def test_period_prevalence_settings(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_period_prevalence
+
         result = estimate_period_prevalence(
             mock_cdm_with_denom,
             "denominator",
@@ -606,9 +654,8 @@ class TestResultConversion:
 
     def test_as_incidence_result(self, mock_cdm_with_denom):
         from omopy.incidence import as_incidence_result, estimate_incidence
-        sr = estimate_incidence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_incidence(mock_cdm_with_denom, "denominator", "outcome")
         tidy = as_incidence_result(sr)
         assert isinstance(tidy, pl.DataFrame)
         if not tidy.is_empty():
@@ -616,17 +663,15 @@ class TestResultConversion:
 
     def test_as_prevalence_result(self, mock_cdm_with_denom):
         from omopy.incidence import as_prevalence_result, estimate_point_prevalence
-        sr = estimate_point_prevalence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_point_prevalence(mock_cdm_with_denom, "denominator", "outcome")
         tidy = as_prevalence_result(sr)
         assert isinstance(tidy, pl.DataFrame)
 
     def test_as_incidence_result_with_metadata(self, mock_cdm_with_denom):
         from omopy.incidence import as_incidence_result, estimate_incidence
-        sr = estimate_incidence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_incidence(mock_cdm_with_denom, "denominator", "outcome")
         tidy = as_incidence_result(sr, metadata=True)
         assert isinstance(tidy, pl.DataFrame)
 
@@ -641,6 +686,7 @@ class TestTableFunctions:
 
     def test_options_table_incidence(self):
         from omopy.incidence import options_table_incidence
+
         opts = options_table_incidence()
         assert isinstance(opts, dict)
         assert "header" in opts
@@ -648,31 +694,29 @@ class TestTableFunctions:
 
     def test_options_table_prevalence(self):
         from omopy.incidence import options_table_prevalence
+
         opts = options_table_prevalence()
         assert isinstance(opts, dict)
         assert "header" in opts
 
     def test_table_incidence_polars(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence, table_incidence
-        sr = estimate_incidence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_incidence(mock_cdm_with_denom, "denominator", "outcome")
         result = table_incidence(sr, type="polars")
         assert isinstance(result, pl.DataFrame)
 
     def test_table_prevalence_polars(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_point_prevalence, table_prevalence
-        sr = estimate_point_prevalence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_point_prevalence(mock_cdm_with_denom, "denominator", "outcome")
         result = table_prevalence(sr, type="polars")
         assert isinstance(result, pl.DataFrame)
 
     def test_table_incidence_attrition_polars(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence, table_incidence_attrition
-        sr = estimate_incidence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_incidence(mock_cdm_with_denom, "denominator", "outcome")
         result = table_incidence_attrition(sr, type="polars")
         assert isinstance(result, pl.DataFrame)
 
@@ -681,9 +725,8 @@ class TestTableFunctions:
             estimate_point_prevalence,
             table_prevalence_attrition,
         )
-        sr = estimate_point_prevalence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_point_prevalence(mock_cdm_with_denom, "denominator", "outcome")
         result = table_prevalence_attrition(sr, type="polars")
         assert isinstance(result, pl.DataFrame)
 
@@ -698,26 +741,23 @@ class TestPlotFunctions:
 
     def test_plot_incidence(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence, plot_incidence
-        sr = estimate_incidence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_incidence(mock_cdm_with_denom, "denominator", "outcome")
         fig = plot_incidence(sr)
         assert fig is not None
         assert hasattr(fig, "to_json")  # plotly Figure
 
     def test_plot_prevalence(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_point_prevalence, plot_prevalence
-        sr = estimate_point_prevalence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_point_prevalence(mock_cdm_with_denom, "denominator", "outcome")
         fig = plot_prevalence(sr)
         assert fig is not None
 
     def test_plot_incidence_population(self, mock_cdm_with_denom):
         from omopy.incidence import estimate_incidence, plot_incidence_population
-        sr = estimate_incidence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_incidence(mock_cdm_with_denom, "denominator", "outcome")
         fig = plot_incidence_population(sr)
         assert fig is not None
 
@@ -726,9 +766,8 @@ class TestPlotFunctions:
             estimate_point_prevalence,
             plot_prevalence_population,
         )
-        sr = estimate_point_prevalence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_point_prevalence(mock_cdm_with_denom, "denominator", "outcome")
         fig = plot_prevalence_population(sr)
         assert fig is not None
 
@@ -737,9 +776,8 @@ class TestPlotFunctions:
             available_incidence_grouping,
             estimate_incidence,
         )
-        sr = estimate_incidence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_incidence(mock_cdm_with_denom, "denominator", "outcome")
         groups = available_incidence_grouping(sr)
         assert isinstance(groups, list)
 
@@ -748,9 +786,8 @@ class TestPlotFunctions:
             available_prevalence_grouping,
             estimate_point_prevalence,
         )
-        sr = estimate_point_prevalence(
-            mock_cdm_with_denom, "denominator", "outcome"
-        )
+
+        sr = estimate_point_prevalence(mock_cdm_with_denom, "denominator", "outcome")
         groups = available_prevalence_grouping(sr)
         assert isinstance(groups, list)
 
@@ -765,12 +802,14 @@ class TestConfidenceIntervals:
 
     def test_poisson_ci_zero_events(self):
         from omopy.incidence._estimate import _poisson_ci
+
         lower, upper = _poisson_ci(0, 100.0)
         assert lower == 0.0
         assert upper > 0.0
 
     def test_poisson_ci_positive_events(self):
         from omopy.incidence._estimate import _poisson_ci
+
         lower, upper = _poisson_ci(10, 100.0)
         assert lower > 0.0
         assert upper > lower
@@ -780,24 +819,28 @@ class TestConfidenceIntervals:
 
     def test_poisson_ci_zero_person_years(self):
         from omopy.incidence._estimate import _poisson_ci
+
         lower, upper = _poisson_ci(5, 0.0)
         assert lower == 0.0
         assert upper == 0.0
 
     def test_wilson_ci_zero(self):
         from omopy.incidence._estimate import _wilson_ci
+
         lower, upper = _wilson_ci(0, 100)
         assert lower < 1e-10  # essentially 0
         assert upper > 0.0
 
     def test_wilson_ci_all(self):
         from omopy.incidence._estimate import _wilson_ci
+
         lower, upper = _wilson_ci(100, 100)
         assert lower > 0.0
         assert upper == 1.0
 
     def test_wilson_ci_normal(self):
         from omopy.incidence._estimate import _wilson_ci
+
         lower, upper = _wilson_ci(50, 100)
         assert lower < 0.5 < upper
         assert 0.0 <= lower
@@ -805,6 +848,7 @@ class TestConfidenceIntervals:
 
     def test_wilson_ci_empty_population(self):
         from omopy.incidence._estimate import _wilson_ci
+
         lower, upper = _wilson_ci(0, 0)
         assert lower == 0.0
         assert upper == 0.0
@@ -820,20 +864,26 @@ class TestCalendarIntervals:
 
     def test_yearly_intervals(self):
         from omopy.incidence._estimate import _generate_intervals
-        denom = pl.DataFrame({
-            "cohort_start_date": [datetime.date(2015, 6, 1)],
-            "cohort_end_date": [datetime.date(2018, 3, 15)],
-        })
+
+        denom = pl.DataFrame(
+            {
+                "cohort_start_date": [datetime.date(2015, 6, 1)],
+                "cohort_end_date": [datetime.date(2018, 3, 15)],
+            }
+        )
         intervals = _generate_intervals(denom, "years")
         assert len(intervals) == 4  # 2015, 2016, 2017, 2018
         assert intervals["interval_label"][0] == "2015"
 
     def test_quarterly_intervals(self):
         from omopy.incidence._estimate import _generate_intervals
-        denom = pl.DataFrame({
-            "cohort_start_date": [datetime.date(2020, 1, 1)],
-            "cohort_end_date": [datetime.date(2020, 12, 31)],
-        })
+
+        denom = pl.DataFrame(
+            {
+                "cohort_start_date": [datetime.date(2020, 1, 1)],
+                "cohort_end_date": [datetime.date(2020, 12, 31)],
+            }
+        )
         intervals = _generate_intervals(denom, "quarters")
         assert len(intervals) == 4
         labels = intervals["interval_label"].to_list()
@@ -842,28 +892,37 @@ class TestCalendarIntervals:
 
     def test_monthly_intervals(self):
         from omopy.incidence._estimate import _generate_intervals
-        denom = pl.DataFrame({
-            "cohort_start_date": [datetime.date(2020, 1, 1)],
-            "cohort_end_date": [datetime.date(2020, 6, 30)],
-        })
+
+        denom = pl.DataFrame(
+            {
+                "cohort_start_date": [datetime.date(2020, 1, 1)],
+                "cohort_end_date": [datetime.date(2020, 6, 30)],
+            }
+        )
         intervals = _generate_intervals(denom, "months")
         assert len(intervals) == 6
 
     def test_weekly_intervals(self):
         from omopy.incidence._estimate import _generate_intervals
-        denom = pl.DataFrame({
-            "cohort_start_date": [datetime.date(2020, 1, 1)],
-            "cohort_end_date": [datetime.date(2020, 1, 31)],
-        })
+
+        denom = pl.DataFrame(
+            {
+                "cohort_start_date": [datetime.date(2020, 1, 1)],
+                "cohort_end_date": [datetime.date(2020, 1, 31)],
+            }
+        )
         intervals = _generate_intervals(denom, "weeks")
         assert len(intervals) >= 4
 
     def test_overall_interval(self):
         from omopy.incidence._estimate import _generate_intervals
-        denom = pl.DataFrame({
-            "cohort_start_date": [datetime.date(2015, 1, 1)],
-            "cohort_end_date": [datetime.date(2020, 12, 31)],
-        })
+
+        denom = pl.DataFrame(
+            {
+                "cohort_start_date": [datetime.date(2015, 1, 1)],
+                "cohort_end_date": [datetime.date(2020, 12, 31)],
+            }
+        )
         intervals = _generate_intervals(denom, "overall")
         assert len(intervals) == 1
         assert intervals["interval_label"][0] == "overall"
@@ -879,29 +938,35 @@ class TestWashout:
 
     def test_first_event_only(self):
         from omopy.incidence._estimate import _apply_washout
-        events = pl.DataFrame({
-            "person_id": [1, 1, 2, 2, 2],
-            "outcome_date": [
-                datetime.date(2020, 1, 1),
-                datetime.date(2020, 6, 1),
-                datetime.date(2020, 3, 1),
-                datetime.date(2020, 7, 1),
-                datetime.date(2020, 12, 1),
-            ],
-        })
+
+        events = pl.DataFrame(
+            {
+                "person_id": [1, 1, 2, 2, 2],
+                "outcome_date": [
+                    datetime.date(2020, 1, 1),
+                    datetime.date(2020, 6, 1),
+                    datetime.date(2020, 3, 1),
+                    datetime.date(2020, 7, 1),
+                    datetime.date(2020, 12, 1),
+                ],
+            }
+        )
         result = _apply_washout(events, float("inf"), repeated_events=False)
         assert len(result) == 2  # one per person
 
     def test_repeated_events_finite_washout(self):
         from omopy.incidence._estimate import _apply_washout
-        events = pl.DataFrame({
-            "person_id": [1, 1, 1],
-            "outcome_date": [
-                datetime.date(2020, 1, 1),
-                datetime.date(2020, 1, 15),  # 14 days later
-                datetime.date(2020, 4, 1),   # 76 days later
-            ],
-        })
+
+        events = pl.DataFrame(
+            {
+                "person_id": [1, 1, 1],
+                "outcome_date": [
+                    datetime.date(2020, 1, 1),
+                    datetime.date(2020, 1, 15),  # 14 days later
+                    datetime.date(2020, 4, 1),  # 76 days later
+                ],
+            }
+        )
         # Washout of 30 days
         result = _apply_washout(events, 30, repeated_events=True)
         # First event kept, second excluded (14 < 30), third kept (76 > 30)
@@ -909,6 +974,7 @@ class TestWashout:
 
     def test_empty_events(self):
         from omopy.incidence._estimate import _apply_washout
+
         events = pl.DataFrame(schema={"person_id": pl.Int64, "outcome_date": pl.Date})
         result = _apply_washout(events, float("inf"), repeated_events=False)
         assert result.is_empty()
@@ -924,6 +990,7 @@ class TestBenchmark:
 
     def test_benchmark_runs(self, mock_cdm):
         from omopy.incidence import benchmark_incidence_prevalence
+
         results = benchmark_incidence_prevalence(mock_cdm)
         assert isinstance(results, dict)
         assert "denominator_generation" in results
@@ -941,6 +1008,7 @@ class TestSyntheaIntegration:
     def test_denominator_from_synthea(self, synthea_cdm):
         """Generate denominator from real OMOP data."""
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(synthea_cdm, name="denom")
         denom = cdm["denom"]
         assert isinstance(denom, CohortTable)
@@ -951,6 +1019,7 @@ class TestSyntheaIntegration:
     def test_denominator_age_stratified(self, synthea_cdm):
         """Age-stratified denominator from Synthea."""
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(
             synthea_cdm,
             name="denom",
@@ -962,6 +1031,7 @@ class TestSyntheaIntegration:
     def test_denominator_sex_stratified(self, synthea_cdm):
         """Sex-stratified denominator from Synthea."""
         from omopy.incidence import generate_denominator_cohort_set
+
         cdm = generate_denominator_cohort_set(
             synthea_cdm,
             name="denom",
@@ -1006,25 +1076,25 @@ class TestSyntheaIntegration:
             pl.col("cohort_end_date").fill_null(pl.col("cohort_start_date"))
         )
 
-        outcome_settings = pl.DataFrame({
-            "cohort_definition_id": [1],
-            "cohort_name": ["first_condition"],
-        }).cast({"cohort_definition_id": pl.Int64})
+        outcome_settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1],
+                "cohort_name": ["first_condition"],
+            }
+        ).cast({"cohort_definition_id": pl.Int64})
 
         cdm["outcome"] = CohortTable(
-            outcome_df, tbl_name="outcome", settings=outcome_settings,
+            outcome_df,
+            tbl_name="outcome",
+            settings=outcome_settings,
         )
 
-        result = estimate_incidence(
-            cdm, "denom", "outcome", interval="overall"
-        )
+        result = estimate_incidence(cdm, "denom", "outcome", interval="overall")
         assert isinstance(result, SummarisedResult)
         assert not result.data.is_empty()
 
         # Should have incidence rate
-        ir_rows = result.data.filter(
-            pl.col("estimate_name") == "incidence_100000_pys"
-        )
+        ir_rows = result.data.filter(pl.col("estimate_name") == "incidence_100000_pys")
         assert not ir_rows.is_empty()
         ir_value = float(ir_rows["estimate_value"][0])
         assert ir_value > 0
@@ -1047,23 +1117,25 @@ class TestSyntheaIntegration:
             pl.lit(1).cast(pl.Int64).alias("cohort_definition_id"),
             pl.col("person_id").cast(pl.Int64).alias("subject_id"),
             pl.col("condition_start_date").alias("cohort_start_date"),
-            pl.col("condition_end_date").fill_null(
-                pl.col("condition_start_date") + pl.duration(days=30)
-            ).alias("cohort_end_date"),
+            pl.col("condition_end_date")
+            .fill_null(pl.col("condition_start_date") + pl.duration(days=30))
+            .alias("cohort_end_date"),
         )
 
-        outcome_settings = pl.DataFrame({
-            "cohort_definition_id": [1],
-            "cohort_name": ["conditions"],
-        }).cast({"cohort_definition_id": pl.Int64})
+        outcome_settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1],
+                "cohort_name": ["conditions"],
+            }
+        ).cast({"cohort_definition_id": pl.Int64})
 
         cdm["outcome"] = CohortTable(
-            outcome_df, tbl_name="outcome", settings=outcome_settings,
+            outcome_df,
+            tbl_name="outcome",
+            settings=outcome_settings,
         )
 
-        result = estimate_point_prevalence(
-            cdm, "denom", "outcome", interval="years"
-        )
+        result = estimate_point_prevalence(cdm, "denom", "outcome", interval="years")
         assert isinstance(result, SummarisedResult)
 
     def test_period_prevalence_on_conditions(self, synthea_cdm):
@@ -1083,23 +1155,25 @@ class TestSyntheaIntegration:
             pl.lit(1).cast(pl.Int64).alias("cohort_definition_id"),
             pl.col("person_id").cast(pl.Int64).alias("subject_id"),
             pl.col("condition_start_date").alias("cohort_start_date"),
-            pl.col("condition_end_date").fill_null(
-                pl.col("condition_start_date") + pl.duration(days=30)
-            ).alias("cohort_end_date"),
+            pl.col("condition_end_date")
+            .fill_null(pl.col("condition_start_date") + pl.duration(days=30))
+            .alias("cohort_end_date"),
         )
 
-        outcome_settings = pl.DataFrame({
-            "cohort_definition_id": [1],
-            "cohort_name": ["conditions"],
-        }).cast({"cohort_definition_id": pl.Int64})
+        outcome_settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1],
+                "cohort_name": ["conditions"],
+            }
+        ).cast({"cohort_definition_id": pl.Int64})
 
         cdm["outcome"] = CohortTable(
-            outcome_df, tbl_name="outcome", settings=outcome_settings,
+            outcome_df,
+            tbl_name="outcome",
+            settings=outcome_settings,
         )
 
-        result = estimate_period_prevalence(
-            cdm, "denom", "outcome", interval="years"
-        )
+        result = estimate_period_prevalence(cdm, "denom", "outcome", interval="years")
         assert isinstance(result, SummarisedResult)
 
     def test_result_conversion_on_synthea(self, synthea_cdm):
@@ -1121,9 +1195,9 @@ class TestSyntheaIntegration:
                 pl.lit(1).cast(pl.Int64).alias("cohort_definition_id"),
                 pl.col("person_id").cast(pl.Int64).alias("subject_id"),
                 pl.col("condition_start_date").alias("cohort_start_date"),
-                pl.col("condition_end_date").fill_null(
-                    pl.col("condition_start_date")
-                ).alias("cohort_end_date"),
+                pl.col("condition_end_date")
+                .fill_null(pl.col("condition_start_date"))
+                .alias("cohort_end_date"),
             )
             .sort("subject_id", "cohort_start_date")
             .group_by("subject_id")
@@ -1131,13 +1205,17 @@ class TestSyntheaIntegration:
             .with_columns(pl.lit(1).cast(pl.Int64).alias("cohort_definition_id"))
         )
 
-        outcome_settings = pl.DataFrame({
-            "cohort_definition_id": [1],
-            "cohort_name": ["first_condition"],
-        }).cast({"cohort_definition_id": pl.Int64})
+        outcome_settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1],
+                "cohort_name": ["first_condition"],
+            }
+        ).cast({"cohort_definition_id": pl.Int64})
 
         cdm["outcome"] = CohortTable(
-            outcome_df, tbl_name="outcome", settings=outcome_settings,
+            outcome_df,
+            tbl_name="outcome",
+            settings=outcome_settings,
         )
 
         sr = estimate_incidence(cdm, "denom", "outcome", interval="overall")

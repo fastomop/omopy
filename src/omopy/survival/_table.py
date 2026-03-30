@@ -107,10 +107,22 @@ def table_survival(
 
     est_cols = [c for c in estimates if c in summary.columns]
     if not est_cols:
-        est_cols = [c for c in summary.columns if c not in display_cols
-                    and c not in ("result_id", "cdm_name", "estimate_type",
-                                  "additional_name", "additional_level",
-                                  "group_name", "strata_name", "variable_name")]
+        est_cols = [
+            c
+            for c in summary.columns
+            if c not in display_cols
+            and c
+            not in (
+                "result_id",
+                "cdm_name",
+                "estimate_type",
+                "additional_name",
+                "additional_level",
+                "group_name",
+                "strata_name",
+                "variable_name",
+            )
+        ]
 
     out = summary.select(*available, *est_cols)
 
@@ -133,11 +145,11 @@ def table_survival(
                 t_str = str(t)
                 # Filter estimates at this time point
                 if "additional_level" in estimates_wide.columns:
-                    at_time = estimates_wide.filter(
-                        pl.col("additional_level") == t_str
-                    )
+                    at_time = estimates_wide.filter(pl.col("additional_level") == t_str)
                     if len(at_time) > 0 and "estimate" in at_time.columns:
-                        label = f"S(t={t})" if time_scale == "days" else f"S(t={t / time_divisor:.1f})"
+                        label = (
+                            f"S(t={t})" if time_scale == "days" else f"S(t={t / time_divisor:.1f})"
+                        )
                         # Join with out
                         merge_cols = [c for c in available if c in at_time.columns]
                         if merge_cols:
@@ -162,6 +174,7 @@ def table_survival(
     if type == "gt":
         try:
             from omopy.vis._table import vis_table
+
             return vis_table(out)
         except ImportError:
             return out
@@ -204,10 +217,18 @@ def table_survival_events(
 
     # Extract display columns
     display_cols = [
-        c for c in events.columns
-        if c not in ("result_id", "cdm_name", "estimate_type",
-                      "group_name", "strata_name", "variable_name",
-                      "additional_name")
+        c
+        for c in events.columns
+        if c
+        not in (
+            "result_id",
+            "cdm_name",
+            "estimate_type",
+            "group_name",
+            "strata_name",
+            "variable_name",
+            "additional_name",
+        )
     ]
 
     out = events.select([c for c in display_cols if c in events.columns])
@@ -216,10 +237,7 @@ def table_survival_events(
     if "additional_level" in out.columns:
         # Split "time &&& eventgap" format
         out = out.with_columns(
-            pl.col("additional_level")
-            .str.split(" &&& ")
-            .list.first()
-            .alias("Time (days)")
+            pl.col("additional_level").str.split(" &&& ").list.first().alias("Time (days)")
         ).drop("additional_level")
 
     # Rename columns
@@ -242,6 +260,7 @@ def table_survival_events(
     if type == "gt":
         try:
             from omopy.vis._table import vis_table
+
             return vis_table(out)
         except ImportError:
             return out
@@ -278,10 +297,18 @@ def table_survival_attrition(
 
     # Build display
     display_cols = [
-        c for c in attrition.columns
-        if c not in ("result_id", "cdm_name", "estimate_type",
-                      "group_name", "strata_name", "variable_name",
-                      "additional_name")
+        c
+        for c in attrition.columns
+        if c
+        not in (
+            "result_id",
+            "cdm_name",
+            "estimate_type",
+            "group_name",
+            "strata_name",
+            "variable_name",
+            "additional_name",
+        )
     ]
 
     out = attrition.select([c for c in display_cols if c in attrition.columns])
@@ -301,6 +328,7 @@ def table_survival_attrition(
     if type == "gt":
         try:
             from omopy.vis._table import vis_table
+
             return vis_table(out)
         except ImportError:
             return out

@@ -100,28 +100,32 @@ def mock_pregnancy_cdm(
         mob = rng.randint(1, 12)
         dob = rng.randint(1, 28)
 
-        person_rows.append({
-            "person_id": i,
-            "year_of_birth": yob,
-            "month_of_birth": mob,
-            "day_of_birth": dob,
-            "gender_concept_id": 8532,  # Female
-            "race_concept_id": 0,
-            "ethnicity_concept_id": 0,
-        })
+        person_rows.append(
+            {
+                "person_id": i,
+                "year_of_birth": yob,
+                "month_of_birth": mob,
+                "day_of_birth": dob,
+                "gender_concept_id": 8532,  # Female
+                "race_concept_id": 0,
+                "ethnicity_concept_id": 0,
+            }
+        )
 
         obs_start_offset = rng.randint(0, study_days // 3)
         obs_end_offset = rng.randint(obs_start_offset + 365, study_days)
         obs_start = study_start + datetime.timedelta(days=obs_start_offset)
         obs_end = study_start + datetime.timedelta(days=min(obs_end_offset, study_days))
 
-        obs_period_rows.append({
-            "person_id": i,
-            "observation_period_id": i,
-            "observation_period_start_date": obs_start,
-            "observation_period_end_date": obs_end,
-            "period_type_concept_id": 44814724,
-        })
+        obs_period_rows.append(
+            {
+                "person_id": i,
+                "observation_period_id": i,
+                "observation_period_start_date": obs_start,
+                "observation_period_end_date": obs_end,
+                "period_type_concept_id": 44814724,
+            }
+        )
 
     # Generate pregnancy events
     cond_rows: list[dict[str, Any]] = []
@@ -178,35 +182,37 @@ def mock_pregnancy_cdm(
 
             # Add outcome condition
             outcome_concepts_for_cat = [
-                cid for cid, info in HIP_CONCEPTS.items()
-                if info["category"] == outcome_type
+                cid for cid, info in HIP_CONCEPTS.items() if info["category"] == outcome_type
             ]
             if outcome_concepts_for_cat:
                 chosen_concept = rng.choice(outcome_concepts_for_cat)
-                cond_rows.append({
-                    "condition_occurrence_id": cond_id,
-                    "person_id": i,
-                    "condition_concept_id": chosen_concept,
-                    "condition_start_date": outcome_date,
-                    "condition_end_date": outcome_date,
-                    "condition_type_concept_id": 32817,
-                })
+                cond_rows.append(
+                    {
+                        "condition_occurrence_id": cond_id,
+                        "person_id": i,
+                        "condition_concept_id": chosen_concept,
+                        "condition_start_date": outcome_date,
+                        "condition_end_date": outcome_date,
+                        "condition_type_concept_id": 32817,
+                    }
+                )
                 cond_id += 1
 
             # Add delivery procedure for LB
             if outcome_type == "LB" and procedure_concepts:
                 deliv_concepts = [
-                    cid for cid, info in HIP_CONCEPTS.items()
-                    if info["category"] == "DELIV"
+                    cid for cid, info in HIP_CONCEPTS.items() if info["category"] == "DELIV"
                 ]
                 if deliv_concepts:
-                    proc_rows.append({
-                        "procedure_occurrence_id": proc_id,
-                        "person_id": i,
-                        "procedure_concept_id": rng.choice(deliv_concepts),
-                        "procedure_date": outcome_date,
-                        "procedure_type_concept_id": 32817,
-                    })
+                    proc_rows.append(
+                        {
+                            "procedure_occurrence_id": proc_id,
+                            "person_id": i,
+                            "procedure_concept_id": rng.choice(deliv_concepts),
+                            "procedure_date": outcome_date,
+                            "procedure_type_concept_id": 32817,
+                        }
+                    )
                     proc_id += 1
 
             # Add prenatal observations (PPS concepts)
@@ -221,19 +227,22 @@ def mock_pregnancy_cdm(
 
                 # Pick PPS concept appropriate for the month
                 suitable = [
-                    cid for cid, info in PPS_CONCEPTS.items()
+                    cid
+                    for cid, info in PPS_CONCEPTS.items()
                     if info["min_month"] <= visit_month <= info["max_month"]
                 ]
                 if not suitable:
                     suitable = list(PPS_CONCEPTS.keys())
 
-                obs_rows.append({
-                    "observation_id": obs_id,
-                    "person_id": i,
-                    "observation_concept_id": rng.choice(suitable),
-                    "observation_date": visit_date,
-                    "observation_type_concept_id": 32817,
-                })
+                obs_rows.append(
+                    {
+                        "observation_id": obs_id,
+                        "person_id": i,
+                        "observation_concept_id": rng.choice(suitable),
+                        "observation_date": visit_date,
+                        "observation_type_concept_id": 32817,
+                    }
+                )
                 obs_id += 1
 
             # Add gestational age measurement (ESD)
@@ -241,65 +250,67 @@ def mock_pregnancy_cdm(
                 ga_date = outcome_date - datetime.timedelta(days=rng.randint(0, 14))
                 if ga_date >= obs_start:
                     ga_concepts = [
-                        cid for cid, info in ESD_CONCEPTS.items()
-                        if info["category"] == "GW"
+                        cid for cid, info in ESD_CONCEPTS.items() if info["category"] == "GW"
                     ]
                     if ga_concepts:
-                        meas_rows.append({
-                            "measurement_id": meas_id,
-                            "person_id": i,
-                            "measurement_concept_id": rng.choice(ga_concepts),
-                            "measurement_date": ga_date,
-                            "measurement_type_concept_id": 32817,
-                            "value_as_number": float(gest_weeks),
-                            "unit_concept_id": 0,
-                        })
+                        meas_rows.append(
+                            {
+                                "measurement_id": meas_id,
+                                "person_id": i,
+                                "measurement_concept_id": rng.choice(ga_concepts),
+                                "measurement_date": ga_date,
+                                "measurement_type_concept_id": 32817,
+                                "value_as_number": float(gest_weeks),
+                                "unit_concept_id": 0,
+                            }
+                        )
                         meas_id += 1
 
             # Add trimester conditions (ESD GR3m)
             if rng.random() < 0.5:
                 trimester_concepts = [
-                    cid for cid, info in ESD_CONCEPTS.items()
-                    if info["category"] == "GR3m"
+                    cid for cid, info in ESD_CONCEPTS.items() if info["category"] == "GR3m"
                 ]
                 if trimester_concepts:
                     tri_month = rng.randint(1, min(9, gest_weeks // 4))
-                    tri_date = conception_date + datetime.timedelta(
-                        days=tri_month * 30
-                    )
+                    tri_date = conception_date + datetime.timedelta(days=tri_month * 30)
                     if obs_start <= tri_date <= obs_end:
-                        cond_rows.append({
-                            "condition_occurrence_id": cond_id,
-                            "person_id": i,
-                            "condition_concept_id": rng.choice(trimester_concepts),
-                            "condition_start_date": tri_date,
-                            "condition_end_date": tri_date,
-                            "condition_type_concept_id": 32817,
-                        })
+                        cond_rows.append(
+                            {
+                                "condition_occurrence_id": cond_id,
+                                "person_id": i,
+                                "condition_concept_id": rng.choice(trimester_concepts),
+                                "condition_start_date": tri_date,
+                                "condition_end_date": tri_date,
+                                "condition_type_concept_id": 32817,
+                            }
+                        )
                         cond_id += 1
 
             # Move current_date forward past this pregnancy
-            current_date = outcome_date + datetime.timedelta(
-                days=rng.randint(180, 400)
-            )
+            current_date = outcome_date + datetime.timedelta(days=rng.randint(180, 400))
 
     # Build DataFrames
-    person_df = pl.DataFrame(person_rows).cast({
-        "person_id": pl.Int64,
-        "year_of_birth": pl.Int32,
-        "month_of_birth": pl.Int32,
-        "day_of_birth": pl.Int32,
-        "gender_concept_id": pl.Int32,
-        "race_concept_id": pl.Int32,
-        "ethnicity_concept_id": pl.Int32,
-    })
-    obs_period_df = pl.DataFrame(obs_period_rows).cast({
-        "person_id": pl.Int64,
-        "observation_period_id": pl.Int64,
-        "observation_period_start_date": pl.Date,
-        "observation_period_end_date": pl.Date,
-        "period_type_concept_id": pl.Int64,
-    })
+    person_df = pl.DataFrame(person_rows).cast(
+        {
+            "person_id": pl.Int64,
+            "year_of_birth": pl.Int32,
+            "month_of_birth": pl.Int32,
+            "day_of_birth": pl.Int32,
+            "gender_concept_id": pl.Int32,
+            "race_concept_id": pl.Int32,
+            "ethnicity_concept_id": pl.Int32,
+        }
+    )
+    obs_period_df = pl.DataFrame(obs_period_rows).cast(
+        {
+            "person_id": pl.Int64,
+            "observation_period_id": pl.Int64,
+            "observation_period_start_date": pl.Date,
+            "observation_period_end_date": pl.Date,
+            "period_type_concept_id": pl.Int64,
+        }
+    )
 
     cond_schema = {
         "condition_occurrence_id": pl.Int64,
@@ -333,10 +344,24 @@ def mock_pregnancy_cdm(
         "observation_type_concept_id": pl.Int64,
     }
 
-    cond_df = pl.DataFrame(cond_rows, schema=cond_schema) if cond_rows else pl.DataFrame(schema=cond_schema)
-    proc_df = pl.DataFrame(proc_rows, schema=proc_schema) if proc_rows else pl.DataFrame(schema=proc_schema)
-    meas_df = pl.DataFrame(meas_rows, schema=meas_schema) if meas_rows else pl.DataFrame(schema=meas_schema)
-    obs_df = pl.DataFrame(obs_rows, schema=obs_schema) if obs_rows else pl.DataFrame(schema=obs_schema)
+    cond_df = (
+        pl.DataFrame(cond_rows, schema=cond_schema)
+        if cond_rows
+        else pl.DataFrame(schema=cond_schema)
+    )
+    proc_df = (
+        pl.DataFrame(proc_rows, schema=proc_schema)
+        if proc_rows
+        else pl.DataFrame(schema=proc_schema)
+    )
+    meas_df = (
+        pl.DataFrame(meas_rows, schema=meas_schema)
+        if meas_rows
+        else pl.DataFrame(schema=meas_schema)
+    )
+    obs_df = (
+        pl.DataFrame(obs_rows, schema=obs_schema) if obs_rows else pl.DataFrame(schema=obs_schema)
+    )
 
     # Build CDM
     cdm = CdmReference(
@@ -383,43 +408,41 @@ def validate_episodes(
     checks: list[dict[str, Any]] = []
 
     if episodes.height == 0:
-        return pl.DataFrame({
-            "check": ["no_episodes"],
-            "n_violations": [0],
-            "details": ["No episodes to validate"],
-        })
+        return pl.DataFrame(
+            {
+                "check": ["no_episodes"],
+                "n_violations": [0],
+                "details": ["No episodes to validate"],
+            }
+        )
 
     # Check 1: start <= end
     if "episode_start_date" in episodes.columns and "episode_end_date" in episodes.columns:
-        bad_dates = episodes.filter(
-            pl.col("episode_start_date") > pl.col("episode_end_date")
+        bad_dates = episodes.filter(pl.col("episode_start_date") > pl.col("episode_end_date"))
+        checks.append(
+            {
+                "check": "start_before_end",
+                "n_violations": bad_dates.height,
+                "details": f"{bad_dates.height} episodes with start > end",
+            }
         )
-        checks.append({
-            "check": "start_before_end",
-            "n_violations": bad_dates.height,
-            "details": f"{bad_dates.height} episodes with start > end",
-        })
 
         # Check 2: duration <= max_days
-        durations = (
-            (episodes["episode_end_date"] - episodes["episode_start_date"])
-            .dt.total_days()
-        )
+        durations = (episodes["episode_end_date"] - episodes["episode_start_date"]).dt.total_days()
         too_long = (durations > max_days).sum()
-        checks.append({
-            "check": "max_duration",
-            "n_violations": int(too_long),
-            "details": f"{too_long} episodes exceeding {max_days} days",
-        })
+        checks.append(
+            {
+                "check": "max_duration",
+                "n_violations": int(too_long),
+                "details": f"{too_long} episodes exceeding {max_days} days",
+            }
+        )
 
     # Check 3: no overlaps within same person
     if "person_id" in episodes.columns:
         n_overlaps = 0
         for pid in episodes["person_id"].unique().to_list():
-            person_eps = (
-                episodes.filter(pl.col("person_id") == pid)
-                .sort("episode_start_date")
-            )
+            person_eps = episodes.filter(pl.col("person_id") == pid).sort("episode_start_date")
             if person_eps.height < 2:
                 continue
             starts = person_eps["episode_start_date"].to_list()
@@ -428,21 +451,27 @@ def validate_episodes(
                 if starts[j] < ends[j - 1]:
                     n_overlaps += 1
 
-        checks.append({
-            "check": "no_overlaps",
-            "n_violations": n_overlaps,
-            "details": f"{n_overlaps} overlapping episode pairs",
-        })
+        checks.append(
+            {
+                "check": "no_overlaps",
+                "n_violations": n_overlaps,
+                "details": f"{n_overlaps} overlapping episode pairs",
+            }
+        )
 
     if not checks:
-        checks.append({
-            "check": "unknown",
-            "n_violations": 0,
-            "details": "No checks could be performed",
-        })
+        checks.append(
+            {
+                "check": "unknown",
+                "n_violations": 0,
+                "details": "No checks could be performed",
+            }
+        )
 
-    return pl.DataFrame(checks).cast({
-        "check": pl.Utf8,
-        "n_violations": pl.Int64,
-        "details": pl.Utf8,
-    })
+    return pl.DataFrame(checks).cast(
+        {
+            "check": pl.Utf8,
+            "n_violations": pl.Int64,
+            "details": pl.Utf8,
+        }
+    )

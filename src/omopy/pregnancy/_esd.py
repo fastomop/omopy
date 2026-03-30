@@ -87,9 +87,7 @@ def _run_esd(
 
                 if gw_records.height > 0:
                     # Use records that have a numeric value
-                    gw_with_val = gw_records.filter(
-                        pl.col("value_as_number").is_not_null()
-                    )
+                    gw_with_val = gw_records.filter(pl.col("value_as_number").is_not_null())
 
                     if gw_with_val.height > 0:
                         # Pick the record closest to outcome/end date
@@ -105,9 +103,7 @@ def _run_esd(
 
                 # Try GR3m (gestational range / trimester) evidence
                 if esd_start is None:
-                    gr_records = person_esd.filter(
-                        pl.col("esd_category") == "GR3m"
-                    )
+                    gr_records = person_esd.filter(pl.col("esd_category") == "GR3m")
 
                     if gr_records.height > 0:
                         # Collect trimester evidence
@@ -130,9 +126,7 @@ def _run_esd(
                                 midpoint_months = (min(all_mins) + max(all_maxs)) / 2.0
 
                             # Use the earliest GR record date
-                            earliest_gr = gr_records.sort("record_date").row(
-                                0, named=True
-                            )
+                            earliest_gr = gr_records.sort("record_date").row(0, named=True)
                             rec_date = earliest_gr["record_date"]
                             days_offset = int(midpoint_months * 30)
                             esd_start = rec_date - timedelta(days=days_offset)

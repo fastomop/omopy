@@ -118,10 +118,7 @@ def _normalise_keys(obj: Any, depth: int = 0) -> Any:
     if depth > 50:
         return obj
     if isinstance(obj, dict):
-        return {
-            _CAMEL_TO_PASCAL.get(k, k): _normalise_keys(v, depth + 1)
-            for k, v in obj.items()
-        }
+        return {_CAMEL_TO_PASCAL.get(k, k): _normalise_keys(v, depth + 1) for k, v in obj.items()}
     if isinstance(obj, list):
         return [_normalise_keys(item, depth + 1) for item in obj]
     return obj
@@ -200,10 +197,7 @@ def _parse_text_filter(d: dict | None) -> TextFilter | None:
 def _parse_concept_filter(lst: list | None) -> ConceptFilter | None:
     if not lst:
         return None
-    ids = tuple(
-        c.get("CONCEPT_ID", 0) if isinstance(c, dict) else int(c)
-        for c in lst
-    )
+    ids = tuple(c.get("CONCEPT_ID", 0) if isinstance(c, dict) else int(c) for c in lst)
     return ConceptFilter(concept_ids=ids)
 
 
@@ -361,9 +355,7 @@ def _parse_criteria_group(d: dict | None) -> CriteriaGroup | None:
     return CriteriaGroup(
         type=d.get("Type", "ALL"),
         count=d.get("Count", 0),
-        criteria_list=tuple(
-            _parse_correlated_criteria(c) for c in d.get("CriteriaList", [])
-        ),
+        criteria_list=tuple(_parse_correlated_criteria(c) for c in d.get("CriteriaList", [])),
         demographic_criteria_list=tuple(
             _parse_demographic_criteria(c) for c in d.get("DemographicCriteriaList", [])
         ),
@@ -381,9 +373,7 @@ def _parse_criteria_group(d: dict | None) -> CriteriaGroup | None:
 
 
 def _parse_primary_criteria(d: dict) -> PrimaryCriteria:
-    criteria_list = tuple(
-        _extract_domain_criteria(c) for c in d.get("CriteriaList", [])
-    )
+    criteria_list = tuple(_extract_domain_criteria(c) for c in d.get("CriteriaList", []))
     obs_window = d.get("ObservationWindow", {})
     # Handle both PrimaryCriteriaLimit and PrimaryLimit
     limit_dict = _get(d, "PrimaryCriteriaLimit", "PrimaryLimit", default={})
@@ -474,17 +464,13 @@ def parse_cohort_expression(d: dict) -> CohortExpression:
     # Normalise camelCase keys to PascalCase throughout
     d = _normalise_keys(d)
 
-    concept_sets = tuple(
-        _parse_concept_set(cs) for cs in d.get("ConceptSets", [])
-    )
+    concept_sets = tuple(_parse_concept_set(cs) for cs in d.get("ConceptSets", []))
 
     primary = _parse_primary_criteria(d.get("PrimaryCriteria", {}))
 
     additional = _parse_criteria_group(d.get("AdditionalCriteria"))
 
-    qualified_limit = CriteriaLimit(
-        type=d.get("QualifiedLimit", {}).get("Type", "All")
-    )
+    qualified_limit = CriteriaLimit(type=d.get("QualifiedLimit", {}).get("Type", "All"))
 
     inclusion_rules = tuple(
         InclusionRule(
@@ -494,16 +480,11 @@ def parse_cohort_expression(d: dict) -> CohortExpression:
         for r in d.get("InclusionRules", [])
     )
 
-    expression_limit = CriteriaLimit(
-        type=d.get("ExpressionLimit", {}).get("Type", "All")
-    )
+    expression_limit = CriteriaLimit(type=d.get("ExpressionLimit", {}).get("Type", "All"))
 
     end_strategy = _parse_end_strategy(d.get("EndStrategy"))
 
-    censoring = tuple(
-        _extract_domain_criteria(c)
-        for c in d.get("CensoringCriteria", [])
-    )
+    censoring = tuple(_extract_domain_criteria(c) for c in d.get("CensoringCriteria", []))
 
     collapse = _parse_collapse_settings(d.get("CollapseSettings"))
     censor_window = _parse_censor_window(d.get("CensorWindow"))
@@ -570,11 +551,13 @@ def read_cohort_set(
     for idx, json_file in enumerate(json_files, start=1):
         raw = json.loads(json_file.read_text(encoding="utf-8"))
         expression = parse_cohort_expression(raw)
-        results.append({
-            "cohort_definition_id": idx,
-            "cohort_name": json_file.stem,
-            "expression": expression,
-            "json_path": json_file,
-        })
+        results.append(
+            {
+                "cohort_definition_id": idx,
+                "cohort_name": json_file.stem,
+                "expression": expression,
+                "json_path": json_file,
+            }
+        )
 
     return results

@@ -41,20 +41,24 @@ def _make_drug_cohort(
     sid = 1
     for cid in range(1, n_cohorts + 1):
         for _ in range(n_subjects):
-            rows.append({
-                "cohort_definition_id": cid,
-                "subject_id": sid,
-                "cohort_start_date": datetime.date(2020, 1, 1),
-                "cohort_end_date": datetime.date(2020, 6, 30),
-            })
+            rows.append(
+                {
+                    "cohort_definition_id": cid,
+                    "subject_id": sid,
+                    "cohort_start_date": datetime.date(2020, 1, 1),
+                    "cohort_end_date": datetime.date(2020, 6, 30),
+                }
+            )
             sid += 1
 
     df = pl.DataFrame(rows)
-    settings = pl.DataFrame({
-        "cohort_definition_id": list(range(1, n_cohorts + 1)),
-        "cohort_name": [f"drug_{i}" for i in range(1, n_cohorts + 1)],
-        "gap_era": [gap_era] * n_cohorts,
-    })
+    settings = pl.DataFrame(
+        {
+            "cohort_definition_id": list(range(1, n_cohorts + 1)),
+            "cohort_name": [f"drug_{i}" for i in range(1, n_cohorts + 1)],
+            "gap_era": [gap_era] * n_cohorts,
+        }
+    )
 
     ct = CohortTable(df, settings=settings)
     if cdm is not None:
@@ -72,14 +76,17 @@ class TestModuleImports:
 
     def test_import_module(self):
         import omopy.drug
+
         assert hasattr(omopy.drug, "__all__")
 
     def test_export_count(self):
         import omopy.drug
+
         assert len(omopy.drug.__all__) == 44
 
     def test_all_exports_are_callable(self):
         import omopy.drug
+
         for name in omopy.drug.__all__:
             obj = getattr(omopy.drug, name)
             assert callable(obj), f"{name} is not callable"
@@ -197,8 +204,11 @@ class TestPatternData:
 
     def test_pattern_formula_names(self):
         from omopy.drug._data.patterns import (
-            PATTERNS, FIXED_AMOUNT, CONCENTRATION,
-            TIME_BASED_DENOM, TIME_BASED_NO_DENOM,
+            PATTERNS,
+            FIXED_AMOUNT,
+            CONCENTRATION,
+            TIME_BASED_DENOM,
+            TIME_BASED_NO_DENOM,
         )
 
         valid_formulas = {FIXED_AMOUNT, CONCENTRATION, TIME_BASED_DENOM, TIME_BASED_NO_DENOM}
@@ -246,9 +256,17 @@ class TestDataConstants:
 
     def test_unit_constants(self):
         from omopy.drug._data.patterns import (
-            HOUR, UNIT, LITER, MILLIGRAM, MILLILITER,
-            INTERNATIONAL_UNIT, MEGA_INTERNATIONAL_UNIT,
-            SQUARE_CENTIMETER, MILLIEQUIVALENT, MICROGRAM, ACTUATION,
+            HOUR,
+            UNIT,
+            LITER,
+            MILLIGRAM,
+            MILLILITER,
+            INTERNATIONAL_UNIT,
+            MEGA_INTERNATIONAL_UNIT,
+            SQUARE_CENTIMETER,
+            MILLIEQUIVALENT,
+            MICROGRAM,
+            ACTUATION,
         )
 
         assert HOUR == 8505
@@ -392,6 +410,7 @@ class TestTableFunctions:
     @pytest.fixture()
     def mock_result(self):
         from omopy.drug import mock_drug_utilisation
+
         return mock_drug_utilisation()
 
     def test_table_drug_utilisation_polars(self, mock_result):
@@ -405,7 +424,9 @@ class TestTableFunctions:
         from omopy.drug import table_drug_utilisation
 
         table = table_drug_utilisation(
-            mock_result, type="polars", header=["cohort_name"],
+            mock_result,
+            type="polars",
+            header=["cohort_name"],
         )
         assert isinstance(table, pl.DataFrame)
 
@@ -416,27 +437,45 @@ class TestTableFunctions:
         # Build a minimal indication SummarisedResult
         rows = [
             {
-                "result_id": 1, "cdm_name": "test", "group_name": "cohort_name",
-                "group_level": "drug_1", "strata_name": OVERALL,
-                "strata_level": OVERALL, "variable_name": "Indication (0, 0)",
-                "variable_level": "hypertension", "estimate_name": "count",
-                "estimate_type": "integer", "estimate_value": "10",
-                "additional_name": "window_name", "additional_level": "(0, 0)",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "cohort_name",
+                "group_level": "drug_1",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Indication (0, 0)",
+                "variable_level": "hypertension",
+                "estimate_name": "count",
+                "estimate_type": "integer",
+                "estimate_value": "10",
+                "additional_name": "window_name",
+                "additional_level": "(0, 0)",
             },
             {
-                "result_id": 1, "cdm_name": "test", "group_name": "cohort_name",
-                "group_level": "drug_1", "strata_name": OVERALL,
-                "strata_level": OVERALL, "variable_name": "Indication (0, 0)",
-                "variable_level": "hypertension", "estimate_name": "percentage",
-                "estimate_type": "percentage", "estimate_value": "50.00",
-                "additional_name": "window_name", "additional_level": "(0, 0)",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "cohort_name",
+                "group_level": "drug_1",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Indication (0, 0)",
+                "variable_level": "hypertension",
+                "estimate_name": "percentage",
+                "estimate_type": "percentage",
+                "estimate_value": "50.00",
+                "additional_name": "window_name",
+                "additional_level": "(0, 0)",
             },
         ]
         data = pl.DataFrame(rows)
-        settings = pl.DataFrame({
-            "result_id": [1], "result_type": ["summarise_indication"],
-            "package_name": ["omopy.drug"], "package_version": ["0.1.0"],
-        })
+        settings = pl.DataFrame(
+            {
+                "result_id": [1],
+                "result_type": ["summarise_indication"],
+                "package_name": ["omopy.drug"],
+                "package_version": ["0.1.0"],
+            }
+        )
         sr = SummarisedResult(data, settings=settings)
 
         table = table_indication(sr, type="polars")
@@ -448,27 +487,45 @@ class TestTableFunctions:
 
         rows = [
             {
-                "result_id": 1, "cdm_name": "test", "group_name": "cohort_name",
-                "group_level": "drug_1", "strata_name": OVERALL,
-                "strata_level": OVERALL, "variable_name": "Medication (0, 0)",
-                "variable_level": "statin", "estimate_name": "count",
-                "estimate_type": "integer", "estimate_value": "8",
-                "additional_name": "window_name", "additional_level": "(0, 0)",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "cohort_name",
+                "group_level": "drug_1",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Medication (0, 0)",
+                "variable_level": "statin",
+                "estimate_name": "count",
+                "estimate_type": "integer",
+                "estimate_value": "8",
+                "additional_name": "window_name",
+                "additional_level": "(0, 0)",
             },
             {
-                "result_id": 1, "cdm_name": "test", "group_name": "cohort_name",
-                "group_level": "drug_1", "strata_name": OVERALL,
-                "strata_level": OVERALL, "variable_name": "Medication (0, 0)",
-                "variable_level": "statin", "estimate_name": "percentage",
-                "estimate_type": "percentage", "estimate_value": "40.00",
-                "additional_name": "window_name", "additional_level": "(0, 0)",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "cohort_name",
+                "group_level": "drug_1",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Medication (0, 0)",
+                "variable_level": "statin",
+                "estimate_name": "percentage",
+                "estimate_type": "percentage",
+                "estimate_value": "40.00",
+                "additional_name": "window_name",
+                "additional_level": "(0, 0)",
             },
         ]
         data = pl.DataFrame(rows)
-        settings = pl.DataFrame({
-            "result_id": [1], "result_type": ["summarise_treatment"],
-            "package_name": ["omopy.drug"], "package_version": ["0.1.0"],
-        })
+        settings = pl.DataFrame(
+            {
+                "result_id": [1],
+                "result_type": ["summarise_treatment"],
+                "package_name": ["omopy.drug"],
+                "package_version": ["0.1.0"],
+            }
+        )
         sr = SummarisedResult(data, settings=settings)
 
         table = table_treatment(sr, type="polars")
@@ -480,27 +537,45 @@ class TestTableFunctions:
 
         rows = [
             {
-                "result_id": 1, "cdm_name": "test", "group_name": "cohort_name",
-                "group_level": "drug_1", "strata_name": OVERALL,
-                "strata_level": OVERALL, "variable_name": "Drug restart in 180 days",
-                "variable_level": "restart", "estimate_name": "count",
-                "estimate_type": "integer", "estimate_value": "5",
-                "additional_name": "follow_up_days", "additional_level": "180",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "cohort_name",
+                "group_level": "drug_1",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Drug restart in 180 days",
+                "variable_level": "restart",
+                "estimate_name": "count",
+                "estimate_type": "integer",
+                "estimate_value": "5",
+                "additional_name": "follow_up_days",
+                "additional_level": "180",
             },
             {
-                "result_id": 1, "cdm_name": "test", "group_name": "cohort_name",
-                "group_level": "drug_1", "strata_name": OVERALL,
-                "strata_level": OVERALL, "variable_name": "Drug restart in 180 days",
-                "variable_level": "restart", "estimate_name": "percentage",
-                "estimate_type": "percentage", "estimate_value": "25.00",
-                "additional_name": "follow_up_days", "additional_level": "180",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "cohort_name",
+                "group_level": "drug_1",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Drug restart in 180 days",
+                "variable_level": "restart",
+                "estimate_name": "percentage",
+                "estimate_type": "percentage",
+                "estimate_value": "25.00",
+                "additional_name": "follow_up_days",
+                "additional_level": "180",
             },
         ]
         data = pl.DataFrame(rows)
-        settings = pl.DataFrame({
-            "result_id": [1], "result_type": ["summarise_drug_restart"],
-            "package_name": ["omopy.drug"], "package_version": ["0.1.0"],
-        })
+        settings = pl.DataFrame(
+            {
+                "result_id": [1],
+                "result_type": ["summarise_drug_restart"],
+                "package_name": ["omopy.drug"],
+                "package_version": ["0.1.0"],
+            }
+        )
         sr = SummarisedResult(data, settings=settings)
 
         table = table_drug_restart(sr, type="polars")
@@ -512,29 +587,45 @@ class TestTableFunctions:
 
         rows = [
             {
-                "result_id": 1, "cdm_name": "test",
-                "group_name": "ingredient_name", "group_level": "aspirin",
-                "strata_name": OVERALL, "strata_level": OVERALL,
-                "variable_name": "daily_dose", "variable_level": "",
-                "estimate_name": "mean", "estimate_type": "numeric",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "ingredient_name",
+                "group_level": "aspirin",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "daily_dose",
+                "variable_level": "",
+                "estimate_name": "mean",
+                "estimate_type": "numeric",
                 "estimate_value": "50.00",
-                "additional_name": OVERALL, "additional_level": OVERALL,
+                "additional_name": OVERALL,
+                "additional_level": OVERALL,
             },
             {
-                "result_id": 1, "cdm_name": "test",
-                "group_name": "ingredient_name", "group_level": "aspirin",
-                "strata_name": OVERALL, "strata_level": OVERALL,
-                "variable_name": "daily_dose", "variable_level": "",
-                "estimate_name": "sd", "estimate_type": "numeric",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "ingredient_name",
+                "group_level": "aspirin",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "daily_dose",
+                "variable_level": "",
+                "estimate_name": "sd",
+                "estimate_type": "numeric",
                 "estimate_value": "10.00",
-                "additional_name": OVERALL, "additional_level": OVERALL,
+                "additional_name": OVERALL,
+                "additional_level": OVERALL,
             },
         ]
         data = pl.DataFrame(rows)
-        settings = pl.DataFrame({
-            "result_id": [1], "result_type": ["summarise_dose_coverage"],
-            "package_name": ["omopy.drug"], "package_version": ["0.1.0"],
-        })
+        settings = pl.DataFrame(
+            {
+                "result_id": [1],
+                "result_type": ["summarise_dose_coverage"],
+                "package_name": ["omopy.drug"],
+                "package_version": ["0.1.0"],
+            }
+        )
         sr = SummarisedResult(data, settings=settings)
 
         table = table_dose_coverage(sr, type="polars")
@@ -553,22 +644,32 @@ class TestTableFunctions:
                 ("ppc_lower", "0.300000"),
                 ("ppc_upper", "0.700000"),
             ]:
-                rows.append({
-                    "result_id": 1, "cdm_name": "test",
-                    "group_name": "cohort_name", "group_level": "drug_1",
-                    "strata_name": OVERALL, "strata_level": OVERALL,
-                    "variable_name": OVERALL, "variable_level": "",
-                    "estimate_name": est_name,
-                    "estimate_type": "numeric" if "ppc" in est_name else "integer",
-                    "estimate_value": est_val,
-                    "additional_name": "time", "additional_level": str(day),
-                })
+                rows.append(
+                    {
+                        "result_id": 1,
+                        "cdm_name": "test",
+                        "group_name": "cohort_name",
+                        "group_level": "drug_1",
+                        "strata_name": OVERALL,
+                        "strata_level": OVERALL,
+                        "variable_name": OVERALL,
+                        "variable_level": "",
+                        "estimate_name": est_name,
+                        "estimate_type": "numeric" if "ppc" in est_name else "integer",
+                        "estimate_value": est_val,
+                        "additional_name": "time",
+                        "additional_level": str(day),
+                    }
+                )
         data = pl.DataFrame(rows)
-        settings = pl.DataFrame({
-            "result_id": [1],
-            "result_type": ["summarise_proportion_of_patients_covered"],
-            "package_name": ["omopy.drug"], "package_version": ["0.1.0"],
-        })
+        settings = pl.DataFrame(
+            {
+                "result_id": [1],
+                "result_type": ["summarise_proportion_of_patients_covered"],
+                "package_name": ["omopy.drug"],
+                "package_version": ["0.1.0"],
+            }
+        )
         sr = SummarisedResult(data, settings=settings)
 
         table = table_proportion_of_patients_covered(sr, type="polars")
@@ -586,6 +687,7 @@ class TestPlotFunctions:
     @pytest.fixture()
     def mock_result(self):
         from omopy.drug import mock_drug_utilisation
+
         return mock_drug_utilisation()
 
     def test_plot_drug_utilisation_boxplot(self, mock_result):
@@ -611,19 +713,30 @@ class TestPlotFunctions:
 
         rows = [
             {
-                "result_id": 1, "cdm_name": "test", "group_name": "cohort_name",
-                "group_level": "drug_1", "strata_name": OVERALL,
-                "strata_level": OVERALL, "variable_name": "Indication (0, 0)",
-                "variable_level": "hypertension", "estimate_name": "percentage",
-                "estimate_type": "percentage", "estimate_value": "50.00",
-                "additional_name": "window_name", "additional_level": "(0, 0)",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "cohort_name",
+                "group_level": "drug_1",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Indication (0, 0)",
+                "variable_level": "hypertension",
+                "estimate_name": "percentage",
+                "estimate_type": "percentage",
+                "estimate_value": "50.00",
+                "additional_name": "window_name",
+                "additional_level": "(0, 0)",
             },
         ]
         data = pl.DataFrame(rows)
-        settings = pl.DataFrame({
-            "result_id": [1], "result_type": ["summarise_indication"],
-            "package_name": ["omopy.drug"], "package_version": ["0.1.0"],
-        })
+        settings = pl.DataFrame(
+            {
+                "result_id": [1],
+                "result_type": ["summarise_indication"],
+                "package_name": ["omopy.drug"],
+                "package_version": ["0.1.0"],
+            }
+        )
         sr = SummarisedResult(data, settings=settings)
 
         fig = plot_indication(sr)
@@ -634,19 +747,30 @@ class TestPlotFunctions:
 
         rows = [
             {
-                "result_id": 1, "cdm_name": "test", "group_name": "cohort_name",
-                "group_level": "drug_1", "strata_name": OVERALL,
-                "strata_level": OVERALL, "variable_name": "Medication (0, 0)",
-                "variable_level": "statin", "estimate_name": "percentage",
-                "estimate_type": "percentage", "estimate_value": "40.00",
-                "additional_name": "window_name", "additional_level": "(0, 0)",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "cohort_name",
+                "group_level": "drug_1",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Medication (0, 0)",
+                "variable_level": "statin",
+                "estimate_name": "percentage",
+                "estimate_type": "percentage",
+                "estimate_value": "40.00",
+                "additional_name": "window_name",
+                "additional_level": "(0, 0)",
             },
         ]
         data = pl.DataFrame(rows)
-        settings = pl.DataFrame({
-            "result_id": [1], "result_type": ["summarise_treatment"],
-            "package_name": ["omopy.drug"], "package_version": ["0.1.0"],
-        })
+        settings = pl.DataFrame(
+            {
+                "result_id": [1],
+                "result_type": ["summarise_treatment"],
+                "package_name": ["omopy.drug"],
+                "package_version": ["0.1.0"],
+            }
+        )
         sr = SummarisedResult(data, settings=settings)
 
         fig = plot_treatment(sr)
@@ -657,27 +781,45 @@ class TestPlotFunctions:
 
         rows = [
             {
-                "result_id": 1, "cdm_name": "test", "group_name": "cohort_name",
-                "group_level": "drug_1", "strata_name": OVERALL,
-                "strata_level": OVERALL, "variable_name": "Drug restart in 180 days",
-                "variable_level": "restart", "estimate_name": "percentage",
-                "estimate_type": "percentage", "estimate_value": "25.00",
-                "additional_name": "follow_up_days", "additional_level": "180",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "cohort_name",
+                "group_level": "drug_1",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Drug restart in 180 days",
+                "variable_level": "restart",
+                "estimate_name": "percentage",
+                "estimate_type": "percentage",
+                "estimate_value": "25.00",
+                "additional_name": "follow_up_days",
+                "additional_level": "180",
             },
             {
-                "result_id": 1, "cdm_name": "test", "group_name": "cohort_name",
-                "group_level": "drug_1", "strata_name": OVERALL,
-                "strata_level": OVERALL, "variable_name": "Drug restart in 180 days",
-                "variable_level": "untreated", "estimate_name": "percentage",
-                "estimate_type": "percentage", "estimate_value": "75.00",
-                "additional_name": "follow_up_days", "additional_level": "180",
+                "result_id": 1,
+                "cdm_name": "test",
+                "group_name": "cohort_name",
+                "group_level": "drug_1",
+                "strata_name": OVERALL,
+                "strata_level": OVERALL,
+                "variable_name": "Drug restart in 180 days",
+                "variable_level": "untreated",
+                "estimate_name": "percentage",
+                "estimate_type": "percentage",
+                "estimate_value": "75.00",
+                "additional_name": "follow_up_days",
+                "additional_level": "180",
             },
         ]
         data = pl.DataFrame(rows)
-        settings = pl.DataFrame({
-            "result_id": [1], "result_type": ["summarise_drug_restart"],
-            "package_name": ["omopy.drug"], "package_version": ["0.1.0"],
-        })
+        settings = pl.DataFrame(
+            {
+                "result_id": [1],
+                "result_type": ["summarise_drug_restart"],
+                "package_name": ["omopy.drug"],
+                "package_version": ["0.1.0"],
+            }
+        )
         sr = SummarisedResult(data, settings=settings)
 
         fig = plot_drug_restart(sr)
@@ -694,21 +836,32 @@ class TestPlotFunctions:
                 ("ppc_lower", f"{ppc - 0.05:.6f}"),
                 ("ppc_upper", f"{ppc + 0.05:.6f}"),
             ]:
-                rows.append({
-                    "result_id": 1, "cdm_name": "test",
-                    "group_name": "cohort_name", "group_level": "drug_1",
-                    "strata_name": OVERALL, "strata_level": OVERALL,
-                    "variable_name": OVERALL, "variable_level": "",
-                    "estimate_name": est_name, "estimate_type": "numeric",
-                    "estimate_value": est_val,
-                    "additional_name": "time", "additional_level": str(day),
-                })
+                rows.append(
+                    {
+                        "result_id": 1,
+                        "cdm_name": "test",
+                        "group_name": "cohort_name",
+                        "group_level": "drug_1",
+                        "strata_name": OVERALL,
+                        "strata_level": OVERALL,
+                        "variable_name": OVERALL,
+                        "variable_level": "",
+                        "estimate_name": est_name,
+                        "estimate_type": "numeric",
+                        "estimate_value": est_val,
+                        "additional_name": "time",
+                        "additional_level": str(day),
+                    }
+                )
         data = pl.DataFrame(rows)
-        settings = pl.DataFrame({
-            "result_id": [1],
-            "result_type": ["summarise_proportion_of_patients_covered"],
-            "package_name": ["omopy.drug"], "package_version": ["0.1.0"],
-        })
+        settings = pl.DataFrame(
+            {
+                "result_id": [1],
+                "result_type": ["summarise_proportion_of_patients_covered"],
+                "package_name": ["omopy.drug"],
+                "package_version": ["0.1.0"],
+            }
+        )
         sr = SummarisedResult(data, settings=settings)
 
         fig = plot_proportion_of_patients_covered(sr)
@@ -773,13 +926,19 @@ class TestSummariseHelpers:
     def test_add_count_rows(self):
         from omopy.drug._summarise import _add_count_rows
 
-        df = pl.DataFrame({
-            "subject_id": [1, 2, 2, 3],
-        })
+        df = pl.DataFrame(
+            {
+                "subject_id": [1, 2, 2, 3],
+            }
+        )
         rows = _add_count_rows(
-            df, cdm_name="test", result_id=1,
-            group_name="cohort_name", group_level="c1",
-            strata_name=OVERALL, strata_level=OVERALL,
+            df,
+            cdm_name="test",
+            result_id=1,
+            group_name="cohort_name",
+            group_level="c1",
+            strata_name=OVERALL,
+            strata_level=OVERALL,
         )
         assert len(rows) == 2
         names = {r["variable_name"] for r in rows}
@@ -794,8 +953,17 @@ class TestSummariseHelpers:
         from omopy.drug._summarise import _compute_numeric_estimates
 
         s = pl.Series("val", [10.0, 20.0, 30.0, 40.0, 50.0])
-        est = ("mean", "sd", "median", "min", "max", "q25", "q75",
-               "count_missing", "percentage_missing")
+        est = (
+            "mean",
+            "sd",
+            "median",
+            "min",
+            "max",
+            "q25",
+            "q75",
+            "count_missing",
+            "percentage_missing",
+        )
         rows = _compute_numeric_estimates(s, "test_metric", est)
 
         names = {r["estimate_name"] for r in rows}
@@ -821,7 +989,9 @@ class TestSummariseHelpers:
 
         s = pl.Series("val", [10.0, None, 30.0, None, 50.0])
         rows = _compute_numeric_estimates(
-            s, "test", ("mean", "count_missing", "percentage_missing"),
+            s,
+            "test",
+            ("mean", "count_missing", "percentage_missing"),
         )
 
         missing_row = next(r for r in rows if r["estimate_name"] == "count_missing")
@@ -893,23 +1063,27 @@ class TestErafyCohort:
         """Two overlapping records for the same subject should merge."""
         from omopy.drug import erafy_cohort
 
-        df = pl.DataFrame({
-            "cohort_definition_id": [1, 1],
-            "subject_id": [1, 1],
-            "cohort_start_date": [
-                datetime.date(2020, 1, 1),
-                datetime.date(2020, 1, 15),
-            ],
-            "cohort_end_date": [
-                datetime.date(2020, 2, 1),
-                datetime.date(2020, 3, 1),
-            ],
-        })
-        settings = pl.DataFrame({
-            "cohort_definition_id": [1],
-            "cohort_name": ["drug_1"],
-            "gap_era": [0],
-        })
+        df = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1],
+                "subject_id": [1, 1],
+                "cohort_start_date": [
+                    datetime.date(2020, 1, 1),
+                    datetime.date(2020, 1, 15),
+                ],
+                "cohort_end_date": [
+                    datetime.date(2020, 2, 1),
+                    datetime.date(2020, 3, 1),
+                ],
+            }
+        )
+        settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1],
+                "cohort_name": ["drug_1"],
+                "gap_era": [0],
+            }
+        )
         ct = CohortTable(df, settings=settings)
 
         result = erafy_cohort(ct, gap_era=0)
@@ -922,23 +1096,27 @@ class TestErafyCohort:
         """Two records with a gap ≤ gap_era should merge."""
         from omopy.drug import erafy_cohort
 
-        df = pl.DataFrame({
-            "cohort_definition_id": [1, 1],
-            "subject_id": [1, 1],
-            "cohort_start_date": [
-                datetime.date(2020, 1, 1),
-                datetime.date(2020, 2, 10),
-            ],
-            "cohort_end_date": [
-                datetime.date(2020, 2, 1),
-                datetime.date(2020, 3, 1),
-            ],
-        })
-        settings = pl.DataFrame({
-            "cohort_definition_id": [1],
-            "cohort_name": ["drug_1"],
-            "gap_era": [0],
-        })
+        df = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1],
+                "subject_id": [1, 1],
+                "cohort_start_date": [
+                    datetime.date(2020, 1, 1),
+                    datetime.date(2020, 2, 10),
+                ],
+                "cohort_end_date": [
+                    datetime.date(2020, 2, 1),
+                    datetime.date(2020, 3, 1),
+                ],
+            }
+        )
+        settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1],
+                "cohort_name": ["drug_1"],
+                "gap_era": [0],
+            }
+        )
         ct = CohortTable(df, settings=settings)
 
         # Gap of 8 days (Feb 2 to Feb 9), so gap_era=10 should merge
@@ -948,30 +1126,36 @@ class TestErafyCohort:
 
         # Gap of 8 days, gap_era=5 should NOT merge
         result2 = erafy_cohort(ct, gap_era=5)
-        result_df2 = result2.collect() if not isinstance(result2.data, pl.DataFrame) else result2.data
+        result_df2 = (
+            result2.collect() if not isinstance(result2.data, pl.DataFrame) else result2.data
+        )
         assert len(result_df2) == 2
 
     def test_erafy_different_subjects(self):
         """Records for different subjects should not merge."""
         from omopy.drug import erafy_cohort
 
-        df = pl.DataFrame({
-            "cohort_definition_id": [1, 1],
-            "subject_id": [1, 2],
-            "cohort_start_date": [
-                datetime.date(2020, 1, 1),
-                datetime.date(2020, 1, 1),
-            ],
-            "cohort_end_date": [
-                datetime.date(2020, 2, 1),
-                datetime.date(2020, 2, 1),
-            ],
-        })
-        settings = pl.DataFrame({
-            "cohort_definition_id": [1],
-            "cohort_name": ["drug_1"],
-            "gap_era": [0],
-        })
+        df = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1],
+                "subject_id": [1, 2],
+                "cohort_start_date": [
+                    datetime.date(2020, 1, 1),
+                    datetime.date(2020, 1, 1),
+                ],
+                "cohort_end_date": [
+                    datetime.date(2020, 2, 1),
+                    datetime.date(2020, 2, 1),
+                ],
+            }
+        )
+        settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1],
+                "cohort_name": ["drug_1"],
+                "gap_era": [0],
+            }
+        )
         ct = CohortTable(df, settings=settings)
 
         result = erafy_cohort(ct, gap_era=30)
@@ -996,17 +1180,21 @@ class TestCohortGapEra:
     def test_gap_era_multiple_cohorts(self):
         from omopy.drug import cohort_gap_era
 
-        df = pl.DataFrame({
-            "cohort_definition_id": [1, 2],
-            "subject_id": [1, 2],
-            "cohort_start_date": [datetime.date(2020, 1, 1)] * 2,
-            "cohort_end_date": [datetime.date(2020, 6, 30)] * 2,
-        })
-        settings = pl.DataFrame({
-            "cohort_definition_id": [1, 2],
-            "cohort_name": ["drug_1", "drug_2"],
-            "gap_era": [30, 60],
-        })
+        df = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 2],
+                "subject_id": [1, 2],
+                "cohort_start_date": [datetime.date(2020, 1, 1)] * 2,
+                "cohort_end_date": [datetime.date(2020, 6, 30)] * 2,
+            }
+        )
+        settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 2],
+                "cohort_name": ["drug_1", "drug_2"],
+                "gap_era": [30, 60],
+            }
+        )
         ct = CohortTable(df, settings=settings)
 
         result = cohort_gap_era(ct)
@@ -1025,24 +1213,28 @@ class TestRequireFunctions:
         from omopy.drug import require_is_first_drug_entry
 
         # Subject 1 has two entries, subject 2 has one
-        df = pl.DataFrame({
-            "cohort_definition_id": [1, 1, 1],
-            "subject_id": [1, 1, 2],
-            "cohort_start_date": [
-                datetime.date(2020, 1, 1),
-                datetime.date(2020, 6, 1),
-                datetime.date(2020, 3, 1),
-            ],
-            "cohort_end_date": [
-                datetime.date(2020, 3, 1),
-                datetime.date(2020, 9, 1),
-                datetime.date(2020, 6, 1),
-            ],
-        })
-        settings = pl.DataFrame({
-            "cohort_definition_id": [1],
-            "cohort_name": ["drug_1"],
-        })
+        df = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1, 1],
+                "subject_id": [1, 1, 2],
+                "cohort_start_date": [
+                    datetime.date(2020, 1, 1),
+                    datetime.date(2020, 6, 1),
+                    datetime.date(2020, 3, 1),
+                ],
+                "cohort_end_date": [
+                    datetime.date(2020, 3, 1),
+                    datetime.date(2020, 9, 1),
+                    datetime.date(2020, 6, 1),
+                ],
+            }
+        )
+        settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1],
+                "cohort_name": ["drug_1"],
+            }
+        )
         ct = CohortTable(df, settings=settings)
 
         result = require_is_first_drug_entry(ct)
@@ -1053,24 +1245,28 @@ class TestRequireFunctions:
     def test_require_drug_in_date_range(self):
         from omopy.drug import require_drug_in_date_range
 
-        df = pl.DataFrame({
-            "cohort_definition_id": [1, 1, 1],
-            "subject_id": [1, 2, 3],
-            "cohort_start_date": [
-                datetime.date(2019, 1, 1),
-                datetime.date(2020, 6, 1),
-                datetime.date(2021, 1, 1),
-            ],
-            "cohort_end_date": [
-                datetime.date(2019, 6, 1),
-                datetime.date(2020, 12, 1),
-                datetime.date(2021, 6, 1),
-            ],
-        })
-        settings = pl.DataFrame({
-            "cohort_definition_id": [1],
-            "cohort_name": ["drug_1"],
-        })
+        df = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1, 1],
+                "subject_id": [1, 2, 3],
+                "cohort_start_date": [
+                    datetime.date(2019, 1, 1),
+                    datetime.date(2020, 6, 1),
+                    datetime.date(2021, 1, 1),
+                ],
+                "cohort_end_date": [
+                    datetime.date(2019, 6, 1),
+                    datetime.date(2020, 12, 1),
+                    datetime.date(2021, 6, 1),
+                ],
+            }
+        )
+        settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1],
+                "cohort_name": ["drug_1"],
+            }
+        )
         ct = CohortTable(df, settings=settings)
 
         result = require_drug_in_date_range(
@@ -1210,9 +1406,13 @@ class TestRequireIntegration:
         # Should have fewer or equal records
         assert len(result_df) <= original_n
         # Each subject should appear at most once per cohort
-        assert result_df.group_by(["cohort_definition_id", "subject_id"]).len().filter(
-            pl.col("len") > 1
-        ).height == 0
+        assert (
+            result_df.group_by(["cohort_definition_id", "subject_id"])
+            .len()
+            .filter(pl.col("len") > 1)
+            .height
+            == 0
+        )
 
     def test_require_drug_in_date_range_integration(self, drug_cohort):
         from omopy.drug import require_drug_in_date_range
@@ -1301,7 +1501,8 @@ class TestAddDrugUseIntegration:
 
         ct = drug_cohort["lisinopril"]
         result = add_drug_utilisation(
-            ct, gap_era=30,
+            ct,
+            gap_era=30,
             concept_set={"lisinopril": [1308216]},
             # Disable dose metrics (Synthea has no drug_strength data)
             initial_daily_dose=False,
@@ -1334,7 +1535,8 @@ class TestSummariseIntegration:
 
         ct = drug_cohort["lisinopril"]
         result = summarise_drug_utilisation(
-            ct, gap_era=30,
+            ct,
+            gap_era=30,
             concept_set={"lisinopril": [1308216]},
             **self._no_dose,
         )
@@ -1351,7 +1553,8 @@ class TestSummariseIntegration:
 
         ct = drug_cohort["lisinopril"]
         result = summarise_drug_utilisation(
-            ct, gap_era=30,
+            ct,
+            gap_era=30,
             concept_set={"lisinopril": [1308216]},
             **self._no_dose,
         )
@@ -1365,7 +1568,8 @@ class TestSummariseIntegration:
 
         ct = drug_cohort["lisinopril"]
         result = summarise_drug_utilisation(
-            ct, gap_era=30,
+            ct,
+            gap_era=30,
             concept_set={"lisinopril": [1308216]},
             **self._no_dose,
         )
@@ -1379,7 +1583,8 @@ class TestSummariseIntegration:
 
         ct = drug_cohort["lisinopril"]
         result = summarise_drug_utilisation(
-            ct, gap_era=30,
+            ct,
+            gap_era=30,
             concept_set={"lisinopril": [1308216]},
             **self._no_dose,
         )
@@ -1394,7 +1599,8 @@ class TestSummariseIntegration:
 
         ct = drug_cohort["lisinopril"]
         sr = summarise_drug_utilisation(
-            ct, gap_era=30,
+            ct,
+            gap_era=30,
             concept_set={"lisinopril": [1308216]},
             **self._no_dose,
         )
@@ -1408,7 +1614,8 @@ class TestSummariseIntegration:
 
         ct = drug_cohort["lisinopril"]
         sr = summarise_drug_utilisation(
-            ct, gap_era=30,
+            ct,
+            gap_era=30,
             concept_set={"lisinopril": [1308216]},
             **self._no_dose,
         )
@@ -1424,7 +1631,8 @@ class TestPPCIntegration:
 
         ct = drug_cohort["lisinopril"]
         result = summarise_proportion_of_patients_covered(
-            ct, follow_up_days=30,
+            ct,
+            follow_up_days=30,
         )
 
         assert isinstance(result, SummarisedResult)
@@ -1441,7 +1649,8 @@ class TestPPCIntegration:
 
         ct = drug_cohort["lisinopril"]
         result = summarise_proportion_of_patients_covered(
-            ct, follow_up_days=10,
+            ct,
+            follow_up_days=10,
         )
 
         if len(result) > 0:

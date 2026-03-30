@@ -192,7 +192,9 @@ def plot_cohort_attrition(
         return go.Figure()
 
     # Group by cohort_name
-    cohort_names = tidy["cohort_name"].unique().to_list() if "cohort_name" in tidy.columns else [""]
+    cohort_names = (
+        tidy["cohort_name"].unique().to_list() if "cohort_name" in tidy.columns else [""]
+    )
 
     fig = go.Figure()
 
@@ -204,11 +206,7 @@ def plot_cohort_attrition(
 
         # Get unique reasons ordered by reason_id
         if "reason_id" in c_data.columns:
-            reasons = (
-                c_data.select("reason", "reason_id")
-                .unique()
-                .sort("reason_id")
-            )
+            reasons = c_data.select("reason", "reason_id").unique().sort("reason_id")
         else:
             reasons = c_data.select("reason").unique()
 
@@ -217,7 +215,9 @@ def plot_cohort_attrition(
 
         for _, reason_row in enumerate(reasons.iter_rows(named=True)):
             reason = reason_row["reason"]
-            r_data = c_data.filter(pl.col("reason") == reason) if "reason" in c_data.columns else c_data
+            r_data = (
+                c_data.filter(pl.col("reason") == reason) if "reason" in c_data.columns else c_data
+            )
 
             # Build label
             parts = [reason]
@@ -328,9 +328,7 @@ def plot_cohort_timing(
         colour = "cohort_name_comparator"
 
     # Filter to timing variable only
-    data = result.data.filter(
-        pl.col("variable_name") == "Days between cohort entries"
-    )
+    data = result.data.filter(pl.col("variable_name") == "Days between cohort entries")
 
     if unique_combinations:
         data = _filter_unique_pairs(data)
@@ -345,7 +343,7 @@ def plot_cohort_timing(
                 try:
                     val = float(r["estimate_value"]) / 365.25
                     r["estimate_value"] = f"{val:.2f}"
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     pass
             rows.append(r)
         data = pl.DataFrame(rows) if rows else data
@@ -560,8 +558,11 @@ def plot_compared_large_scale_characteristics(
     comp_data = pct_data.filter(pl.col(colour) != reference)
 
     # Build join key (all columns except colour, percentage, estimate_value)
-    join_cols = [c for c in pct_data.columns
-                 if c not in {colour, "percentage", "estimate_value", "estimate_name", "estimate_type"}]
+    join_cols = [
+        c
+        for c in pct_data.columns
+        if c not in {colour, "percentage", "estimate_value", "estimate_name", "estimate_type"}
+    ]
 
     # Join reference percentage
     ref_slim = ref_data.select(join_cols + [pl.col("percentage").alias("reference_percentage")])
@@ -589,7 +590,10 @@ def plot_compared_large_scale_characteristics(
     # Add diagonal reference line
     fig.add_shape(
         type="line",
-        x0=0, y0=0, x1=100, y1=100,
+        x0=0,
+        y0=0,
+        x1=100,
+        y1=100,
         line=dict(dash="dash", color="gray"),
     )
 

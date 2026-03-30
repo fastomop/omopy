@@ -148,6 +148,7 @@ class TestComputePermanent:
     def test_cdm_table_input(self, writable_con, sample_expr):
         """Can accept a CdmTable wrapping an Ibis expression."""
         from omopy.generics.cdm_table import CdmTable
+
         cdm_tbl = CdmTable(data=sample_expr, tbl_name="sample")
         result = compute_permanent(
             cdm_tbl,

@@ -58,10 +58,12 @@ class TestSummariseCodeUse:
 
     def test_multiple_concept_sets(self, synthea_cdm):
         """Multiple concept sets are processed."""
-        cl = Codelist({
-            "hyp": [320128],
-            "sin": [40481087],
-        })
+        cl = Codelist(
+            {
+                "hyp": [320128],
+                "sin": [40481087],
+            }
+        )
         result = summarise_code_use(cl, synthea_cdm)
         set_names = result["concept_set_name"].unique().to_list()
         assert "hyp" in set_names
@@ -147,8 +149,14 @@ class TestSummariseOrphanCodes:
         # Use a concept with no descendants
         cl = Codelist({"leaf": [40481087]})
         result = summarise_orphan_codes(cl, synthea_cdm)
-        expected_cols = {"concept_set_name", "concept_id", "concept_name",
-                         "domain_id", "relationship", "count"}
+        expected_cols = {
+            "concept_set_name",
+            "concept_id",
+            "concept_name",
+            "domain_id",
+            "relationship",
+            "count",
+        }
         assert expected_cols == set(result.columns)
 
     def test_empty_codelist(self, synthea_cdm):

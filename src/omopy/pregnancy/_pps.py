@@ -70,10 +70,7 @@ def _run_pps(
     persons = pps_records["person_id"].unique().sort().to_list()
 
     for pid in persons:
-        precs = (
-            pps_records.filter(pl.col("person_id") == pid)
-            .sort("record_date")
-        )
+        precs = pps_records.filter(pl.col("person_id") == pid).sort("record_date")
         if precs.height == 0:
             continue
 
@@ -94,14 +91,16 @@ def _run_pps(
             if gap_days > _MAX_GAP_DAYS:
                 # Emit current episode
                 episode_counter += 1
-                episodes.append({
-                    "person_id": pid,
-                    "episode_id": episode_counter,
-                    "episode_start_date": ep_start,
-                    "episode_end_date": ep_end,
-                    "n_pps_records": ep_count,
-                    "category": "PREG",
-                })
+                episodes.append(
+                    {
+                        "person_id": pid,
+                        "episode_id": episode_counter,
+                        "episode_start_date": ep_start,
+                        "episode_end_date": ep_end,
+                        "n_pps_records": ep_count,
+                        "category": "PREG",
+                    }
+                )
                 ep_start = dt
                 ep_end = dt
                 ep_count = 1
@@ -116,22 +115,23 @@ def _run_pps(
 
             if expected_min is not None and expected_max is not None:
                 # Does the elapsed time agree with the expected gestational month?
-                agrees = (
-                    elapsed_months >= (expected_min - _TIMING_TOLERANCE_MONTHS)
-                    and elapsed_months <= (expected_max + _TIMING_TOLERANCE_MONTHS)
-                )
+                agrees = elapsed_months >= (
+                    expected_min - _TIMING_TOLERANCE_MONTHS
+                ) and elapsed_months <= (expected_max + _TIMING_TOLERANCE_MONTHS)
 
                 if not agrees and gap_days > _MIN_DISAGREEMENT_GAP_DAYS:
                     # Timing disagrees and there's a meaningful gap — new episode
                     episode_counter += 1
-                    episodes.append({
-                        "person_id": pid,
-                        "episode_id": episode_counter,
-                        "episode_start_date": ep_start,
-                        "episode_end_date": ep_end,
-                        "n_pps_records": ep_count,
-                        "category": "PREG",
-                    })
+                    episodes.append(
+                        {
+                            "person_id": pid,
+                            "episode_id": episode_counter,
+                            "episode_start_date": ep_start,
+                            "episode_end_date": ep_end,
+                            "n_pps_records": ep_count,
+                            "category": "PREG",
+                        }
+                    )
                     ep_start = dt
                     ep_end = dt
                     ep_count = 1
@@ -143,31 +143,36 @@ def _run_pps(
 
         # Emit final episode for this person
         episode_counter += 1
-        episodes.append({
-            "person_id": pid,
-            "episode_id": episode_counter,
-            "episode_start_date": ep_start,
-            "episode_end_date": ep_end,
-            "n_pps_records": ep_count,
-            "category": "PREG",
-        })
+        episodes.append(
+            {
+                "person_id": pid,
+                "episode_id": episode_counter,
+                "episode_start_date": ep_start,
+                "episode_end_date": ep_end,
+                "n_pps_records": ep_count,
+                "category": "PREG",
+            }
+        )
 
     if not episodes:
         return pl.DataFrame(schema=result_schema)
 
-    result = pl.DataFrame(episodes).cast({
-        "person_id": pl.Int64,
-        "episode_id": pl.Int64,
-        "episode_start_date": pl.Date,
-        "episode_end_date": pl.Date,
-        "n_pps_records": pl.Int64,
-        "category": pl.Utf8,
-    })
+    result = pl.DataFrame(episodes).cast(
+        {
+            "person_id": pl.Int64,
+            "episode_id": pl.Int64,
+            "episode_start_date": pl.Date,
+            "episode_end_date": pl.Date,
+            "n_pps_records": pl.Int64,
+            "category": pl.Utf8,
+        }
+    )
 
     # Remove episodes longer than 365 days
     result = result.with_columns(
-        ((pl.col("episode_end_date") - pl.col("episode_start_date")).dt.total_days())
-        .alias("_duration")
+        ((pl.col("episode_end_date") - pl.col("episode_start_date")).dt.total_days()).alias(
+            "_duration"
+        )
     )
     n_before = result.height
     result = result.filter(pl.col("_duration") <= _MAX_EPISODE_DAYS).drop("_duration")

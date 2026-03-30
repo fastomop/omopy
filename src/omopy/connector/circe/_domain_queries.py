@@ -222,9 +222,7 @@ def build_domain_query(
         codeset = codeset_tables.get(criteria.codeset_id)
         if codeset is not None:
             # Semi-join: filter rows where concept_id is in the codeset
-            tbl = tbl.filter(
-                tbl[concept_id_col].isin(codeset.concept_id)
-            )
+            tbl = tbl.filter(tbl[concept_id_col].isin(codeset.concept_id))
 
     # --- Handle DateAdjustment (swap start/end columns) ---
     if criteria.date_adjustment:
@@ -273,47 +271,51 @@ def build_domain_query(
             query = query.join(
                 person_tbl.select("person_id", "gender_concept_id", "year_of_birth"),
                 "person_id",
-            ).filter(
-                person_tbl.gender_concept_id.isin(gender_ids)
-            )
+            ).filter(person_tbl.gender_concept_id.isin(gender_ids))
             if criteria.age is not None:
                 # Age at event start
-                age_expr = (
-                    query.start_date.year() - query.year_of_birth
-                ).cast("int64")
+                age_expr = (query.start_date.year() - query.year_of_birth).cast("int64")
                 query = query.filter(_numeric_filter(age_expr, criteria.age))
             # Drop joined columns, keep standard set
             query = query.select(
-                "person_id", "event_id", "start_date", "end_date",
-                "visit_occurrence_id", "sort_date",
+                "person_id",
+                "event_id",
+                "start_date",
+                "end_date",
+                "visit_occurrence_id",
+                "sort_date",
             )
         elif criteria.age is not None:
             query = query.join(
                 person_tbl.select("person_id", "year_of_birth"),
                 "person_id",
             )
-            age_expr = (
-                query.start_date.year() - query.year_of_birth
-            ).cast("int64")
-            query = query.filter(
-                _numeric_filter(age_expr, criteria.age)
-            ).select(
-                "person_id", "event_id", "start_date", "end_date",
-                "visit_occurrence_id", "sort_date",
+            age_expr = (query.start_date.year() - query.year_of_birth).cast("int64")
+            query = query.filter(_numeric_filter(age_expr, criteria.age)).select(
+                "person_id",
+                "event_id",
+                "start_date",
+                "end_date",
+                "visit_occurrence_id",
+                "sort_date",
             )
 
     # --- First occurrence only ---
     if criteria.first:
-        query = query.mutate(
-            _ordinal=ibis.row_number().over(
-                ibis.window(
-                    group_by="person_id",
-                    order_by="sort_date",
+        query = (
+            query.mutate(
+                _ordinal=ibis.row_number().over(
+                    ibis.window(
+                        group_by="person_id",
+                        order_by="sort_date",
+                    )
                 )
             )
-        ).filter(
-            ibis._._ == 0  # row_number is 0-indexed in Ibis
-        ).drop("_ordinal")
+            .filter(
+                ibis._._ == 0  # row_number is 0-indexed in Ibis
+            )
+            .drop("_ordinal")
+        )
 
     return query
 

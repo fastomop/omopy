@@ -93,9 +93,9 @@ def _build_concept_overlap_table(
 
     # Look up domain_id for all concept IDs at once
     concept_lookup = concept_tbl.filter(
-        concept_tbl["concept_id"].cast("int64").isin(
-            [ibis.literal(int(c)) for c in all_concept_ids]
-        )
+        concept_tbl["concept_id"]
+        .cast("int64")
+        .isin([ibis.literal(int(c)) for c in all_concept_ids])
     ).select(
         concept_id=concept_tbl["concept_id"].cast("int64"),
         domain_id=concept_tbl["domain_id"].lower(),
@@ -136,9 +136,7 @@ def _build_concept_overlap_table(
 
         # Filter domain table to only relevant concept IDs
         filtered = domain_tbl.filter(
-            domain_tbl[concept_col].cast("int64").isin(
-                [ibis.literal(int(c)) for c in domain_cids]
-            )
+            domain_tbl[concept_col].cast("int64").isin([ibis.literal(int(c)) for c in domain_cids])
         )
 
         # Build the CASE for concept_set_id assignment
@@ -151,9 +149,9 @@ def _build_concept_overlap_table(
 
         for set_id, cids_for_set in sets_in_domain.items():
             part = filtered.filter(
-                filtered[concept_col].cast("int64").isin(
-                    [ibis.literal(int(c)) for c in cids_for_set]
-                )
+                filtered[concept_col]
+                .cast("int64")
+                .isin([ibis.literal(int(c)) for c in cids_for_set])
             ).select(
                 person_id=filtered["person_id"],
                 _ov_start=filtered[start_col],
@@ -232,7 +230,8 @@ def add_concept_intersect_flag(
     overlap, set_ids, set_names = _build_concept_overlap_table(cdm, dict(concept_set))
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=overlap,
         target_person_col="person_id",
         target_start_date="_ov_start",
@@ -291,7 +290,8 @@ def add_concept_intersect_count(
     overlap, set_ids, set_names = _build_concept_overlap_table(cdm, dict(concept_set))
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=overlap,
         target_person_col="person_id",
         target_start_date="_ov_start",
@@ -353,7 +353,8 @@ def add_concept_intersect_date(
     overlap, set_ids, set_names = _build_concept_overlap_table(cdm, dict(concept_set))
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=overlap,
         target_person_col="person_id",
         target_start_date="_ov_start",
@@ -416,7 +417,8 @@ def add_concept_intersect_days(
     overlap, set_ids, set_names = _build_concept_overlap_table(cdm, dict(concept_set))
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=overlap,
         target_person_col="person_id",
         target_start_date="_ov_start",
@@ -489,7 +491,8 @@ def add_concept_intersect_field(
     overlap, set_ids, set_names = _build_concept_overlap_table(cdm, dict(concept_set))
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=overlap,
         target_person_col="person_id",
         target_start_date="_ov_start",

@@ -285,6 +285,7 @@ def _detect_table_type() -> TableType:
     """Detect the best available table type."""
     try:
         import great_tables  # noqa: F401
+
         return "gt"
     except ImportError:
         return "polars"
@@ -418,9 +419,7 @@ def _pivot_for_header(df: pl.DataFrame, header_cols: list[str]) -> pl.DataFrame:
             continue
 
         index_cols = [c for c in df.columns if c != col and c != value_col]
-        unique_vals = sorted(
-            [v for v in df[col].drop_nulls().unique().to_list() if v is not None]
-        )
+        unique_vals = sorted([v for v in df[col].drop_nulls().unique().to_list() if v is not None])
 
         if not unique_vals:
             continue

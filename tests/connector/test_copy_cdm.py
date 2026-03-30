@@ -24,44 +24,50 @@ from omopy.generics._types import CdmVersion
 @pytest.fixture()
 def source_cdm():
     """A minimal in-memory CDM for testing copy operations."""
-    person_df = pl.DataFrame({
-        "person_id": [1, 2, 3],
-        "gender_concept_id": [8507, 8532, 8507],
-        "year_of_birth": [1990, 1985, 2000],
-        "month_of_birth": [1, 6, 12],
-        "day_of_birth": [15, 20, 1],
-        "race_concept_id": [0, 0, 0],
-        "ethnicity_concept_id": [0, 0, 0],
-    })
-    obs_period_df = pl.DataFrame({
-        "observation_period_id": [1, 2, 3],
-        "person_id": [1, 2, 3],
-        "observation_period_start_date": [
-            datetime.date(2010, 1, 1),
-            datetime.date(2012, 6, 1),
-            datetime.date(2015, 1, 1),
-        ],
-        "observation_period_end_date": [
-            datetime.date(2023, 12, 31),
-            datetime.date(2023, 12, 31),
-            datetime.date(2023, 12, 31),
-        ],
-        "period_type_concept_id": [0, 0, 0],
-    })
-    condition_df = pl.DataFrame({
-        "condition_occurrence_id": [1, 2],
-        "person_id": [1, 2],
-        "condition_concept_id": [320128, 257012],
-        "condition_start_date": [
-            datetime.date(2020, 3, 15),
-            datetime.date(2021, 7, 1),
-        ],
-        "condition_end_date": [
-            datetime.date(2020, 4, 15),
-            datetime.date(2021, 8, 1),
-        ],
-        "condition_type_concept_id": [0, 0],
-    })
+    person_df = pl.DataFrame(
+        {
+            "person_id": [1, 2, 3],
+            "gender_concept_id": [8507, 8532, 8507],
+            "year_of_birth": [1990, 1985, 2000],
+            "month_of_birth": [1, 6, 12],
+            "day_of_birth": [15, 20, 1],
+            "race_concept_id": [0, 0, 0],
+            "ethnicity_concept_id": [0, 0, 0],
+        }
+    )
+    obs_period_df = pl.DataFrame(
+        {
+            "observation_period_id": [1, 2, 3],
+            "person_id": [1, 2, 3],
+            "observation_period_start_date": [
+                datetime.date(2010, 1, 1),
+                datetime.date(2012, 6, 1),
+                datetime.date(2015, 1, 1),
+            ],
+            "observation_period_end_date": [
+                datetime.date(2023, 12, 31),
+                datetime.date(2023, 12, 31),
+                datetime.date(2023, 12, 31),
+            ],
+            "period_type_concept_id": [0, 0, 0],
+        }
+    )
+    condition_df = pl.DataFrame(
+        {
+            "condition_occurrence_id": [1, 2],
+            "person_id": [1, 2],
+            "condition_concept_id": [320128, 257012],
+            "condition_start_date": [
+                datetime.date(2020, 3, 15),
+                datetime.date(2021, 7, 1),
+            ],
+            "condition_end_date": [
+                datetime.date(2020, 4, 15),
+                datetime.date(2021, 8, 1),
+            ],
+            "condition_type_concept_id": [0, 0],
+        }
+    )
 
     tables = {
         "person": CdmTable(data=person_df, tbl_name="person"),
@@ -78,33 +84,39 @@ def source_cdm():
 @pytest.fixture()
 def source_cdm_with_cohort(source_cdm):
     """Source CDM that includes a cohort table."""
-    cohort_df = pl.DataFrame({
-        "cohort_definition_id": [1, 1, 2],
-        "subject_id": [1, 2, 3],
-        "cohort_start_date": [
-            datetime.date(2020, 1, 1),
-            datetime.date(2020, 6, 1),
-            datetime.date(2021, 1, 1),
-        ],
-        "cohort_end_date": [
-            datetime.date(2020, 12, 31),
-            datetime.date(2020, 12, 31),
-            datetime.date(2021, 12, 31),
-        ],
-    })
-    settings = pl.DataFrame({
-        "cohort_definition_id": [1, 2],
-        "cohort_name": ["hypertension", "sinusitis"],
-    })
-    attrition = pl.DataFrame({
-        "cohort_definition_id": [1, 2],
-        "number_records": [2, 1],
-        "number_subjects": [2, 1],
-        "reason_id": [1, 1],
-        "reason": ["Initial qualifying events", "Initial qualifying events"],
-        "excluded_records": [0, 0],
-        "excluded_subjects": [0, 0],
-    })
+    cohort_df = pl.DataFrame(
+        {
+            "cohort_definition_id": [1, 1, 2],
+            "subject_id": [1, 2, 3],
+            "cohort_start_date": [
+                datetime.date(2020, 1, 1),
+                datetime.date(2020, 6, 1),
+                datetime.date(2021, 1, 1),
+            ],
+            "cohort_end_date": [
+                datetime.date(2020, 12, 31),
+                datetime.date(2020, 12, 31),
+                datetime.date(2021, 12, 31),
+            ],
+        }
+    )
+    settings = pl.DataFrame(
+        {
+            "cohort_definition_id": [1, 2],
+            "cohort_name": ["hypertension", "sinusitis"],
+        }
+    )
+    attrition = pl.DataFrame(
+        {
+            "cohort_definition_id": [1, 2],
+            "number_records": [2, 1],
+            "number_subjects": [2, 1],
+            "reason_id": [1, 1],
+            "reason": ["Initial qualifying events", "Initial qualifying events"],
+            "excluded_records": [0, 0],
+            "excluded_subjects": [0, 0],
+        }
+    )
 
     cohort = CohortTable(
         data=cohort_df,
@@ -174,6 +186,7 @@ class TestCopyCdmTo:
         new_cdm = copy_cdm_to(source_cdm, target_con, schema="cdm")
 
         import ibis.expr.types as ir
+
         for name in new_cdm.table_names:
             tbl = new_cdm[name]
             assert isinstance(tbl.data, ir.Table), f"{name} should be Ibis-backed"
@@ -260,22 +273,26 @@ class TestCopyEdgeCases:
 
     def test_empty_table(self, target_con):
         """Can copy a CDM with an empty table."""
-        empty_person = pl.DataFrame({
-            "person_id": pl.Series([], dtype=pl.Int64),
-            "gender_concept_id": pl.Series([], dtype=pl.Int64),
-            "year_of_birth": pl.Series([], dtype=pl.Int64),
-            "month_of_birth": pl.Series([], dtype=pl.Int64),
-            "day_of_birth": pl.Series([], dtype=pl.Int64),
-            "race_concept_id": pl.Series([], dtype=pl.Int64),
-            "ethnicity_concept_id": pl.Series([], dtype=pl.Int64),
-        })
-        obs = pl.DataFrame({
-            "observation_period_id": pl.Series([], dtype=pl.Int64),
-            "person_id": pl.Series([], dtype=pl.Int64),
-            "observation_period_start_date": pl.Series([], dtype=pl.Date),
-            "observation_period_end_date": pl.Series([], dtype=pl.Date),
-            "period_type_concept_id": pl.Series([], dtype=pl.Int64),
-        })
+        empty_person = pl.DataFrame(
+            {
+                "person_id": pl.Series([], dtype=pl.Int64),
+                "gender_concept_id": pl.Series([], dtype=pl.Int64),
+                "year_of_birth": pl.Series([], dtype=pl.Int64),
+                "month_of_birth": pl.Series([], dtype=pl.Int64),
+                "day_of_birth": pl.Series([], dtype=pl.Int64),
+                "race_concept_id": pl.Series([], dtype=pl.Int64),
+                "ethnicity_concept_id": pl.Series([], dtype=pl.Int64),
+            }
+        )
+        obs = pl.DataFrame(
+            {
+                "observation_period_id": pl.Series([], dtype=pl.Int64),
+                "person_id": pl.Series([], dtype=pl.Int64),
+                "observation_period_start_date": pl.Series([], dtype=pl.Date),
+                "observation_period_end_date": pl.Series([], dtype=pl.Date),
+                "period_type_concept_id": pl.Series([], dtype=pl.Int64),
+            }
+        )
         tables = {
             "person": CdmTable(data=empty_person, tbl_name="person"),
             "observation_period": CdmTable(data=obs, tbl_name="observation_period"),

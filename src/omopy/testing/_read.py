@@ -121,9 +121,7 @@ def validate_patient_data(
             continue
 
         # Check columns against spec
-        col_errors = schema.validate_columns(
-            table_name, df.columns, check_required=True
-        )
+        col_errors = schema.validate_columns(table_name, df.columns, check_required=True)
         errors.extend(col_errors)
 
     return errors
@@ -174,10 +172,7 @@ def read_patients(
     elif p.is_dir():
         data = _read_csv_dir(p)
     else:
-        msg = (
-            f"Unsupported path: {p}. "
-            "Provide an .xlsx file or a directory of .csv files."
-        )
+        msg = f"Unsupported path: {p}. Provide an .xlsx file or a directory of .csv files."
         raise ValueError(msg)
 
     if not data:

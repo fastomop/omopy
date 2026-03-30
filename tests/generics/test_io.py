@@ -25,46 +25,56 @@ from omopy.generics.summarised_result import SummarisedResult
 
 
 def _sample_codelist() -> Codelist:
-    return Codelist({
-        "diabetes": [201826, 442793],
-        "hypertension": [316866, 4028741],
-    })
+    return Codelist(
+        {
+            "diabetes": [201826, 442793],
+            "hypertension": [316866, 4028741],
+        }
+    )
 
 
 def _sample_cse() -> ConceptSetExpression:
-    return ConceptSetExpression({
-        "diabetes": [
-            ConceptEntry(concept_id=201826, concept_name="Type 2 DM", include_descendants=True),
-            ConceptEntry(concept_id=442793, concept_name="DM NOS", is_excluded=True),
-        ],
-        "hypertension": [
-            ConceptEntry(concept_id=316866, concept_name="HTN"),
-        ],
-    })
+    return ConceptSetExpression(
+        {
+            "diabetes": [
+                ConceptEntry(
+                    concept_id=201826, concept_name="Type 2 DM", include_descendants=True
+                ),
+                ConceptEntry(concept_id=442793, concept_name="DM NOS", is_excluded=True),
+            ],
+            "hypertension": [
+                ConceptEntry(concept_id=316866, concept_name="HTN"),
+            ],
+        }
+    )
 
 
 def _sample_summarised_result() -> SummarisedResult:
-    data = pl.DataFrame({
-        "result_id": [1, 1, 1],
-        "cdm_name": ["test"] * 3,
-        "group_name": [OVERALL] * 3,
-        "group_level": [OVERALL] * 3,
-        "strata_name": [OVERALL] * 3,
-        "strata_level": [OVERALL] * 3,
-        "variable_name": ["number subjects", "age", "age"],
-        "variable_level": [None, None, None],
-        "estimate_name": ["count", "mean", "sd"],
-        "estimate_type": ["integer", "numeric", "numeric"],
-        "estimate_value": ["100", "55.3", "12.1"],
-        "additional_name": [OVERALL] * 3,
-        "additional_level": [OVERALL] * 3,
-    })
-    settings = pl.DataFrame({
-        "result_id": [1],
-        "result_type": ["demographics"],
-        "package_name": ["omopy"],
-        "package_version": ["0.1.0"],
-    })
+    data = pl.DataFrame(
+        {
+            "result_id": [1, 1, 1],
+            "cdm_name": ["test"] * 3,
+            "group_name": [OVERALL] * 3,
+            "group_level": [OVERALL] * 3,
+            "strata_name": [OVERALL] * 3,
+            "strata_level": [OVERALL] * 3,
+            "variable_name": ["number subjects", "age", "age"],
+            "variable_level": [None, None, None],
+            "estimate_name": ["count", "mean", "sd"],
+            "estimate_type": ["integer", "numeric", "numeric"],
+            "estimate_value": ["100", "55.3", "12.1"],
+            "additional_name": [OVERALL] * 3,
+            "additional_level": [OVERALL] * 3,
+        }
+    )
+    settings = pl.DataFrame(
+        {
+            "result_id": [1],
+            "result_type": ["demographics"],
+            "package_name": ["omopy"],
+            "package_version": ["0.1.0"],
+        }
+    )
     return SummarisedResult(data, settings=settings)
 
 

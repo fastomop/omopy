@@ -41,7 +41,9 @@ class TestAddCohortIntersectFlag:
         """Flag observation periods for overlap with hypertension cohort."""
         obs = cdm_with_cohort["observation_period"]
         result = add_cohort_intersect_flag(
-            obs, "my_cohort", cdm_with_cohort,
+            obs,
+            "my_cohort",
+            cdm_with_cohort,
             index_date="observation_period_start_date",
             window=(0, float("inf")),
         )
@@ -55,7 +57,9 @@ class TestAddCohortIntersectFlag:
         obs = cdm_with_cohort["observation_period"]
         orig = obs.count()
         result = add_cohort_intersect_flag(
-            obs, "my_cohort", cdm_with_cohort,
+            obs,
+            "my_cohort",
+            cdm_with_cohort,
             index_date="observation_period_start_date",
         )
         assert result.count() == orig
@@ -63,7 +67,9 @@ class TestAddCohortIntersectFlag:
     def test_multiple_windows(self, cdm_with_cohort):
         obs = cdm_with_cohort["observation_period"]
         result = add_cohort_intersect_flag(
-            obs, "my_cohort", cdm_with_cohort,
+            obs,
+            "my_cohort",
+            cdm_with_cohort,
             index_date="observation_period_start_date",
             window=[(0, 365), (366, float("inf"))],
         )
@@ -76,7 +82,9 @@ class TestAddCohortIntersectCount:
     def test_count_basic(self, cdm_with_cohort):
         obs = cdm_with_cohort["observation_period"]
         result = add_cohort_intersect_count(
-            obs, "my_cohort", cdm_with_cohort,
+            obs,
+            "my_cohort",
+            cdm_with_cohort,
             index_date="observation_period_start_date",
             window=(0, float("inf")),
         )
@@ -90,7 +98,9 @@ class TestAddCohortIntersectDate:
     def test_date_basic(self, cdm_with_cohort):
         obs = cdm_with_cohort["observation_period"]
         result = add_cohort_intersect_date(
-            obs, "my_cohort", cdm_with_cohort,
+            obs,
+            "my_cohort",
+            cdm_with_cohort,
             index_date="observation_period_start_date",
             window=(0, float("inf")),
             order="first",
@@ -106,7 +116,9 @@ class TestAddCohortIntersectDays:
     def test_days_basic(self, cdm_with_cohort):
         obs = cdm_with_cohort["observation_period"]
         result = add_cohort_intersect_days(
-            obs, "my_cohort", cdm_with_cohort,
+            obs,
+            "my_cohort",
+            cdm_with_cohort,
             index_date="observation_period_start_date",
             window=(0, float("inf")),
             order="first",

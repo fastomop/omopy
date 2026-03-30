@@ -53,10 +53,12 @@ class TestSubsetByDomain:
 
     def test_preserves_multiple_sets(self, synthea_cdm):
         """Multiple concept sets are each filtered independently."""
-        cl = Codelist({
-            "set1": [40481087],
-            "set2": [1177480],
-        })
+        cl = Codelist(
+            {
+                "set1": [40481087],
+                "set2": [1177480],
+            }
+        )
         result = subset_by_domain(cl, synthea_cdm, "Condition")
         assert 40481087 in result["set1"]
         assert result["set2"] == []
@@ -159,10 +161,12 @@ class TestSubsetToCodesToInUse:
 
     def test_preserves_multiple_sets(self, synthea_cdm):
         """Multiple concept sets are each processed independently."""
-        cl = Codelist({
-            "used": [40481087],
-            "unused": [4283893],
-        })
+        cl = Codelist(
+            {
+                "used": [40481087],
+                "unused": [4283893],
+            }
+        )
         result = subset_to_codes_in_use(cl, synthea_cdm)
         assert 40481087 in result["used"]
         assert result["unused"] == []

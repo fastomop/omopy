@@ -267,25 +267,40 @@ def _add_intersect(
     )
 
     # Collect the enriched data
-    enriched_df = enriched.collect() if not isinstance(enriched.data, pl.DataFrame) else enriched.data
+    enriched_df = (
+        enriched.collect() if not isinstance(enriched.data, pl.DataFrame) else enriched.data
+    )
 
     # Step 2: Handle unknown indication table
     unknown_flag_cols: dict[str, str] = {}  # window_name -> column_name
     if unknown_table is not None and kind == "indication":
         unknown_tables = [unknown_table] if isinstance(unknown_table, str) else list(unknown_table)
         enriched_df = _add_unknown_flags(
-            enriched_df, cdm, unknown_tables, windows, index_date, censor_date,
+            enriched_df,
+            cdm,
+            unknown_tables,
+            windows,
+            index_date,
+            censor_date,
             unknown_flag_cols,
         )
 
     # Step 3: Build output columns
     if mutually_exclusive:
         result_df = _collapse_to_labels(
-            enriched_df, windows, names, unknown_flag_cols, name_style, kind,
+            enriched_df,
+            windows,
+            names,
+            unknown_flag_cols,
+            name_style,
+            kind,
         )
     else:
         result_df = _rename_flag_columns(
-            enriched_df, windows, names, name_style,
+            enriched_df,
+            windows,
+            names,
+            name_style,
         )
 
     # Clean up temporary flag columns
@@ -299,7 +314,9 @@ def _add_intersect(
         tbl_source=cohort._tbl_source if hasattr(cohort, "_tbl_source") else "local",
         settings=cohort.settings.clone(),
         attrition=cohort.attrition.clone(),
-        cohort_codelist=cohort.cohort_codelist.clone() if len(cohort.cohort_codelist) > 0 else None,
+        cohort_codelist=cohort.cohort_codelist.clone()
+        if len(cohort.cohort_codelist) > 0
+        else None,
     )
 
 
@@ -335,15 +352,13 @@ def _collapse_to_labels(
             if flag_col not in df.columns:
                 continue
 
-            label_expr = pl.when(
-                (pl.col(flag_col) == 1) & (label_expr == pl.lit(""))
-            ).then(
-                pl.lit(cname)
-            ).when(
-                pl.col(flag_col) == 1
-            ).then(
-                label_expr + pl.lit(" and ") + pl.lit(cname)
-            ).otherwise(label_expr)
+            label_expr = (
+                pl.when((pl.col(flag_col) == 1) & (label_expr == pl.lit("")))
+                .then(pl.lit(cname))
+                .when(pl.col(flag_col) == 1)
+                .then(label_expr + pl.lit(" and ") + pl.lit(cname))
+                .otherwise(label_expr)
+            )
 
         # Handle empty labels (no match)
         unknown_col = unknown_flag_cols.get(wn)
@@ -447,19 +462,26 @@ def _add_unknown_flags(
 
             try:
                 enriched = add_table_intersect_flag(
-                    temp, cdm,
+                    temp,
+                    cdm,
                     table_name=table_name,
                     index_date=index_date,
                     window=w,
                     name_style=f"_unk_{table_name}_{{window_name}}",
                 )
-                enriched_data = enriched.collect() if not isinstance(enriched.data, pl.DataFrame) else enriched.data
+                enriched_data = (
+                    enriched.collect()
+                    if not isinstance(enriched.data, pl.DataFrame)
+                    else enriched.data
+                )
 
                 unk_flag = f"_unk_{table_name}_{wn}"
                 if unk_flag in enriched_data.columns:
                     # OR with existing unknown flag
                     df = enriched_data.with_columns(
-                        pl.max_horizontal(pl.col(unknown_col), pl.col(unk_flag)).alias(unknown_col),
+                        pl.max_horizontal(pl.col(unknown_col), pl.col(unk_flag)).alias(
+                            unknown_col
+                        ),
                     ).drop(unk_flag)
             except Exception:
                 # Skip if table intersection fails
@@ -504,5 +526,7 @@ def _add_empty_columns(
         tbl_source=cohort._tbl_source if hasattr(cohort, "_tbl_source") else "local",
         settings=cohort.settings.clone(),
         attrition=cohort.attrition.clone(),
-        cohort_codelist=cohort.cohort_codelist.clone() if len(cohort.cohort_codelist) > 0 else None,
+        cohort_codelist=cohort.cohort_codelist.clone()
+        if len(cohort.cohort_codelist) > 0
+        else None,
     )

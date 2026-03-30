@@ -118,9 +118,11 @@ def _build_case_expr(
         elif math.isinf(hi) and hi > 0:
             cases.append((col >= ibis.literal(lo), label))
         else:
-            cases.append((
-                (col >= ibis.literal(lo)) & (col <= ibis.literal(hi)),
-                label,
-            ))
+            cases.append(
+                (
+                    (col >= ibis.literal(lo)) & (col <= ibis.literal(hi)),
+                    label,
+                )
+            )
 
     return ibis.cases(*cases, else_=missing_value)

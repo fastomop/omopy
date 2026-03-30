@@ -119,23 +119,23 @@ def _merge_hipps(
                     p = pps_eps[pi]
 
                     episode_counter += 1
-                    merged_rows.append({
-                        "person_id": pid,
-                        "merged_episode_id": episode_counter,
-                        "hip_episode_id": h["episode_id"],
-                        "pps_episode_id": p["episode_id"],
-                        "category": h["category"],
-                        "episode_start_date": min(
-                            h["episode_start_date"], p["episode_start_date"]
-                        ),
-                        "episode_end_date": max(
-                            h["episode_end_date"], p["episode_end_date"]
-                        ),
-                        "outcome_date": h.get("outcome_date"),
-                        "outcome_concept_id": h.get("outcome_concept_id"),
-                        "n_pps_records": p.get("n_pps_records", 0),
-                        "source": "HIP+PPS",
-                    })
+                    merged_rows.append(
+                        {
+                            "person_id": pid,
+                            "merged_episode_id": episode_counter,
+                            "hip_episode_id": h["episode_id"],
+                            "pps_episode_id": p["episode_id"],
+                            "category": h["category"],
+                            "episode_start_date": min(
+                                h["episode_start_date"], p["episode_start_date"]
+                            ),
+                            "episode_end_date": max(h["episode_end_date"], p["episode_end_date"]),
+                            "outcome_date": h.get("outcome_date"),
+                            "outcome_concept_id": h.get("outcome_concept_id"),
+                            "n_pps_records": p.get("n_pps_records", 0),
+                            "source": "HIP+PPS",
+                        }
+                    )
                     made_assignment = True
             if not made_assignment:
                 break
@@ -144,54 +144,60 @@ def _merge_hipps(
         for hi, h in enumerate(hip_eps):
             if hi not in matched_hip:
                 episode_counter += 1
-                merged_rows.append({
-                    "person_id": pid,
-                    "merged_episode_id": episode_counter,
-                    "hip_episode_id": h["episode_id"],
-                    "pps_episode_id": None,
-                    "category": h["category"],
-                    "episode_start_date": h["episode_start_date"],
-                    "episode_end_date": h["episode_end_date"],
-                    "outcome_date": h.get("outcome_date"),
-                    "outcome_concept_id": h.get("outcome_concept_id"),
-                    "n_pps_records": 0,
-                    "source": "HIP",
-                })
+                merged_rows.append(
+                    {
+                        "person_id": pid,
+                        "merged_episode_id": episode_counter,
+                        "hip_episode_id": h["episode_id"],
+                        "pps_episode_id": None,
+                        "category": h["category"],
+                        "episode_start_date": h["episode_start_date"],
+                        "episode_end_date": h["episode_end_date"],
+                        "outcome_date": h.get("outcome_date"),
+                        "outcome_concept_id": h.get("outcome_concept_id"),
+                        "n_pps_records": 0,
+                        "source": "HIP",
+                    }
+                )
 
         # Unmatched PPS episodes
         for pi, p in enumerate(pps_eps):
             if pi not in matched_pps:
                 episode_counter += 1
-                merged_rows.append({
-                    "person_id": pid,
-                    "merged_episode_id": episode_counter,
-                    "hip_episode_id": None,
-                    "pps_episode_id": p["episode_id"],
-                    "category": p.get("category", "PREG"),
-                    "episode_start_date": p["episode_start_date"],
-                    "episode_end_date": p["episode_end_date"],
-                    "outcome_date": None,
-                    "outcome_concept_id": None,
-                    "n_pps_records": p.get("n_pps_records", 0),
-                    "source": "PPS",
-                })
+                merged_rows.append(
+                    {
+                        "person_id": pid,
+                        "merged_episode_id": episode_counter,
+                        "hip_episode_id": None,
+                        "pps_episode_id": p["episode_id"],
+                        "category": p.get("category", "PREG"),
+                        "episode_start_date": p["episode_start_date"],
+                        "episode_end_date": p["episode_end_date"],
+                        "outcome_date": None,
+                        "outcome_concept_id": None,
+                        "n_pps_records": p.get("n_pps_records", 0),
+                        "source": "PPS",
+                    }
+                )
 
     if not merged_rows:
         return pl.DataFrame(schema=result_schema)
 
-    result = pl.DataFrame(merged_rows).cast({
-        "person_id": pl.Int64,
-        "merged_episode_id": pl.Int64,
-        "hip_episode_id": pl.Int64,
-        "pps_episode_id": pl.Int64,
-        "category": pl.Utf8,
-        "episode_start_date": pl.Date,
-        "episode_end_date": pl.Date,
-        "outcome_date": pl.Date,
-        "outcome_concept_id": pl.Int64,
-        "n_pps_records": pl.Int64,
-        "source": pl.Utf8,
-    })
+    result = pl.DataFrame(merged_rows).cast(
+        {
+            "person_id": pl.Int64,
+            "merged_episode_id": pl.Int64,
+            "hip_episode_id": pl.Int64,
+            "pps_episode_id": pl.Int64,
+            "category": pl.Utf8,
+            "episode_start_date": pl.Date,
+            "episode_end_date": pl.Date,
+            "outcome_date": pl.Date,
+            "outcome_concept_id": pl.Int64,
+            "n_pps_records": pl.Int64,
+            "source": pl.Utf8,
+        }
+    )
 
     log.info("Merged into %d episodes.", result.height)
     return result

@@ -26,9 +26,9 @@ def _filter_result_type(
     result_type: str,
 ) -> SummarisedResult:
     """Filter a SummarisedResult to a specific result_type."""
-    matching_ids = result.settings.filter(
-        pl.col("result_type") == result_type
-    )["result_id"].to_list()
+    matching_ids = result.settings.filter(pl.col("result_type") == result_type)[
+        "result_id"
+    ].to_list()
 
     if not matching_ids:
         return result
@@ -57,12 +57,12 @@ def _plot_categorical(
     import plotly.express as px
 
     data = result.data.filter(
-        (pl.col("variable_name") == check_name)
-        & (pl.col("estimate_name") == "count")
+        (pl.col("variable_name") == check_name) & (pl.col("estimate_name") == "count")
     )
 
     if data.height == 0:
         import plotly.graph_objects as go
+
         fig = go.Figure()
         fig.update_layout(title=title)
         return fig
@@ -123,7 +123,7 @@ def _plot_quantile(
             if val != "NA":
                 try:
                     stats[est] = float(val)
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     stats[est] = None
 
         # Extract ingredient name (second part of "id &&& name")
@@ -163,12 +163,12 @@ def _plot_missing(
     import plotly.express as px
 
     data = result.data.filter(
-        (pl.col("variable_name") == "missing")
-        & (pl.col("estimate_name") == "proportion_missing")
+        (pl.col("variable_name") == "missing") & (pl.col("estimate_name") == "proportion_missing")
     )
 
     if data.height == 0:
         import plotly.graph_objects as go
+
         fig = go.Figure()
         fig.update_layout(title=title)
         return fig
@@ -243,7 +243,11 @@ def plot_drug_diagnostics(
     ValueError
         If ``check`` is not a valid plottable check name.
     """
-    plottable = _CATEGORICAL_CHECKS | _QUANTILE_CHECKS | {"missing", "verbatim_end_date", "dose", "diagnostics_summary"}
+    plottable = (
+        _CATEGORICAL_CHECKS
+        | _QUANTILE_CHECKS
+        | {"missing", "verbatim_end_date", "dose", "diagnostics_summary"}
+    )
     if check not in plottable:
         msg = f"Cannot plot check '{check}'. Plottable checks: {sorted(plottable)}"
         raise ValueError(msg)

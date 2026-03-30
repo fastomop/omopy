@@ -98,6 +98,6 @@ def plot_pregnancies(
                 colour=colour,
                 style=style,
             )
-    except (ImportError, Exception):
+    except ImportError, Exception:
         # Fallback: return tidy DataFrame
         return filtered

@@ -22,6 +22,7 @@ __all__ = ["CdmTable", "TableData"]
 # Table data protocol — what CdmTable wraps
 # ---------------------------------------------------------------------------
 
+
 @runtime_checkable
 class TableData(Protocol):
     """Protocol for data backends that CdmTable can wrap.

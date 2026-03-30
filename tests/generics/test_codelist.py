@@ -133,10 +133,12 @@ class TestConceptSetExpression:
         assert len(cse["diabetes"]) == 2
 
     def test_names(self):
-        cse = ConceptSetExpression({
-            "a": [ConceptEntry(concept_id=1)],
-            "b": [ConceptEntry(concept_id=2)],
-        })
+        cse = ConceptSetExpression(
+            {
+                "a": [ConceptEntry(concept_id=1)],
+                "b": [ConceptEntry(concept_id=2)],
+            }
+        )
         assert set(cse.names) == {"a", "b"}
 
     def test_to_codelist(self):
@@ -157,9 +159,11 @@ class TestConceptSetExpression:
         assert cl["test"] == []
 
     def test_repr(self):
-        cse = ConceptSetExpression({
-            "a": [ConceptEntry(concept_id=1), ConceptEntry(concept_id=2)],
-        })
+        cse = ConceptSetExpression(
+            {
+                "a": [ConceptEntry(concept_id=1), ConceptEntry(concept_id=2)],
+            }
+        )
         r = repr(cse)
         assert "1 concept set(s)" in r
         assert "2 total entries" in r

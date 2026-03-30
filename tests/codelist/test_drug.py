@@ -101,9 +101,7 @@ class TestGetATCCodes:
 
     def test_atc_level_filter_multiple(self, synthea_cdm):
         """Filter to multiple ATC levels."""
-        cl = get_atc_codes(
-            synthea_cdm, level=["ATC 1st", "ATC 2nd"], name="atc12"
-        )
+        cl = get_atc_codes(synthea_cdm, level=["ATC 1st", "ATC 2nd"], name="atc12")
         assert "atc12" in cl
         ids = cl["atc12"]
         # 11 + 30 = 41

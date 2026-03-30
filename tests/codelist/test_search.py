@@ -35,7 +35,7 @@ class TestGetCandidateCodes:
         ids = cl[key]
         # Should include both sinusitis and hypertension concepts
         assert 40481087 in ids  # Viral sinusitis
-        assert 320128 in ids    # Essential hypertension
+        assert 320128 in ids  # Essential hypertension
 
     def test_case_insensitive(self, synthea_cdm):
         """Search is case-insensitive."""
@@ -49,18 +49,14 @@ class TestGetCandidateCodes:
 
     def test_domain_filter(self, synthea_cdm):
         """Filtering by domain restricts results."""
-        cl = get_candidate_codes(
-            synthea_cdm, "sinusitis", domains="Condition"
-        )
+        cl = get_candidate_codes(synthea_cdm, "sinusitis", domains="Condition")
         key = next(iter(cl))
         ids = cl[key]
         assert len(ids) >= 3  # All sinusitis concepts are Condition domain
 
     def test_standard_concept_filter(self, synthea_cdm):
         """Filtering by standard_concept='S' keeps only standard concepts."""
-        cl = get_candidate_codes(
-            synthea_cdm, "sinusitis", standard_concept="S"
-        )
+        cl = get_candidate_codes(synthea_cdm, "sinusitis", standard_concept="S")
         key = next(iter(cl))
         ids = cl[key]
         # All three sinusitis concepts are standard
@@ -70,18 +66,14 @@ class TestGetCandidateCodes:
 
     def test_vocabulary_filter(self, synthea_cdm):
         """Filtering by vocabulary_id."""
-        cl = get_candidate_codes(
-            synthea_cdm, "sinusitis", vocabulary_id="SNOMED"
-        )
+        cl = get_candidate_codes(synthea_cdm, "sinusitis", vocabulary_id="SNOMED")
         key = next(iter(cl))
         ids = cl[key]
         assert len(ids) >= 3
 
     def test_exclude_keyword(self, synthea_cdm):
         """Exclude keyword removes matching concepts."""
-        cl = get_candidate_codes(
-            synthea_cdm, "sinusitis", exclude="chronic"
-        )
+        cl = get_candidate_codes(synthea_cdm, "sinusitis", exclude="chronic")
         key = next(iter(cl))
         ids = cl[key]
         # 257012 (Chronic sinusitis) should be excluded
@@ -92,14 +84,12 @@ class TestGetCandidateCodes:
 
     def test_exclude_multiple(self, synthea_cdm):
         """Multiple exclude keywords."""
-        cl = get_candidate_codes(
-            synthea_cdm, "sinusitis", exclude=["chronic", "viral"]
-        )
+        cl = get_candidate_codes(synthea_cdm, "sinusitis", exclude=["chronic", "viral"])
         key = next(iter(cl))
         ids = cl[key]
-        assert 257012 not in ids   # Chronic sinusitis excluded
+        assert 257012 not in ids  # Chronic sinusitis excluded
         assert 40481087 not in ids  # Viral sinusitis excluded
-        assert 4283893 in ids       # Just "Sinusitis" remains
+        assert 4283893 in ids  # Just "Sinusitis" remains
 
     def test_custom_name(self, synthea_cdm):
         """Custom name parameter."""
@@ -116,9 +106,7 @@ class TestGetCandidateCodes:
         # Without descendants
         cl_no_desc = get_candidate_codes(synthea_cdm, "sinusitis")
         # With descendants
-        cl_desc = get_candidate_codes(
-            synthea_cdm, "sinusitis", include_descendants=True
-        )
+        cl_desc = get_candidate_codes(synthea_cdm, "sinusitis", include_descendants=True)
         key_no = next(iter(cl_no_desc))
         key_yes = next(iter(cl_desc))
         # With descendants should have at least as many concepts
@@ -126,9 +114,7 @@ class TestGetCandidateCodes:
 
     def test_concept_class_filter(self, synthea_cdm):
         """Filtering by concept_class_id."""
-        cl = get_candidate_codes(
-            synthea_cdm, "sinusitis", concept_class_id="Disorder"
-        )
+        cl = get_candidate_codes(synthea_cdm, "sinusitis", concept_class_id="Disorder")
         key = next(iter(cl))
         ids = cl[key]
         # All sinusitis concepts are "Disorder" class
@@ -173,10 +159,12 @@ class TestGetMappings:
 
     def test_multiple_concept_sets(self, synthea_cdm):
         """Each concept set is mapped independently."""
-        cl = Codelist({
-            "hypertension": [320128],
-            "sinusitis": [40481087],
-        })
+        cl = Codelist(
+            {
+                "hypertension": [320128],
+                "sinusitis": [40481087],
+            }
+        )
         mapped = get_mappings(synthea_cdm, cl)
         assert "hypertension" in mapped
         assert "sinusitis" in mapped
@@ -190,17 +178,12 @@ class TestGetMappings:
     def test_custom_name_style(self, synthea_cdm):
         """name_style parameter formats output names."""
         cl = Codelist({"hyp": [320128]})
-        mapped = get_mappings(
-            synthea_cdm, cl,
-            name_style="mapped_{concept_set_name}"
-        )
+        mapped = get_mappings(synthea_cdm, cl, name_style="mapped_{concept_set_name}")
         assert "mapped_hyp" in mapped
 
     def test_is_a_relationship(self, synthea_cdm):
         """Using 'Is a' relationship returns parents."""
         cl = Codelist({"hypertension": [320128]})
-        mapped = get_mappings(
-            synthea_cdm, cl, relationship_id="Is a"
-        )
+        mapped = get_mappings(synthea_cdm, cl, relationship_id="Is a")
         # 320128 "Is a" 316866 (Hypertensive disorder)
         assert 316866 in mapped["hypertension"]

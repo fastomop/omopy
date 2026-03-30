@@ -249,9 +249,7 @@ def append_permanent(
 
     # If table doesn't exist, create it
     if not _table_exists(con, name, schema):
-        return compute_permanent(
-            ibis_expr, name=name, con=con, schema=schema, overwrite=False
-        )
+        return compute_permanent(ibis_expr, name=name, con=con, schema=schema, overwrite=False)
 
     # Table exists — INSERT INTO ... SELECT ...
     sql_query = ibis.to_sql(ibis_expr)
@@ -318,10 +316,7 @@ def compute_query(
     if isinstance(expr, CdmTable):
         ibis_expr = expr.data
         if not isinstance(ibis_expr, ir.Table):
-            msg = (
-                "compute_query requires an Ibis-backed CdmTable, "
-                f"got {type(ibis_expr).__name__}"
-            )
+            msg = f"compute_query requires an Ibis-backed CdmTable, got {type(ibis_expr).__name__}"
             raise TypeError(msg)
     elif isinstance(expr, ir.Table):
         ibis_expr = expr

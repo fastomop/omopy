@@ -27,45 +27,53 @@ from omopy.testing import (
 
 def _minimal_person_df() -> pl.DataFrame:
     """Minimal valid person table."""
-    return pl.DataFrame({
-        "person_id": [1, 2],
-        "gender_concept_id": [8507, 8532],
-        "year_of_birth": [1990, 1985],
-        "race_concept_id": [8515, 8516],
-        "ethnicity_concept_id": [38003563, 38003564],
-    })
+    return pl.DataFrame(
+        {
+            "person_id": [1, 2],
+            "gender_concept_id": [8507, 8532],
+            "year_of_birth": [1990, 1985],
+            "race_concept_id": [8515, 8516],
+            "ethnicity_concept_id": [38003563, 38003564],
+        }
+    )
 
 
 def _minimal_obs_period_df() -> pl.DataFrame:
     """Minimal valid observation_period table."""
-    return pl.DataFrame({
-        "observation_period_id": [1, 2],
-        "person_id": [1, 2],
-        "observation_period_start_date": [date(2020, 1, 1), date(2020, 1, 1)],
-        "observation_period_end_date": [date(2024, 12, 31), date(2024, 12, 31)],
-        "period_type_concept_id": [44814724, 44814724],
-    })
+    return pl.DataFrame(
+        {
+            "observation_period_id": [1, 2],
+            "person_id": [1, 2],
+            "observation_period_start_date": [date(2020, 1, 1), date(2020, 1, 1)],
+            "observation_period_end_date": [date(2024, 12, 31), date(2024, 12, 31)],
+            "period_type_concept_id": [44814724, 44814724],
+        }
+    )
 
 
 def _minimal_condition_df() -> pl.DataFrame:
     """Minimal valid condition_occurrence table."""
-    return pl.DataFrame({
-        "condition_occurrence_id": [1],
-        "person_id": [1],
-        "condition_concept_id": [31967],
-        "condition_start_date": [date(2021, 3, 15)],
-        "condition_type_concept_id": [32020],
-    })
+    return pl.DataFrame(
+        {
+            "condition_occurrence_id": [1],
+            "person_id": [1],
+            "condition_concept_id": [31967],
+            "condition_start_date": [date(2021, 3, 15)],
+            "condition_type_concept_id": [32020],
+        }
+    )
 
 
 def _cohort_df() -> pl.DataFrame:
     """Cohort table for plotting tests."""
-    return pl.DataFrame({
-        "cohort_definition_id": [1, 1, 2],
-        "subject_id": [1, 2, 1],
-        "cohort_start_date": [date(2021, 1, 1), date(2021, 6, 1), date(2022, 1, 1)],
-        "cohort_end_date": [date(2021, 12, 31), date(2021, 12, 31), date(2022, 6, 30)],
-    })
+    return pl.DataFrame(
+        {
+            "cohort_definition_id": [1, 1, 2],
+            "subject_id": [1, 2, 1],
+            "cohort_start_date": [date(2021, 1, 1), date(2021, 6, 1), date(2022, 1, 1)],
+            "cohort_end_date": [date(2021, 12, 31), date(2021, 12, 31), date(2022, 6, 30)],
+        }
+    )
 
 
 def _write_test_xlsx(path: Path, tables: dict[str, pl.DataFrame]) -> None:
@@ -137,10 +145,12 @@ class TestValidatePatientData:
     def test_missing_required_column(self):
         # person without person_id
         data = {
-            "person": pl.DataFrame({
-                "gender_concept_id": [8507],
-                "year_of_birth": [1990],
-            }),
+            "person": pl.DataFrame(
+                {
+                    "gender_concept_id": [8507],
+                    "year_of_birth": [1990],
+                }
+            ),
         }
         errors = validate_patient_data(data, cdm_version="5.4")
         assert any("person_id" in e for e in errors)
@@ -354,9 +364,17 @@ class TestPatientsCdm:
         # JSON meta says 5.4, but we can override at call site
         json_path = tmp_path / "test.json"
         # Write without meta
-        data = {"person": [{"person_id": 1, "gender_concept_id": 8507,
-                            "year_of_birth": 1990, "race_concept_id": 8515,
-                            "ethnicity_concept_id": 38003563}]}
+        data = {
+            "person": [
+                {
+                    "person_id": 1,
+                    "gender_concept_id": 8507,
+                    "year_of_birth": 1990,
+                    "race_concept_id": 8515,
+                    "ethnicity_concept_id": 38003563,
+                }
+            ]
+        }
         json_path.write_text(json.dumps(data), encoding="utf-8")
 
         cdm = patients_cdm(json_path, cdm_version="5.3")
@@ -511,9 +529,7 @@ class TestGenerateTestTables:
             generate_test_tables(["concept"], output_path=tmp_path)
 
     def test_version_53(self, tmp_path: Path):
-        path = generate_test_tables(
-            ["person"], output_path=tmp_path, cdm_version="5.3"
-        )
+        path = generate_test_tables(["person"], output_path=tmp_path, cdm_version="5.3")
         assert path.exists()
 
     def test_multiple_tables(self, tmp_path: Path):

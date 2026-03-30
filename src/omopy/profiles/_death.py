@@ -59,6 +59,7 @@ def add_death_date(
     if "death" not in cdm:
         # No death table — add NULL column
         import ibis
+
         tbl = _get_ibis_table(x)
         tbl = tbl.mutate(**{death_date_name: ibis.null().cast("date")})
         return x._with_data(tbl)
@@ -66,7 +67,8 @@ def add_death_date(
     target = _get_ibis_table(cdm["death"])
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="person_id",
         target_start_date="death_date",
@@ -117,6 +119,7 @@ def add_death_days(
 
     if "death" not in cdm:
         import ibis
+
         tbl = _get_ibis_table(x)
         tbl = tbl.mutate(**{death_days_name: ibis.null().cast("int64")})
         return x._with_data(tbl)
@@ -124,7 +127,8 @@ def add_death_days(
     target = _get_ibis_table(cdm["death"])
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="person_id",
         target_start_date="death_date",
@@ -175,6 +179,7 @@ def add_death_flag(
 
     if "death" not in cdm:
         import ibis
+
         tbl = _get_ibis_table(x)
         tbl = tbl.mutate(**{death_flag_name: ibis.literal(0)})
         return x._with_data(tbl)
@@ -182,7 +187,8 @@ def add_death_flag(
     target = _get_ibis_table(cdm["death"])
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="person_id",
         target_start_date="death_date",

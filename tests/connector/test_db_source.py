@@ -12,6 +12,7 @@ class TestDbSourceCreation:
 
     def test_creation(self, synthea_db_source):
         from omopy.connector.db_source import DbSource
+
         assert isinstance(synthea_db_source, DbSource)
 
     def test_source_type_is_duckdb(self, synthea_db_source):
@@ -47,8 +48,12 @@ class TestDbSourceListTables:
     def test_list_tables_has_standard_cdm(self, synthea_db_source):
         tables = synthea_db_source.list_tables()
         expected = [
-            "person", "observation_period", "visit_occurrence",
-            "condition_occurrence", "drug_exposure", "measurement",
+            "person",
+            "observation_period",
+            "visit_occurrence",
+            "condition_occurrence",
+            "drug_exposure",
+            "measurement",
         ]
         for name in expected:
             assert name in tables, f"Expected '{name}' in tables"
@@ -67,11 +72,13 @@ class TestDbSourceReadTable:
 
     def test_read_table_returns_cdm_table(self, synthea_db_source):
         from omopy.generics.cdm_table import CdmTable
+
         tbl = synthea_db_source.read_table("person")
         assert isinstance(tbl, CdmTable)
 
     def test_read_table_is_lazy(self, synthea_db_source):
         import ibis
+
         tbl = synthea_db_source.read_table("person")
         # The underlying data should be an Ibis table, not materialised
         assert isinstance(tbl.data, ibis.expr.types.Table)
@@ -97,6 +104,7 @@ class TestDbSourceReadTable:
 
     def test_read_table_collect(self, synthea_db_source):
         import polars as pl
+
         tbl = synthea_db_source.read_table("person")
         df = tbl.collect()
         assert isinstance(df, pl.DataFrame)
@@ -113,4 +121,5 @@ class TestDbSourceCdmSourceProtocol:
 
     def test_implements_protocol(self, synthea_db_source):
         from omopy.generics.cdm_reference import CdmSource
+
         assert isinstance(synthea_db_source, CdmSource)

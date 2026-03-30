@@ -105,7 +105,8 @@ def add_cohort_intersect_flag(
     target = _get_ibis_table(cohort)
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="subject_id",
         target_start_date=target_start_date,
@@ -167,7 +168,8 @@ def add_cohort_intersect_count(
     target = _get_ibis_table(cohort)
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="subject_id",
         target_start_date=target_start_date,
@@ -231,7 +233,8 @@ def add_cohort_intersect_date(
     target = _get_ibis_table(cohort)
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="subject_id",
         target_start_date=target_date,
@@ -296,7 +299,8 @@ def add_cohort_intersect_days(
     target = _get_ibis_table(cohort)
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="subject_id",
         target_start_date=target_date,
@@ -364,7 +368,8 @@ def add_cohort_intersect_field(
     target = _get_ibis_table(cohort)
 
     return _add_intersect(
-        x, cdm,
+        x,
+        cdm,
         target_table=target,
         target_person_col="subject_id",
         target_start_date=target_date,

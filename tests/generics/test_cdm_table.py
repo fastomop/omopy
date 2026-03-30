@@ -12,11 +12,13 @@ from omopy.generics.cdm_table import CdmTable
 
 
 def _sample_df() -> pl.DataFrame:
-    return pl.DataFrame({
-        "person_id": [1, 2, 3],
-        "gender_concept_id": [8507, 8532, 8507],
-        "year_of_birth": [1990, 1985, 2000],
-    })
+    return pl.DataFrame(
+        {
+            "person_id": [1, 2, 3],
+            "gender_concept_id": [8507, 8532, 8507],
+            "year_of_birth": [1990, 1985, 2000],
+        }
+    )
 
 
 # ---------------------------------------------------------------------------

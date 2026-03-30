@@ -101,22 +101,37 @@ def scatter_plot(
         for i, (name, grp) in enumerate(groups):
             color = style.color_palette[i % len(style.color_palette)]
             grp = grp.sort_values(x)
-            fig.add_trace(go.Scatter(
-                x=grp[x], y=grp[y_max],
-                mode="lines", line=dict(width=0),
-                showlegend=False, name=str(name),
-            ))
-            fig.add_trace(go.Scatter(
-                x=grp[x], y=grp[y_min],
-                mode="lines", line=dict(width=0),
-                fill="tonexty", fillcolor=_with_opacity(color, 0.2),
-                showlegend=False, name=str(name),
-            ))
+            fig.add_trace(
+                go.Scatter(
+                    x=grp[x],
+                    y=grp[y_max],
+                    mode="lines",
+                    line=dict(width=0),
+                    showlegend=False,
+                    name=str(name),
+                )
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=grp[x],
+                    y=grp[y_min],
+                    mode="lines",
+                    line=dict(width=0),
+                    fill="tonexty",
+                    fillcolor=_with_opacity(color, 0.2),
+                    showlegend=False,
+                    name=str(name),
+                )
+            )
 
     if point and not line:
         fig_scatter = px.scatter(
-            pdf, x=x, y=y, color=colour,
-            facet_row=facet_row, facet_col=facet_col,
+            pdf,
+            x=x,
+            y=y,
+            color=colour,
+            facet_row=facet_row,
+            facet_col=facet_col,
             color_discrete_sequence=style.color_palette,
             title=title,
         )
@@ -126,10 +141,15 @@ def scatter_plot(
             fig.update_layout(annotations=fig_scatter.layout.annotations)
     elif line and point:
         fig_line = px.line(
-            pdf, x=x, y=y, color=colour,
-            facet_row=facet_row, facet_col=facet_col,
+            pdf,
+            x=x,
+            y=y,
+            color=colour,
+            facet_row=facet_row,
+            facet_col=facet_col,
             color_discrete_sequence=style.color_palette,
-            title=title, markers=True,
+            title=title,
+            markers=True,
         )
         for trace in fig_line.data:
             fig.add_trace(trace)
@@ -137,8 +157,12 @@ def scatter_plot(
             fig.update_layout(annotations=fig_line.layout.annotations)
     elif line:
         fig_line = px.line(
-            pdf, x=x, y=y, color=colour,
-            facet_row=facet_row, facet_col=facet_col,
+            pdf,
+            x=x,
+            y=y,
+            color=colour,
+            facet_row=facet_row,
+            facet_col=facet_col,
             color_discrete_sequence=style.color_palette,
             title=title,
         )
@@ -149,7 +173,8 @@ def scatter_plot(
 
     # Apply layout styling
     fig = _apply_plot_style(
-        fig, style,
+        fig,
+        style,
         title=title,
         x_title=x_title or customise_text(x),
         y_title=y_title or customise_text(y),
@@ -208,14 +233,20 @@ def bar_plot(
     barmode = "group" if position == "dodge" else "stack"
 
     fig = px.bar(
-        pdf, x=x, y=y, color=colour,
-        facet_row=facet_row, facet_col=facet_col,
+        pdf,
+        x=x,
+        y=y,
+        color=colour,
+        facet_row=facet_row,
+        facet_col=facet_col,
         color_discrete_sequence=style.color_palette,
-        title=title, barmode=barmode,
+        title=title,
+        barmode=barmode,
     )
 
     fig = _apply_plot_style(
-        fig, style,
+        fig,
+        style,
         title=title,
         x_title=x_title or customise_text(x),
         y_title=y_title or customise_text(y),
@@ -290,20 +321,23 @@ def box_plot(
 
     for i, (name, grp) in enumerate(groups):
         color = style.color_palette[i % len(style.color_palette)]
-        fig.add_trace(go.Box(
-            x=grp[x],
-            lowerfence=grp[y_min],
-            q1=grp[lower],
-            median=grp[middle],
-            q3=grp[upper],
-            upperfence=grp[y_max],
-            name=str(name),
-            marker_color=color,
-            fillcolor=_with_opacity(color, 0.3),
-        ))
+        fig.add_trace(
+            go.Box(
+                x=grp[x],
+                lowerfence=grp[y_min],
+                q1=grp[lower],
+                median=grp[middle],
+                q3=grp[upper],
+                upperfence=grp[y_max],
+                name=str(name),
+                marker_color=color,
+                fillcolor=_with_opacity(color, 0.3),
+            )
+        )
 
     fig = _apply_plot_style(
-        fig, style,
+        fig,
+        style,
         title=title,
         x_title=x_title or customise_text(x),
         y_title=y_title or "Value",
@@ -333,7 +367,11 @@ def _prepare_plot_data(result: SummarisedResult | pl.DataFrame) -> pl.DataFrame:
 
         # Pivot estimate_name/estimate_value to wide
         if "estimate_name" in df.columns and "estimate_value" in df.columns:
-            key_cols = [c for c in df.columns if c not in ("estimate_name", "estimate_type", "estimate_value")]
+            key_cols = [
+                c
+                for c in df.columns
+                if c not in ("estimate_name", "estimate_type", "estimate_value")
+            ]
             try:
                 df = df.pivot(
                     on="estimate_name",
@@ -383,9 +421,7 @@ def _parse_facets(facet: str | list[str] | None) -> tuple[str | None, str | None
     return facet[0], facet[1]
 
 
-def _get_groups(
-    pdf: Any, colour: str | None
-) -> list[tuple[str, Any]]:
+def _get_groups(pdf: Any, colour: str | None) -> list[tuple[str, Any]]:
     """Split a pandas DataFrame by colour groups."""
     if colour is None:
         return [("all", pdf)]
@@ -395,6 +431,7 @@ def _get_groups(
 def _to_numeric(series: Any) -> Any:
     """Coerce a pandas Series to numeric, ignoring errors."""
     import pandas as pd
+
     return pd.to_numeric(series, errors="coerce")
 
 

@@ -71,9 +71,7 @@ def compute_cohort_end_dates(
     if strategy is not None:
         if strategy.date_offset is not None:
             has_custom_end = True
-            end_parts.append(
-                _date_offset_end(included_events, strategy.date_offset)
-            )
+            end_parts.append(_date_offset_end(included_events, strategy.date_offset))
         elif strategy.custom_era is not None:
             has_custom_end = True
             end_parts.append(
@@ -130,18 +128,20 @@ def compute_cohort_end_dates(
         right_event_id="event_id",
     )
 
-    joined = left.join(
-        right,
-        (left.person_id == right.right_person_id)
-        & (left.event_id == right.right_event_id),
-    ).filter(
-        lambda t: t.end_date >= t.start_date,
-    ).select("person_id", "event_id", "start_date", "end_date")
+    joined = (
+        left.join(
+            right,
+            (left.person_id == right.right_person_id) & (left.event_id == right.right_event_id),
+        )
+        .filter(
+            lambda t: t.end_date >= t.start_date,
+        )
+        .select("person_id", "event_id", "start_date", "end_date")
+    )
 
     # Pick earliest end date per (person_id, event_id)
-    result = (
-        joined.group_by(["person_id", "event_id", "start_date"])
-        .agg(end_date=joined.end_date.min())
+    result = joined.group_by(["person_id", "event_id", "start_date"]).agg(
+        end_date=joined.end_date.min()
     )
 
     return result
@@ -242,9 +242,7 @@ def _custom_era_end(
 
     # Filter to matching codeset concepts
     if codeset_tbl is not None:
-        joined = joined.filter(
-            joined[era_concept_col].isin(codeset_tbl.concept_id)
-        )
+        joined = joined.filter(joined[era_concept_col].isin(codeset_tbl.concept_id))
 
     # Cap era end at op_end_date
     era_end = joined[era_end_col]
@@ -264,10 +262,7 @@ def _custom_era_end(
     )
 
     # Pick earliest end date per event (an event may overlap multiple eras)
-    return (
-        selected.group_by(["event_id", "person_id"])
-        .agg(end_date=selected.end_date.min())
-    )
+    return selected.group_by(["event_id", "person_id"]).agg(end_date=selected.end_date.min())
 
 
 # ---------------------------------------------------------------------------
@@ -302,27 +297,32 @@ def _censoring_end(
     # and <= included event op_end_date.
     # Rename censor_events columns to avoid collision.
     left = included_events.select(
-        "person_id", "event_id", "start_date", "op_end_date",
+        "person_id",
+        "event_id",
+        "start_date",
+        "op_end_date",
     )
     right = censor_events.rename(
         censor_person_id="person_id",
         censor_start_date="start_date",
     )
 
-    joined = left.join(
-        right,
-        left.person_id == right.censor_person_id,
-    ).filter(
-        lambda t: (t.censor_start_date >= t.start_date)
-        & (t.censor_start_date <= t.op_end_date),
-    ).select(
-        person_id=lambda t: t.person_id,
-        event_id=lambda t: t.event_id,
-        end_date=lambda t: t.censor_start_date,
+    joined = (
+        left.join(
+            right,
+            left.person_id == right.censor_person_id,
+        )
+        .filter(
+            lambda t: (
+                (t.censor_start_date >= t.start_date) & (t.censor_start_date <= t.op_end_date)
+            ),
+        )
+        .select(
+            person_id=lambda t: t.person_id,
+            event_id=lambda t: t.event_id,
+            end_date=lambda t: t.censor_start_date,
+        )
     )
 
     # Pick earliest censoring date per event
-    return (
-        joined.group_by(["event_id", "person_id"])
-        .agg(end_date=joined.end_date.min())
-    )
+    return joined.group_by(["event_id", "person_id"]).agg(end_date=joined.end_date.min())

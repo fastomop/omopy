@@ -50,7 +50,8 @@ def available_survival_grouping(
 
     # Check settings columns
     settings_cols = [
-        c for c in settings.columns
+        c
+        for c in settings.columns
         if c not in ("result_id", "result_type", "package_name", "package_version")
     ]
     for col in settings_cols:
@@ -160,7 +161,8 @@ def plot_survival(
     # Create figure with optional risk table subplot
     if risk_table:
         fig = make_subplots(
-            rows=2, cols=1,
+            rows=2,
+            cols=1,
             row_heights=[0.75, 0.25],
             vertical_spacing=0.08,
             shared_xaxes=True,
@@ -192,6 +194,7 @@ def plot_survival(
 
         if log_log:
             import numpy as np
+
             est_np = est_vals.to_numpy()
             # log(-log(S(t)))
             with np.errstate(divide="ignore", invalid="ignore"):
@@ -247,7 +250,13 @@ def plot_survival(
         if len(events_data) > 0 and "n_risk_count" in events_data.columns:
             try:
                 if "additional_level" in events_data.columns:
-                    rt_times = events_data["additional_level"].str.split(" &&& ").list.first().cast(pl.Float64) / time_divisor
+                    rt_times = (
+                        events_data["additional_level"]
+                        .str.split(" &&& ")
+                        .list.first()
+                        .cast(pl.Float64)
+                        / time_divisor
+                    )
                 else:
                     rt_times = pl.Series(range(len(events_data))) / time_divisor
 
@@ -261,10 +270,13 @@ def plot_survival(
                         textposition="middle center",
                         showlegend=False,
                     ),
-                    row=2, col=1,
+                    row=2,
+                    col=1,
                 )
                 fig.update_yaxes(
-                    visible=False, row=2, col=1,
+                    visible=False,
+                    row=2,
+                    col=1,
                 )
                 fig.update_xaxes(title_text=time_label, row=2, col=1)
             except Exception:
@@ -309,10 +321,7 @@ def _get_plot_groups(
     """Split estimates DataFrame by group column."""
     if group_col in estimates.columns:
         unique_vals = estimates[group_col].unique().sort().to_list()
-        return [
-            (str(val), estimates.filter(pl.col(group_col) == val))
-            for val in unique_vals
-        ]
+        return [(str(val), estimates.filter(pl.col(group_col) == val)) for val in unique_vals]
     else:
         return [("overall", estimates)]
 
@@ -331,9 +340,16 @@ def _time_divisor(time_scale: str) -> float:
 def _default_colours() -> list[str]:
     """Default colour palette for survival plots."""
     return [
-        "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
-        "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
-        "#bcbd22", "#17becf",
+        "#1f77b4",
+        "#ff7f0e",
+        "#2ca02c",
+        "#d62728",
+        "#9467bd",
+        "#8c564b",
+        "#e377c2",
+        "#7f7f7f",
+        "#bcbd22",
+        "#17becf",
     ]
 
 

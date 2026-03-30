@@ -36,14 +36,16 @@ def _make_settings(
     min_cell_count: int,
 ) -> pl.DataFrame:
     """Build a settings row for a check."""
-    return pl.DataFrame({
-        "result_id": [result_id],
-        "result_type": [f"{_RESULT_TYPE_PREFIX}_{check_name}"],
-        "package_name": [_PACKAGE_NAME],
-        "package_version": [_PACKAGE_VERSION],
-        "sample_size": [str(sample_size) if sample_size is not None else "all"],
-        "min_cell_count": [str(min_cell_count)],
-    })
+    return pl.DataFrame(
+        {
+            "result_id": [result_id],
+            "result_type": [f"{_RESULT_TYPE_PREFIX}_{check_name}"],
+            "package_name": [_PACKAGE_NAME],
+            "package_version": [_PACKAGE_VERSION],
+            "sample_size": [str(sample_size) if sample_size is not None else "all"],
+            "min_cell_count": [str(min_cell_count)],
+        }
+    )
 
 
 def _rows_from_wide(
@@ -108,21 +110,23 @@ def _rows_from_wide(
             else:
                 est_type = "character"
 
-            rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": group_name,
-                "group_level": group_level,
-                "strata_name": OVERALL,
-                "strata_level": OVERALL,
-                "variable_name": check_name,
-                "variable_level": mc,
-                "estimate_name": mc,
-                "estimate_type": est_type,
-                "estimate_value": est_value,
-                "additional_name": additional_name,
-                "additional_level": additional_level,
-            })
+            rows.append(
+                {
+                    "result_id": result_id,
+                    "cdm_name": cdm_name,
+                    "group_name": group_name,
+                    "group_level": group_level,
+                    "strata_name": OVERALL,
+                    "strata_level": OVERALL,
+                    "variable_name": check_name,
+                    "variable_level": mc,
+                    "estimate_name": mc,
+                    "estimate_type": est_type,
+                    "estimate_value": est_value,
+                    "additional_name": additional_name,
+                    "additional_level": additional_level,
+                }
+            )
 
     return rows
 
@@ -149,21 +153,23 @@ def _summarise_missing(
             est_value = "NA" if val is None else str(val)
             est_type = "integer" if est_name.startswith("n_") else "numeric"
 
-            rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": group_name,
-                "group_level": group_level,
-                "strata_name": OVERALL,
-                "strata_level": OVERALL,
-                "variable_name": "missing",
-                "variable_level": variable,
-                "estimate_name": est_name,
-                "estimate_type": est_type,
-                "estimate_value": est_value,
-                "additional_name": OVERALL,
-                "additional_level": OVERALL,
-            })
+            rows.append(
+                {
+                    "result_id": result_id,
+                    "cdm_name": cdm_name,
+                    "group_name": group_name,
+                    "group_level": group_level,
+                    "strata_name": OVERALL,
+                    "strata_level": OVERALL,
+                    "variable_name": "missing",
+                    "variable_level": variable,
+                    "estimate_name": est_name,
+                    "estimate_type": est_type,
+                    "estimate_value": est_value,
+                    "additional_name": OVERALL,
+                    "additional_level": OVERALL,
+                }
+            )
 
     return rows
 
@@ -192,21 +198,23 @@ def _summarise_categorical(
             est_value = "NA" if val is None else str(val)
             est_type = "integer" if est_name == "count" else "numeric"
 
-            rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": group_name,
-                "group_level": group_level,
-                "strata_name": OVERALL,
-                "strata_level": OVERALL,
-                "variable_name": check_name,
-                "variable_level": str(category_val),
-                "estimate_name": est_name,
-                "estimate_type": est_type,
-                "estimate_value": est_value,
-                "additional_name": OVERALL,
-                "additional_level": OVERALL,
-            })
+            rows.append(
+                {
+                    "result_id": result_id,
+                    "cdm_name": cdm_name,
+                    "group_name": group_name,
+                    "group_level": group_level,
+                    "strata_name": OVERALL,
+                    "strata_level": OVERALL,
+                    "variable_name": check_name,
+                    "variable_level": str(category_val),
+                    "estimate_name": est_name,
+                    "estimate_type": est_type,
+                    "estimate_value": est_value,
+                    "additional_name": OVERALL,
+                    "additional_level": OVERALL,
+                }
+            )
 
     return rows
 
@@ -238,32 +246,8 @@ def _summarise_quantile(
             est_value = "NA" if val is None else str(val)
             est_type = "integer" if stat in ("count", "count_missing") else "numeric"
 
-            rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": group_name,
-                "group_level": group_level,
-                "strata_name": OVERALL,
-                "strata_level": OVERALL,
-                "variable_name": check_name,
-                "variable_level": stat,
-                "estimate_name": stat,
-                "estimate_type": est_type,
-                "estimate_value": est_value,
-                "additional_name": OVERALL,
-                "additional_level": OVERALL,
-            })
-
-        # Add extra columns specific to certain checks
-        for extra in ("n_negative_duration", "proportion_negative_duration",
-                       "n_days_supply_match_date_diff", "n_days_supply_differ_date_diff",
-                       "n_days_supply_or_dates_missing",
-                       "n_persons", "n_persons_multiple_records"):
-            if extra in record:
-                val = record[extra]
-                est_value = "NA" if val is None else str(val)
-                est_type = "integer" if extra.startswith("n_") else "numeric"
-                rows.append({
+            rows.append(
+                {
                     "result_id": result_id,
                     "cdm_name": cdm_name,
                     "group_name": group_name,
@@ -271,13 +255,46 @@ def _summarise_quantile(
                     "strata_name": OVERALL,
                     "strata_level": OVERALL,
                     "variable_name": check_name,
-                    "variable_level": extra,
-                    "estimate_name": extra,
+                    "variable_level": stat,
+                    "estimate_name": stat,
                     "estimate_type": est_type,
                     "estimate_value": est_value,
                     "additional_name": OVERALL,
                     "additional_level": OVERALL,
-                })
+                }
+            )
+
+        # Add extra columns specific to certain checks
+        for extra in (
+            "n_negative_duration",
+            "proportion_negative_duration",
+            "n_days_supply_match_date_diff",
+            "n_days_supply_differ_date_diff",
+            "n_days_supply_or_dates_missing",
+            "n_persons",
+            "n_persons_multiple_records",
+        ):
+            if extra in record:
+                val = record[extra]
+                est_value = "NA" if val is None else str(val)
+                est_type = "integer" if extra.startswith("n_") else "numeric"
+                rows.append(
+                    {
+                        "result_id": result_id,
+                        "cdm_name": cdm_name,
+                        "group_name": group_name,
+                        "group_level": group_level,
+                        "strata_name": OVERALL,
+                        "strata_level": OVERALL,
+                        "variable_name": check_name,
+                        "variable_level": extra,
+                        "estimate_name": extra,
+                        "estimate_type": est_type,
+                        "estimate_value": est_value,
+                        "additional_name": OVERALL,
+                        "additional_level": OVERALL,
+                    }
+                )
 
     return rows
 
@@ -291,9 +308,11 @@ def _summarise_verbatim_end_date(
     """Convert verbatim_end_date check results into rows."""
     rows: list[dict[str, Any]] = []
     metrics = [
-        "n_verbatim_end_date_missing", "n_verbatim_end_date_equal",
+        "n_verbatim_end_date_missing",
+        "n_verbatim_end_date_equal",
         "n_verbatim_end_date_differ",
-        "proportion_verbatim_end_date_missing", "proportion_verbatim_end_date_equal",
+        "proportion_verbatim_end_date_missing",
+        "proportion_verbatim_end_date_equal",
         "proportion_verbatim_end_date_differ",
     ]
 
@@ -309,21 +328,23 @@ def _summarise_verbatim_end_date(
             est_value = "NA" if val is None else str(val)
             est_type = "integer" if est_name.startswith("n_") else "numeric"
 
-            rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": group_name,
-                "group_level": group_level,
-                "strata_name": OVERALL,
-                "strata_level": OVERALL,
-                "variable_name": "verbatim_end_date",
-                "variable_level": est_name,
-                "estimate_name": est_name,
-                "estimate_type": est_type,
-                "estimate_value": est_value,
-                "additional_name": OVERALL,
-                "additional_level": OVERALL,
-            })
+            rows.append(
+                {
+                    "result_id": result_id,
+                    "cdm_name": cdm_name,
+                    "group_name": group_name,
+                    "group_level": group_level,
+                    "strata_name": OVERALL,
+                    "strata_level": OVERALL,
+                    "variable_name": "verbatim_end_date",
+                    "variable_level": est_name,
+                    "estimate_name": est_name,
+                    "estimate_type": est_type,
+                    "estimate_value": est_value,
+                    "additional_name": OVERALL,
+                    "additional_level": OVERALL,
+                }
+            )
 
     return rows
 
@@ -337,7 +358,10 @@ def _summarise_dose(
     """Convert dose check results into rows."""
     rows: list[dict[str, Any]] = []
     metrics = [
-        "n_records", "n_with_dose", "n_without_dose", "proportion_with_dose",
+        "n_records",
+        "n_with_dose",
+        "n_without_dose",
+        "proportion_with_dose",
     ]
 
     for record in df.iter_rows(named=True):
@@ -352,21 +376,23 @@ def _summarise_dose(
             est_value = "NA" if val is None else str(val)
             est_type = "integer" if est_name.startswith("n_") else "numeric"
 
-            rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": group_name,
-                "group_level": group_level,
-                "strata_name": OVERALL,
-                "strata_level": OVERALL,
-                "variable_name": "dose",
-                "variable_level": est_name,
-                "estimate_name": est_name,
-                "estimate_type": est_type,
-                "estimate_value": est_value,
-                "additional_name": OVERALL,
-                "additional_level": OVERALL,
-            })
+            rows.append(
+                {
+                    "result_id": result_id,
+                    "cdm_name": cdm_name,
+                    "group_name": group_name,
+                    "group_level": group_level,
+                    "strata_name": OVERALL,
+                    "strata_level": OVERALL,
+                    "variable_name": "dose",
+                    "variable_level": est_name,
+                    "estimate_name": est_name,
+                    "estimate_type": est_type,
+                    "estimate_value": est_value,
+                    "additional_name": OVERALL,
+                    "additional_level": OVERALL,
+                }
+            )
 
     return rows
 
@@ -395,21 +421,23 @@ def _summarise_summary(
             est_value = "NA" if val is None else str(val)
             est_type = "integer" if isinstance(val, int) else "numeric"
 
-            rows.append({
-                "result_id": result_id,
-                "cdm_name": cdm_name,
-                "group_name": group_name,
-                "group_level": group_level,
-                "strata_name": OVERALL,
-                "strata_level": OVERALL,
-                "variable_name": "diagnostics_summary",
-                "variable_level": col,
-                "estimate_name": col,
-                "estimate_type": est_type,
-                "estimate_value": est_value,
-                "additional_name": OVERALL,
-                "additional_level": OVERALL,
-            })
+            rows.append(
+                {
+                    "result_id": result_id,
+                    "cdm_name": cdm_name,
+                    "group_name": group_name,
+                    "group_level": group_level,
+                    "strata_name": OVERALL,
+                    "strata_level": OVERALL,
+                    "variable_name": "diagnostics_summary",
+                    "variable_level": col,
+                    "estimate_name": col,
+                    "estimate_type": est_type,
+                    "estimate_value": est_value,
+                    "additional_name": OVERALL,
+                    "additional_level": OVERALL,
+                }
+            )
 
     return rows
 
@@ -455,7 +483,12 @@ def summarise_drug_diagnostics(
         if df.height == 0:
             # Still create a settings entry
             all_settings.append(
-                _make_settings(rid, check_name, sample_size=result.sample_size, min_cell_count=result.min_cell_count)
+                _make_settings(
+                    rid,
+                    check_name,
+                    sample_size=result.sample_size,
+                    min_cell_count=result.min_cell_count,
+                )
             )
             continue
 
@@ -464,28 +497,43 @@ def summarise_drug_diagnostics(
             rows = _summarise_missing(df, result_id=rid, cdm_name=cdm_name)
         elif check_name == "exposure_duration":
             rows = _summarise_quantile(
-                df, result_id=rid, cdm_name=cdm_name,
-                check_name="exposure_duration", prefix="duration",
+                df,
+                result_id=rid,
+                cdm_name=cdm_name,
+                check_name="exposure_duration",
+                prefix="duration",
             )
         elif check_name == "type":
             rows = _summarise_categorical(
-                df, result_id=rid, cdm_name=cdm_name,
-                check_name="type", category_col="drug_type",
+                df,
+                result_id=rid,
+                cdm_name=cdm_name,
+                check_name="type",
+                category_col="drug_type",
             )
         elif check_name == "route":
             rows = _summarise_categorical(
-                df, result_id=rid, cdm_name=cdm_name,
-                check_name="route", category_col="route",
+                df,
+                result_id=rid,
+                cdm_name=cdm_name,
+                check_name="route",
+                category_col="route",
             )
         elif check_name == "source_concept":
             rows = _summarise_categorical(
-                df, result_id=rid, cdm_name=cdm_name,
-                check_name="source_concept", category_col="drug_source_value",
+                df,
+                result_id=rid,
+                cdm_name=cdm_name,
+                check_name="source_concept",
+                category_col="drug_source_value",
             )
         elif check_name == "days_supply":
             rows = _summarise_quantile(
-                df, result_id=rid, cdm_name=cdm_name,
-                check_name="days_supply", prefix="days_supply",
+                df,
+                result_id=rid,
+                cdm_name=cdm_name,
+                check_name="days_supply",
+                prefix="days_supply",
             )
         elif check_name == "verbatim_end_date":
             rows = _summarise_verbatim_end_date(df, result_id=rid, cdm_name=cdm_name)
@@ -493,18 +541,27 @@ def summarise_drug_diagnostics(
             rows = _summarise_dose(df, result_id=rid, cdm_name=cdm_name)
         elif check_name == "sig":
             rows = _summarise_categorical(
-                df, result_id=rid, cdm_name=cdm_name,
-                check_name="sig", category_col="sig",
+                df,
+                result_id=rid,
+                cdm_name=cdm_name,
+                check_name="sig",
+                category_col="sig",
             )
         elif check_name == "quantity":
             rows = _summarise_quantile(
-                df, result_id=rid, cdm_name=cdm_name,
-                check_name="quantity", prefix="quantity",
+                df,
+                result_id=rid,
+                cdm_name=cdm_name,
+                check_name="quantity",
+                prefix="quantity",
             )
         elif check_name == "days_between":
             rows = _summarise_quantile(
-                df, result_id=rid, cdm_name=cdm_name,
-                check_name="days_between", prefix="days_between",
+                df,
+                result_id=rid,
+                cdm_name=cdm_name,
+                check_name="days_between",
+                prefix="days_between",
             )
         elif check_name == "diagnostics_summary":
             rows = _summarise_summary(df, result_id=rid, cdm_name=cdm_name)
@@ -513,7 +570,12 @@ def summarise_drug_diagnostics(
 
         all_rows.extend(rows)
         all_settings.append(
-            _make_settings(rid, check_name, sample_size=result.sample_size, min_cell_count=result.min_cell_count)
+            _make_settings(
+                rid,
+                check_name,
+                sample_size=result.sample_size,
+                min_cell_count=result.min_cell_count,
+            )
         )
 
     # Build final SummarisedResult
@@ -523,11 +585,17 @@ def summarise_drug_diagnostics(
         data = pl.DataFrame(schema={col: pl.Utf8 for col in SUMMARISED_RESULT_COLUMNS})
         data = data.cast({"result_id": pl.Int64})
 
-    settings = pl.concat(all_settings, how="diagonal_relaxed") if all_settings else pl.DataFrame({
-        "result_id": [],
-        "result_type": [],
-        "package_name": [],
-        "package_version": [],
-    })
+    settings = (
+        pl.concat(all_settings, how="diagonal_relaxed")
+        if all_settings
+        else pl.DataFrame(
+            {
+                "result_id": [],
+                "result_type": [],
+                "package_name": [],
+                "package_version": [],
+            }
+        )
+    )
 
     return SummarisedResult(data, settings=settings)

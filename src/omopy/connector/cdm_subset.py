@@ -99,9 +99,7 @@ def cdm_subset_cohort(
     cohort_df = cohort.collect()
 
     if cohort_id is not None:
-        cohort_df = cohort_df.filter(
-            pl.col("cohort_definition_id").is_in(cohort_id)
-        )
+        cohort_df = cohort_df.filter(pl.col("cohort_definition_id").is_in(cohort_id))
 
     # Get distinct person IDs as a Polars Series
     subject_ids = cohort_df.select("subject_id").unique().rename({"subject_id": "person_id"})
@@ -171,11 +169,7 @@ def cdm_sample(
         except Exception:
             pass
 
-    sampled = (
-        eligible
-        .order_by(ibis.random())
-        .limit(n)
-    )
+    sampled = eligible.order_by(ibis.random()).limit(n)
 
     return _subset_cdm_by_persons_ibis(cdm, sampled)
 

@@ -48,12 +48,20 @@ def as_survival_result(result: SummarisedResult) -> dict[str, pl.DataFrame]:
 
     # Identify estimate type rows
     key_cols = [
-        "result_id", "cdm_name", "group_name", "group_level",
-        "strata_name", "strata_level", "variable_name", "variable_level",
+        "result_id",
+        "cdm_name",
+        "group_name",
+        "group_level",
+        "strata_name",
+        "strata_level",
+        "variable_name",
+        "variable_level",
     ]
 
     # --- Estimates ---
-    est_mask = data["additional_name"].str.contains("time") & ~data["additional_name"].str.contains("eventgap")
+    est_mask = data["additional_name"].str.contains("time") & ~data[
+        "additional_name"
+    ].str.contains("eventgap")
     estimates_long = data.filter(est_mask)
     estimates = _pivot_wide(estimates_long, key_cols + ["additional_name", "additional_level"])
 
@@ -63,10 +71,7 @@ def as_survival_result(result: SummarisedResult) -> dict[str, pl.DataFrame]:
     events = _pivot_wide(events_long, key_cols + ["additional_name", "additional_level"])
 
     # --- Summary ---
-    sum_mask = (
-        (data["additional_name"] == OVERALL)
-        & ~data["strata_name"].str.contains("reason")
-    )
+    sum_mask = (data["additional_name"] == OVERALL) & ~data["strata_name"].str.contains("reason")
     summary_long = data.filter(sum_mask)
     summary = _pivot_wide(summary_long, key_cols + ["additional_name", "additional_level"])
 

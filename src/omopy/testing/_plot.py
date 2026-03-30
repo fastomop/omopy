@@ -57,12 +57,14 @@ def graph_cohort(
         if isinstance(subject_df, pl.LazyFrame):
             subject_df = subject_df.collect()
         for row in subject_df.iter_rows(named=True):
-            segments.append({
-                "cohort_name": cohort_name,
-                "start": row["cohort_start_date"],
-                "end": row["cohort_end_date"],
-                "cohort_id": row.get("cohort_definition_id", 0),
-            })
+            segments.append(
+                {
+                    "cohort_name": cohort_name,
+                    "start": row["cohort_start_date"],
+                    "end": row["cohort_end_date"],
+                    "cohort_id": row.get("cohort_definition_id", 0),
+                }
+            )
 
     if not segments:
         msg = f"No cohort records found for subject_id={subject_id}"
@@ -77,8 +79,16 @@ def graph_cohort(
 
     # Default color palette
     colors = [
-        "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
-        "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+        "#1f77b4",
+        "#ff7f0e",
+        "#2ca02c",
+        "#d62728",
+        "#9467bd",
+        "#8c564b",
+        "#e377c2",
+        "#7f7f7f",
+        "#bcbd22",
+        "#17becf",
     ]
 
     for seg in segments:
@@ -88,21 +98,20 @@ def graph_cohort(
         start_str = str(seg["start"])
         end_str = str(seg["end"])
 
-        fig.add_trace(go.Scatter(
-            x=[start_str, end_str],
-            y=[cname, cname],
-            mode="lines+markers",
-            line={"color": color, "width": 6},
-            marker={"size": 8, "color": color},
-            name=cname,
-            showlegend=False,
-            hovertemplate=(
-                f"<b>{cname}</b><br>"
-                f"Start: {start_str}<br>"
-                f"End: {end_str}<br>"
-                f"<extra></extra>"
-            ),
-        ))
+        fig.add_trace(
+            go.Scatter(
+                x=[start_str, end_str],
+                y=[cname, cname],
+                mode="lines+markers",
+                line={"color": color, "width": 6},
+                marker={"size": 8, "color": color},
+                name=cname,
+                showlegend=False,
+                hovertemplate=(
+                    f"<b>{cname}</b><br>Start: {start_str}<br>End: {end_str}<br><extra></extra>"
+                ),
+            )
+        )
 
     # Layout
     layout_kwargs: dict[str, Any] = {

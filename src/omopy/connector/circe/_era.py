@@ -88,12 +88,9 @@ def collapse_eras(
     grouped = marked.mutate(group_idx=group_idx)
 
     # Step 4: Aggregate per group, then un-pad the end date
-    result = (
-        grouped.group_by(["person_id", "group_idx"])
-        .agg(
-            start_date=grouped.start_date.min(),
-            end_date=grouped.padded_end.max(),
-        )
+    result = grouped.group_by(["person_id", "group_idx"]).agg(
+        start_date=grouped.start_date.min(),
+        end_date=grouped.padded_end.max(),
     )
 
     # Un-pad: subtract era_pad from the final end date

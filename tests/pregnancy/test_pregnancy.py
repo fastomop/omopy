@@ -254,15 +254,19 @@ class TestRunHip:
         assert "episode_id" in result.columns
 
     def test_single_lb_outcome(self):
-        records = _make_hip_records([{
-            "person_id": 1,
-            "concept_id": 4014295,
-            "record_date": datetime.date(2020, 9, 1),
-            "value_as_number": None,
-            "source_table": "condition_occurrence",
-            "category": "LB",
-            "gest_value": 40,
-        }])
+        records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4014295,
+                    "record_date": datetime.date(2020, 9, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "LB",
+                    "gest_value": 40,
+                }
+            ]
+        )
         result = _run_hip(records)
         assert result.height == 1
         assert result["category"][0] == "LB"
@@ -270,51 +274,55 @@ class TestRunHip:
 
     def test_two_lb_outcomes_with_sufficient_spacing(self):
         """Two LB outcomes 200 days apart should produce 2 episodes."""
-        records = _make_hip_records([
-            {
-                "person_id": 1,
-                "concept_id": 4014295,
-                "record_date": datetime.date(2020, 1, 1),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": "LB",
-                "gest_value": 40,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 4302541,
-                "record_date": datetime.date(2020, 7, 20),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": "LB",
-                "gest_value": 40,
-            },
-        ])
+        records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4014295,
+                    "record_date": datetime.date(2020, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "LB",
+                    "gest_value": 40,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 4302541,
+                    "record_date": datetime.date(2020, 7, 20),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "LB",
+                    "gest_value": 40,
+                },
+            ]
+        )
         result = _run_hip(records)
         assert result.height == 2
 
     def test_two_lb_outcomes_too_close(self):
         """Two LB outcomes 100 days apart — second should be skipped."""
-        records = _make_hip_records([
-            {
-                "person_id": 1,
-                "concept_id": 4014295,
-                "record_date": datetime.date(2020, 1, 1),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": "LB",
-                "gest_value": 40,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 4302541,
-                "record_date": datetime.date(2020, 4, 10),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": "LB",
-                "gest_value": 40,
-            },
-        ])
+        records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4014295,
+                    "record_date": datetime.date(2020, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "LB",
+                    "gest_value": 40,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 4302541,
+                    "record_date": datetime.date(2020, 4, 10),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "LB",
+                    "gest_value": 40,
+                },
+            ]
+        )
         result = _run_hip(records)
         # Walking backwards: last record (Apr) assigned, then Jan is 100 days before
         # which is < 168 min spacing for LB->LB, so Jan is skipped.
@@ -323,134 +331,148 @@ class TestRunHip:
 
     def test_lb_then_sa_with_sufficient_spacing(self):
         """LB then SA with 60+ days gap."""
-        records = _make_hip_records([
-            {
-                "person_id": 1,
-                "concept_id": 4014295,
-                "record_date": datetime.date(2020, 1, 1),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": "LB",
-                "gest_value": 40,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 4199459,
-                "record_date": datetime.date(2020, 4, 1),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": "SA",
-                "gest_value": None,
-            },
-        ])
+        records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4014295,
+                    "record_date": datetime.date(2020, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "LB",
+                    "gest_value": 40,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 4199459,
+                    "record_date": datetime.date(2020, 4, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "SA",
+                    "gest_value": None,
+                },
+            ]
+        )
         result = _run_hip(records)
         # Walking backwards: SA at Apr 1 assigned, then LB at Jan 1 is 91 days before.
         # SA->LB limit is 56 days. 91 > 56, so both assigned.
         assert result.height == 2
 
     def test_multiple_persons(self):
-        records = _make_hip_records([
-            {
-                "person_id": 1,
-                "concept_id": 4014295,
-                "record_date": datetime.date(2020, 6, 1),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": "LB",
-                "gest_value": 40,
-            },
-            {
-                "person_id": 2,
-                "concept_id": 443213,
-                "record_date": datetime.date(2020, 3, 1),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": "ECT",
-                "gest_value": None,
-            },
-        ])
+        records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4014295,
+                    "record_date": datetime.date(2020, 6, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "LB",
+                    "gest_value": 40,
+                },
+                {
+                    "person_id": 2,
+                    "concept_id": 443213,
+                    "record_date": datetime.date(2020, 3, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "ECT",
+                    "gest_value": None,
+                },
+            ]
+        )
         result = _run_hip(records)
         assert result.height == 2
         assert set(result["person_id"].to_list()) == {1, 2}
 
     def test_gestation_only_episodes(self):
         """Records with no outcome category should form PREG episodes."""
-        records = _make_hip_records([
-            {
-                "person_id": 1,
-                "concept_id": 9999,
-                "record_date": datetime.date(2020, 1, 1),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": None,
-                "gest_value": None,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 9999,
-                "record_date": datetime.date(2020, 3, 1),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": None,
-                "gest_value": None,
-            },
-        ])
+        records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 9999,
+                    "record_date": datetime.date(2020, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": None,
+                    "gest_value": None,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 9999,
+                    "record_date": datetime.date(2020, 3, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": None,
+                    "gest_value": None,
+                },
+            ]
+        )
         result = _run_hip(records, just_gestation=True)
         assert result.height == 1
         assert result["category"][0] == "PREG"
 
     def test_gestation_only_split_by_long_gap(self):
         """Gestation-only records with >305 day gap should split."""
-        records = _make_hip_records([
-            {
-                "person_id": 1,
-                "concept_id": 9999,
-                "record_date": datetime.date(2019, 1, 1),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": None,
-                "gest_value": None,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 9999,
-                "record_date": datetime.date(2020, 1, 1),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": None,
-                "gest_value": None,
-            },
-        ])
+        records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 9999,
+                    "record_date": datetime.date(2019, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": None,
+                    "gest_value": None,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 9999,
+                    "record_date": datetime.date(2020, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": None,
+                    "gest_value": None,
+                },
+            ]
+        )
         result = _run_hip(records, just_gestation=True)
         assert result.height == 2
 
     def test_no_gestation_pass(self):
         """When just_gestation=False, unassigned records not grouped."""
-        records = _make_hip_records([
-            {
-                "person_id": 1,
-                "concept_id": 9999,
-                "record_date": datetime.date(2020, 1, 1),
-                "value_as_number": None,
-                "source_table": "condition_occurrence",
-                "category": None,
-                "gest_value": None,
-            },
-        ])
+        records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 9999,
+                    "record_date": datetime.date(2020, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": None,
+                    "gest_value": None,
+                },
+            ]
+        )
         result = _run_hip(records, just_gestation=False)
         assert result.height == 0
 
     def test_episode_start_date_computed(self):
         """Episode start should be outcome_date - max_term."""
-        records = _make_hip_records([{
-            "person_id": 1,
-            "concept_id": 4014295,
-            "record_date": datetime.date(2020, 9, 1),
-            "value_as_number": None,
-            "source_table": "condition_occurrence",
-            "category": "LB",
-            "gest_value": 40,
-        }])
+        records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4014295,
+                    "record_date": datetime.date(2020, 9, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "LB",
+                    "gest_value": 40,
+                }
+            ]
+        )
         result = _run_hip(records)
         # LB max_term = 308 days
         expected_start = datetime.date(2020, 9, 1) - datetime.timedelta(days=308)
@@ -458,28 +480,38 @@ class TestRunHip:
 
     def test_ect_episode_shorter_than_lb(self):
         """ECT episodes should have shorter duration than LB."""
-        lb_records = _make_hip_records([{
-            "person_id": 1,
-            "concept_id": 4014295,
-            "record_date": datetime.date(2020, 9, 1),
-            "value_as_number": None,
-            "source_table": "condition_occurrence",
-            "category": "LB",
-            "gest_value": 40,
-        }])
-        ect_records = _make_hip_records([{
-            "person_id": 1,
-            "concept_id": 443213,
-            "record_date": datetime.date(2020, 9, 1),
-            "value_as_number": None,
-            "source_table": "condition_occurrence",
-            "category": "ECT",
-            "gest_value": None,
-        }])
+        lb_records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4014295,
+                    "record_date": datetime.date(2020, 9, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "LB",
+                    "gest_value": 40,
+                }
+            ]
+        )
+        ect_records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 443213,
+                    "record_date": datetime.date(2020, 9, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "ECT",
+                    "gest_value": None,
+                }
+            ]
+        )
         lb_result = _run_hip(lb_records)
         ect_result = _run_hip(ect_records)
         lb_duration = (lb_result["episode_end_date"][0] - lb_result["episode_start_date"][0]).days
-        ect_duration = (ect_result["episode_end_date"][0] - ect_result["episode_start_date"][0]).days
+        ect_duration = (
+            ect_result["episode_end_date"][0] - ect_result["episode_start_date"][0]
+        ).days
         assert ect_duration < lb_duration
 
 
@@ -498,65 +530,73 @@ class TestRunPps:
         assert "episode_id" in result.columns
 
     def test_single_record(self):
-        records = _make_pps_records([{
-            "person_id": 1,
-            "concept_id": 4048098,
-            "record_date": datetime.date(2020, 3, 1),
-            "value_as_number": None,
-            "source_table": "observation",
-            "min_month": 1,
-            "max_month": 3,
-        }])
+        records = _make_pps_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4048098,
+                    "record_date": datetime.date(2020, 3, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 1,
+                    "max_month": 3,
+                }
+            ]
+        )
         result = _run_pps(records)
         assert result.height == 1
         assert result["category"][0] == "PREG"
 
     def test_two_records_same_episode(self):
-        records = _make_pps_records([
-            {
-                "person_id": 1,
-                "concept_id": 4048098,
-                "record_date": datetime.date(2020, 1, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": 1,
-                "max_month": 3,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 4098620,
-                "record_date": datetime.date(2020, 4, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": 2,
-                "max_month": 9,
-            },
-        ])
+        records = _make_pps_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4048098,
+                    "record_date": datetime.date(2020, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 1,
+                    "max_month": 3,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 4098620,
+                    "record_date": datetime.date(2020, 4, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 2,
+                    "max_month": 9,
+                },
+            ]
+        )
         result = _run_pps(records)
         assert result.height == 1
 
     def test_large_gap_forces_new_episode(self):
         """Gap > 300 days should force a new episode."""
-        records = _make_pps_records([
-            {
-                "person_id": 1,
-                "concept_id": 4048098,
-                "record_date": datetime.date(2019, 1, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": 1,
-                "max_month": 3,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 4048098,
-                "record_date": datetime.date(2020, 1, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": 1,
-                "max_month": 3,
-            },
-        ])
+        records = _make_pps_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4048098,
+                    "record_date": datetime.date(2019, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 1,
+                    "max_month": 3,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 4048098,
+                    "record_date": datetime.date(2020, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 1,
+                    "max_month": 3,
+                },
+            ]
+        )
         result = _run_pps(records)
         assert result.height == 2
 
@@ -567,130 +607,138 @@ class TestRunPps:
         days, null timing so no disagreement splits) but together span
         > 365 days.
         """
-        records = _make_pps_records([
-            {
-                "person_id": 1,
-                "concept_id": 4230360,
-                "record_date": datetime.date(2019, 1, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": None,
-                "max_month": None,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 4230360,
-                "record_date": datetime.date(2019, 6, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": None,
-                "max_month": None,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 4230360,
-                "record_date": datetime.date(2019, 10, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": None,
-                "max_month": None,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 4230360,
-                "record_date": datetime.date(2020, 3, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": None,
-                "max_month": None,
-            },
-        ])
+        records = _make_pps_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4230360,
+                    "record_date": datetime.date(2019, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": None,
+                    "max_month": None,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 4230360,
+                    "record_date": datetime.date(2019, 6, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": None,
+                    "max_month": None,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 4230360,
+                    "record_date": datetime.date(2019, 10, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": None,
+                    "max_month": None,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 4230360,
+                    "record_date": datetime.date(2020, 3, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": None,
+                    "max_month": None,
+                },
+            ]
+        )
         result = _run_pps(records)
         # The episode spans Jan 2019 to Mar 2020 (>365 days), should be removed.
         # With null timing info, no disagreement splits occur, and all gaps < 300 days.
         assert result.height == 0
 
     def test_multiple_persons(self):
-        records = _make_pps_records([
-            {
-                "person_id": 1,
-                "concept_id": 4048098,
-                "record_date": datetime.date(2020, 3, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": 1,
-                "max_month": 3,
-            },
-            {
-                "person_id": 2,
-                "concept_id": 4048098,
-                "record_date": datetime.date(2020, 5, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": 1,
-                "max_month": 3,
-            },
-        ])
+        records = _make_pps_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4048098,
+                    "record_date": datetime.date(2020, 3, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 1,
+                    "max_month": 3,
+                },
+                {
+                    "person_id": 2,
+                    "concept_id": 4048098,
+                    "record_date": datetime.date(2020, 5, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 1,
+                    "max_month": 3,
+                },
+            ]
+        )
         result = _run_pps(records)
         assert result.height == 2
         assert set(result["person_id"].to_list()) == {1, 2}
 
     def test_n_pps_records_counted(self):
-        records = _make_pps_records([
-            {
-                "person_id": 1,
-                "concept_id": 4048098,
-                "record_date": datetime.date(2020, 1, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": 1,
-                "max_month": 3,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 4098620,
-                "record_date": datetime.date(2020, 2, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": 2,
-                "max_month": 9,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 4113553,
-                "record_date": datetime.date(2020, 3, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": 4,
-                "max_month": 6,
-            },
-        ])
+        records = _make_pps_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4048098,
+                    "record_date": datetime.date(2020, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 1,
+                    "max_month": 3,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 4098620,
+                    "record_date": datetime.date(2020, 2, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 2,
+                    "max_month": 9,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 4113553,
+                    "record_date": datetime.date(2020, 3, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 4,
+                    "max_month": 6,
+                },
+            ]
+        )
         result = _run_pps(records)
         assert result.height == 1
         assert result["n_pps_records"][0] == 3
 
     def test_timing_disagreement_splits_episode(self):
         """Records that disagree in timing with gap > 30 days should split."""
-        records = _make_pps_records([
-            {
-                "person_id": 1,
-                "concept_id": 4238072,
-                "record_date": datetime.date(2020, 1, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": 9,
-                "max_month": 10,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 4048098,
-                "record_date": datetime.date(2020, 3, 15),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": 1,
-                "max_month": 3,
-            },
-        ])
+        records = _make_pps_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4238072,
+                    "record_date": datetime.date(2020, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 9,
+                    "max_month": 10,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 4048098,
+                    "record_date": datetime.date(2020, 3, 15),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": 1,
+                    "max_month": 3,
+                },
+            ]
+        )
         result = _run_pps(records)
         # First record: term pregnancy (month 9-10), second is first visit (1-3).
         # Elapsed ~2.5 months, expected 1-3 but with tolerance still might agree.
@@ -708,74 +756,104 @@ class TestMergeHipps:
     """Tests for _merge_hipps()."""
 
     def test_empty_both(self):
-        hip = pl.DataFrame(schema={
-            "person_id": pl.Int64, "episode_id": pl.Int64, "category": pl.Utf8,
-            "episode_start_date": pl.Date, "episode_end_date": pl.Date,
-            "outcome_date": pl.Date, "outcome_concept_id": pl.Int64,
-        })
-        pps = pl.DataFrame(schema={
-            "person_id": pl.Int64, "episode_id": pl.Int64,
-            "episode_start_date": pl.Date, "episode_end_date": pl.Date,
-            "n_pps_records": pl.Int64, "category": pl.Utf8,
-        })
+        hip = pl.DataFrame(
+            schema={
+                "person_id": pl.Int64,
+                "episode_id": pl.Int64,
+                "category": pl.Utf8,
+                "episode_start_date": pl.Date,
+                "episode_end_date": pl.Date,
+                "outcome_date": pl.Date,
+                "outcome_concept_id": pl.Int64,
+            }
+        )
+        pps = pl.DataFrame(
+            schema={
+                "person_id": pl.Int64,
+                "episode_id": pl.Int64,
+                "episode_start_date": pl.Date,
+                "episode_end_date": pl.Date,
+                "n_pps_records": pl.Int64,
+                "category": pl.Utf8,
+            }
+        )
         result = _merge_hipps(hip, pps)
         assert result.height == 0
 
     def test_hip_only(self):
-        hip = pl.DataFrame({
-            "person_id": [1],
-            "episode_id": [1],
-            "category": ["LB"],
-            "episode_start_date": [datetime.date(2019, 12, 1)],
-            "episode_end_date": [datetime.date(2020, 9, 1)],
-            "outcome_date": [datetime.date(2020, 9, 1)],
-            "outcome_concept_id": [4014295],
-        })
-        pps = pl.DataFrame(schema={
-            "person_id": pl.Int64, "episode_id": pl.Int64,
-            "episode_start_date": pl.Date, "episode_end_date": pl.Date,
-            "n_pps_records": pl.Int64, "category": pl.Utf8,
-        })
+        hip = pl.DataFrame(
+            {
+                "person_id": [1],
+                "episode_id": [1],
+                "category": ["LB"],
+                "episode_start_date": [datetime.date(2019, 12, 1)],
+                "episode_end_date": [datetime.date(2020, 9, 1)],
+                "outcome_date": [datetime.date(2020, 9, 1)],
+                "outcome_concept_id": [4014295],
+            }
+        )
+        pps = pl.DataFrame(
+            schema={
+                "person_id": pl.Int64,
+                "episode_id": pl.Int64,
+                "episode_start_date": pl.Date,
+                "episode_end_date": pl.Date,
+                "n_pps_records": pl.Int64,
+                "category": pl.Utf8,
+            }
+        )
         result = _merge_hipps(hip, pps)
         assert result.height == 1
         assert result["source"][0] == "HIP"
 
     def test_pps_only(self):
-        hip = pl.DataFrame(schema={
-            "person_id": pl.Int64, "episode_id": pl.Int64, "category": pl.Utf8,
-            "episode_start_date": pl.Date, "episode_end_date": pl.Date,
-            "outcome_date": pl.Date, "outcome_concept_id": pl.Int64,
-        })
-        pps = pl.DataFrame({
-            "person_id": [1],
-            "episode_id": [1],
-            "episode_start_date": [datetime.date(2020, 1, 1)],
-            "episode_end_date": [datetime.date(2020, 6, 1)],
-            "n_pps_records": [5],
-            "category": ["PREG"],
-        })
+        hip = pl.DataFrame(
+            schema={
+                "person_id": pl.Int64,
+                "episode_id": pl.Int64,
+                "category": pl.Utf8,
+                "episode_start_date": pl.Date,
+                "episode_end_date": pl.Date,
+                "outcome_date": pl.Date,
+                "outcome_concept_id": pl.Int64,
+            }
+        )
+        pps = pl.DataFrame(
+            {
+                "person_id": [1],
+                "episode_id": [1],
+                "episode_start_date": [datetime.date(2020, 1, 1)],
+                "episode_end_date": [datetime.date(2020, 6, 1)],
+                "n_pps_records": [5],
+                "category": ["PREG"],
+            }
+        )
         result = _merge_hipps(hip, pps)
         assert result.height == 1
         assert result["source"][0] == "PPS"
 
     def test_overlapping_episodes_merged(self):
-        hip = pl.DataFrame({
-            "person_id": [1],
-            "episode_id": [1],
-            "category": ["LB"],
-            "episode_start_date": [datetime.date(2019, 12, 1)],
-            "episode_end_date": [datetime.date(2020, 9, 1)],
-            "outcome_date": [datetime.date(2020, 9, 1)],
-            "outcome_concept_id": [4014295],
-        })
-        pps = pl.DataFrame({
-            "person_id": [1],
-            "episode_id": [1],
-            "episode_start_date": [datetime.date(2020, 1, 1)],
-            "episode_end_date": [datetime.date(2020, 8, 1)],
-            "n_pps_records": [5],
-            "category": ["PREG"],
-        })
+        hip = pl.DataFrame(
+            {
+                "person_id": [1],
+                "episode_id": [1],
+                "category": ["LB"],
+                "episode_start_date": [datetime.date(2019, 12, 1)],
+                "episode_end_date": [datetime.date(2020, 9, 1)],
+                "outcome_date": [datetime.date(2020, 9, 1)],
+                "outcome_concept_id": [4014295],
+            }
+        )
+        pps = pl.DataFrame(
+            {
+                "person_id": [1],
+                "episode_id": [1],
+                "episode_start_date": [datetime.date(2020, 1, 1)],
+                "episode_end_date": [datetime.date(2020, 8, 1)],
+                "n_pps_records": [5],
+                "category": ["PREG"],
+            }
+        )
         result = _merge_hipps(hip, pps)
         assert result.height == 1
         assert result["source"][0] == "HIP+PPS"
@@ -783,23 +861,27 @@ class TestMergeHipps:
         assert result["category"][0] == "LB"
 
     def test_non_overlapping_stay_separate(self):
-        hip = pl.DataFrame({
-            "person_id": [1],
-            "episode_id": [1],
-            "category": ["LB"],
-            "episode_start_date": [datetime.date(2018, 1, 1)],
-            "episode_end_date": [datetime.date(2018, 9, 1)],
-            "outcome_date": [datetime.date(2018, 9, 1)],
-            "outcome_concept_id": [4014295],
-        })
-        pps = pl.DataFrame({
-            "person_id": [1],
-            "episode_id": [1],
-            "episode_start_date": [datetime.date(2020, 1, 1)],
-            "episode_end_date": [datetime.date(2020, 6, 1)],
-            "n_pps_records": [5],
-            "category": ["PREG"],
-        })
+        hip = pl.DataFrame(
+            {
+                "person_id": [1],
+                "episode_id": [1],
+                "category": ["LB"],
+                "episode_start_date": [datetime.date(2018, 1, 1)],
+                "episode_end_date": [datetime.date(2018, 9, 1)],
+                "outcome_date": [datetime.date(2018, 9, 1)],
+                "outcome_concept_id": [4014295],
+            }
+        )
+        pps = pl.DataFrame(
+            {
+                "person_id": [1],
+                "episode_id": [1],
+                "episode_start_date": [datetime.date(2020, 1, 1)],
+                "episode_end_date": [datetime.date(2020, 6, 1)],
+                "n_pps_records": [5],
+                "category": ["PREG"],
+            }
+        )
         result = _merge_hipps(hip, pps)
         assert result.height == 2
         sources = set(result["source"].to_list())
@@ -807,20 +889,27 @@ class TestMergeHipps:
         assert "PPS" in sources
 
     def test_multiple_persons(self):
-        hip = pl.DataFrame({
-            "person_id": [1, 2],
-            "episode_id": [1, 2],
-            "category": ["LB", "SA"],
-            "episode_start_date": [datetime.date(2019, 12, 1), datetime.date(2020, 1, 1)],
-            "episode_end_date": [datetime.date(2020, 9, 1), datetime.date(2020, 5, 1)],
-            "outcome_date": [datetime.date(2020, 9, 1), datetime.date(2020, 5, 1)],
-            "outcome_concept_id": [4014295, 4199459],
-        })
-        pps = pl.DataFrame(schema={
-            "person_id": pl.Int64, "episode_id": pl.Int64,
-            "episode_start_date": pl.Date, "episode_end_date": pl.Date,
-            "n_pps_records": pl.Int64, "category": pl.Utf8,
-        })
+        hip = pl.DataFrame(
+            {
+                "person_id": [1, 2],
+                "episode_id": [1, 2],
+                "category": ["LB", "SA"],
+                "episode_start_date": [datetime.date(2019, 12, 1), datetime.date(2020, 1, 1)],
+                "episode_end_date": [datetime.date(2020, 9, 1), datetime.date(2020, 5, 1)],
+                "outcome_date": [datetime.date(2020, 9, 1), datetime.date(2020, 5, 1)],
+                "outcome_concept_id": [4014295, 4199459],
+            }
+        )
+        pps = pl.DataFrame(
+            schema={
+                "person_id": pl.Int64,
+                "episode_id": pl.Int64,
+                "episode_start_date": pl.Date,
+                "episode_end_date": pl.Date,
+                "n_pps_records": pl.Int64,
+                "category": pl.Utf8,
+            }
+        )
         result = _merge_hipps(hip, pps)
         assert result.height == 2
         assert set(result["person_id"].to_list()) == {1, 2}
@@ -835,14 +924,21 @@ class TestRunEsd:
     """Tests for _run_esd()."""
 
     def test_empty_episodes(self):
-        episodes = pl.DataFrame(schema={
-            "person_id": pl.Int64, "merged_episode_id": pl.Int64,
-            "hip_episode_id": pl.Int64, "pps_episode_id": pl.Int64,
-            "category": pl.Utf8, "episode_start_date": pl.Date,
-            "episode_end_date": pl.Date, "outcome_date": pl.Date,
-            "outcome_concept_id": pl.Int64, "n_pps_records": pl.Int64,
-            "source": pl.Utf8,
-        })
+        episodes = pl.DataFrame(
+            schema={
+                "person_id": pl.Int64,
+                "merged_episode_id": pl.Int64,
+                "hip_episode_id": pl.Int64,
+                "pps_episode_id": pl.Int64,
+                "category": pl.Utf8,
+                "episode_start_date": pl.Date,
+                "episode_end_date": pl.Date,
+                "outcome_date": pl.Date,
+                "outcome_concept_id": pl.Int64,
+                "n_pps_records": pl.Int64,
+                "source": pl.Utf8,
+            }
+        )
         esd = _make_esd_records([])
         result = _run_esd(episodes, esd)
         assert "esd_start_date" in result.columns
@@ -850,120 +946,142 @@ class TestRunEsd:
         assert "final_start_date" in result.columns
 
     def test_no_esd_records_low_precision(self):
-        episodes = pl.DataFrame({
-            "person_id": [1],
-            "merged_episode_id": [1],
-            "hip_episode_id": [1],
-            "pps_episode_id": [None],
-            "category": ["LB"],
-            "episode_start_date": [datetime.date(2019, 12, 1)],
-            "episode_end_date": [datetime.date(2020, 9, 1)],
-            "outcome_date": [datetime.date(2020, 9, 1)],
-            "outcome_concept_id": [4014295],
-            "n_pps_records": [0],
-            "source": ["HIP"],
-        })
+        episodes = pl.DataFrame(
+            {
+                "person_id": [1],
+                "merged_episode_id": [1],
+                "hip_episode_id": [1],
+                "pps_episode_id": [None],
+                "category": ["LB"],
+                "episode_start_date": [datetime.date(2019, 12, 1)],
+                "episode_end_date": [datetime.date(2020, 9, 1)],
+                "outcome_date": [datetime.date(2020, 9, 1)],
+                "outcome_concept_id": [4014295],
+                "n_pps_records": [0],
+                "source": ["HIP"],
+            }
+        )
         esd = _make_esd_records([])
         result = _run_esd(episodes, esd)
         assert result["precision"][0] == "low"
         assert result["esd_start_date"][0] is None
 
     def test_gw_evidence_high_precision(self):
-        episodes = pl.DataFrame({
-            "person_id": [1],
-            "merged_episode_id": [1],
-            "hip_episode_id": [1],
-            "pps_episode_id": [None],
-            "category": ["LB"],
-            "episode_start_date": [datetime.date(2019, 12, 1)],
-            "episode_end_date": [datetime.date(2020, 9, 1)],
-            "outcome_date": [datetime.date(2020, 9, 1)],
-            "outcome_concept_id": [4014295],
-            "n_pps_records": [0],
-            "source": ["HIP"],
-        })
-        esd = _make_esd_records([{
-            "person_id": 1,
-            "concept_id": 4260747,
-            "record_date": datetime.date(2020, 9, 1),
-            "value_as_number": 38.0,
-            "source_table": "measurement",
-            "esd_category": "GW",
-            "esd_domain": "measurement",
-        }])
+        episodes = pl.DataFrame(
+            {
+                "person_id": [1],
+                "merged_episode_id": [1],
+                "hip_episode_id": [1],
+                "pps_episode_id": [None],
+                "category": ["LB"],
+                "episode_start_date": [datetime.date(2019, 12, 1)],
+                "episode_end_date": [datetime.date(2020, 9, 1)],
+                "outcome_date": [datetime.date(2020, 9, 1)],
+                "outcome_concept_id": [4014295],
+                "n_pps_records": [0],
+                "source": ["HIP"],
+            }
+        )
+        esd = _make_esd_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4260747,
+                    "record_date": datetime.date(2020, 9, 1),
+                    "value_as_number": 38.0,
+                    "source_table": "measurement",
+                    "esd_category": "GW",
+                    "esd_domain": "measurement",
+                }
+            ]
+        )
         result = _run_esd(episodes, esd)
         assert result["precision"][0] == "high"
         expected_start = datetime.date(2020, 9, 1) - datetime.timedelta(days=38 * 7)
         assert result["esd_start_date"][0] == expected_start
 
     def test_gr3m_evidence_medium_precision(self):
-        episodes = pl.DataFrame({
-            "person_id": [1],
-            "merged_episode_id": [1],
-            "hip_episode_id": [1],
-            "pps_episode_id": [None],
-            "category": ["LB"],
-            "episode_start_date": [datetime.date(2019, 12, 1)],
-            "episode_end_date": [datetime.date(2020, 9, 1)],
-            "outcome_date": [datetime.date(2020, 9, 1)],
-            "outcome_concept_id": [4014295],
-            "n_pps_records": [0],
-            "source": ["HIP"],
-        })
-        esd = _make_esd_records([{
-            "person_id": 1,
-            "concept_id": 4299535,  # First trimester
-            "record_date": datetime.date(2020, 2, 1),
-            "value_as_number": None,
-            "source_table": "condition_occurrence",
-            "esd_category": "GR3m",
-            "esd_domain": "condition",
-        }])
+        episodes = pl.DataFrame(
+            {
+                "person_id": [1],
+                "merged_episode_id": [1],
+                "hip_episode_id": [1],
+                "pps_episode_id": [None],
+                "category": ["LB"],
+                "episode_start_date": [datetime.date(2019, 12, 1)],
+                "episode_end_date": [datetime.date(2020, 9, 1)],
+                "outcome_date": [datetime.date(2020, 9, 1)],
+                "outcome_concept_id": [4014295],
+                "n_pps_records": [0],
+                "source": ["HIP"],
+            }
+        )
+        esd = _make_esd_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4299535,  # First trimester
+                    "record_date": datetime.date(2020, 2, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "esd_category": "GR3m",
+                    "esd_domain": "condition",
+                }
+            ]
+        )
         result = _run_esd(episodes, esd)
         assert result["precision"][0] == "medium"
         assert result["esd_start_date"][0] is not None
 
     def test_final_start_date_uses_esd_when_available(self):
-        episodes = pl.DataFrame({
-            "person_id": [1],
-            "merged_episode_id": [1],
-            "hip_episode_id": [1],
-            "pps_episode_id": [None],
-            "category": ["LB"],
-            "episode_start_date": [datetime.date(2019, 12, 1)],
-            "episode_end_date": [datetime.date(2020, 9, 1)],
-            "outcome_date": [datetime.date(2020, 9, 1)],
-            "outcome_concept_id": [4014295],
-            "n_pps_records": [0],
-            "source": ["HIP"],
-        })
-        esd = _make_esd_records([{
-            "person_id": 1,
-            "concept_id": 4260747,
-            "record_date": datetime.date(2020, 9, 1),
-            "value_as_number": 39.0,
-            "source_table": "measurement",
-            "esd_category": "GW",
-            "esd_domain": "measurement",
-        }])
+        episodes = pl.DataFrame(
+            {
+                "person_id": [1],
+                "merged_episode_id": [1],
+                "hip_episode_id": [1],
+                "pps_episode_id": [None],
+                "category": ["LB"],
+                "episode_start_date": [datetime.date(2019, 12, 1)],
+                "episode_end_date": [datetime.date(2020, 9, 1)],
+                "outcome_date": [datetime.date(2020, 9, 1)],
+                "outcome_concept_id": [4014295],
+                "n_pps_records": [0],
+                "source": ["HIP"],
+            }
+        )
+        esd = _make_esd_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4260747,
+                    "record_date": datetime.date(2020, 9, 1),
+                    "value_as_number": 39.0,
+                    "source_table": "measurement",
+                    "esd_category": "GW",
+                    "esd_domain": "measurement",
+                }
+            ]
+        )
         result = _run_esd(episodes, esd)
         expected_start = datetime.date(2020, 9, 1) - datetime.timedelta(days=39 * 7)
         assert result["final_start_date"][0] == expected_start
 
     def test_fallback_start_date_uses_category_term(self):
-        episodes = pl.DataFrame({
-            "person_id": [1],
-            "merged_episode_id": [1],
-            "hip_episode_id": [1],
-            "pps_episode_id": [None],
-            "category": ["LB"],
-            "episode_start_date": [datetime.date(2019, 12, 1)],
-            "episode_end_date": [datetime.date(2020, 9, 1)],
-            "outcome_date": [datetime.date(2020, 9, 1)],
-            "outcome_concept_id": [4014295],
-            "n_pps_records": [0],
-            "source": ["HIP"],
-        })
+        episodes = pl.DataFrame(
+            {
+                "person_id": [1],
+                "merged_episode_id": [1],
+                "hip_episode_id": [1],
+                "pps_episode_id": [None],
+                "category": ["LB"],
+                "episode_start_date": [datetime.date(2019, 12, 1)],
+                "episode_end_date": [datetime.date(2020, 9, 1)],
+                "outcome_date": [datetime.date(2020, 9, 1)],
+                "outcome_concept_id": [4014295],
+                "n_pps_records": [0],
+                "source": ["HIP"],
+            }
+        )
         esd = _make_esd_records([])
         result = _run_esd(episodes, esd)
         # No ESD evidence: fall back to outcome_date - max_term(LB=308)
@@ -1032,13 +1150,20 @@ class TestMockPregnancyCdm:
 
     def test_returns_cdm_reference(self):
         from omopy.generics.cdm_reference import CdmReference
+
         cdm = mock_pregnancy_cdm(seed=42, n_persons=10)
         assert isinstance(cdm, CdmReference)
 
     def test_has_required_tables(self):
         cdm = mock_pregnancy_cdm(seed=42, n_persons=10)
-        for tbl in ["person", "observation_period", "condition_occurrence",
-                     "procedure_occurrence", "measurement", "observation"]:
+        for tbl in [
+            "person",
+            "observation_period",
+            "condition_occurrence",
+            "procedure_occurrence",
+            "measurement",
+            "observation",
+        ]:
             assert tbl in cdm, f"Missing table: {tbl}"
 
     def test_person_table_has_persons(self):
@@ -1090,68 +1215,69 @@ class TestValidateEpisodes:
     """Tests for validate_episodes()."""
 
     def test_empty_episodes(self):
-        df = pl.DataFrame(schema={
-            "person_id": pl.Int64,
-            "episode_start_date": pl.Date,
-            "episode_end_date": pl.Date,
-        })
+        df = pl.DataFrame(
+            schema={
+                "person_id": pl.Int64,
+                "episode_start_date": pl.Date,
+                "episode_end_date": pl.Date,
+            }
+        )
         result = validate_episodes(df)
         assert result.height >= 1
         assert "check" in result.columns
 
     def test_valid_episodes_no_violations(self):
-        df = pl.DataFrame({
-            "person_id": [1, 2],
-            "episode_start_date": [datetime.date(2020, 1, 1), datetime.date(2020, 6, 1)],
-            "episode_end_date": [datetime.date(2020, 5, 1), datetime.date(2020, 9, 1)],
-        })
+        df = pl.DataFrame(
+            {
+                "person_id": [1, 2],
+                "episode_start_date": [datetime.date(2020, 1, 1), datetime.date(2020, 6, 1)],
+                "episode_end_date": [datetime.date(2020, 5, 1), datetime.date(2020, 9, 1)],
+            }
+        )
         result = validate_episodes(df)
         violations = result.filter(pl.col("n_violations") > 0)
         assert violations.height == 0
 
     def test_start_after_end_detected(self):
-        df = pl.DataFrame({
-            "person_id": [1],
-            "episode_start_date": [datetime.date(2020, 9, 1)],
-            "episode_end_date": [datetime.date(2020, 1, 1)],
-        })
-        result = validate_episodes(df)
-        bad = result.filter(
-            (pl.col("check") == "start_before_end")
-            & (pl.col("n_violations") > 0)
+        df = pl.DataFrame(
+            {
+                "person_id": [1],
+                "episode_start_date": [datetime.date(2020, 9, 1)],
+                "episode_end_date": [datetime.date(2020, 1, 1)],
+            }
         )
+        result = validate_episodes(df)
+        bad = result.filter((pl.col("check") == "start_before_end") & (pl.col("n_violations") > 0))
         assert bad.height == 1
 
     def test_max_duration_exceeded(self):
-        df = pl.DataFrame({
-            "person_id": [1],
-            "episode_start_date": [datetime.date(2019, 1, 1)],
-            "episode_end_date": [datetime.date(2020, 6, 1)],
-        })
-        result = validate_episodes(df, max_days=365)
-        bad = result.filter(
-            (pl.col("check") == "max_duration")
-            & (pl.col("n_violations") > 0)
+        df = pl.DataFrame(
+            {
+                "person_id": [1],
+                "episode_start_date": [datetime.date(2019, 1, 1)],
+                "episode_end_date": [datetime.date(2020, 6, 1)],
+            }
         )
+        result = validate_episodes(df, max_days=365)
+        bad = result.filter((pl.col("check") == "max_duration") & (pl.col("n_violations") > 0))
         assert bad.height == 1
 
     def test_overlap_detected(self):
-        df = pl.DataFrame({
-            "person_id": [1, 1],
-            "episode_start_date": [
-                datetime.date(2020, 1, 1),
-                datetime.date(2020, 3, 1),
-            ],
-            "episode_end_date": [
-                datetime.date(2020, 6, 1),
-                datetime.date(2020, 9, 1),
-            ],
-        })
-        result = validate_episodes(df)
-        bad = result.filter(
-            (pl.col("check") == "no_overlaps")
-            & (pl.col("n_violations") > 0)
+        df = pl.DataFrame(
+            {
+                "person_id": [1, 1],
+                "episode_start_date": [
+                    datetime.date(2020, 1, 1),
+                    datetime.date(2020, 3, 1),
+                ],
+                "episode_end_date": [
+                    datetime.date(2020, 6, 1),
+                    datetime.date(2020, 9, 1),
+                ],
+            }
         )
+        result = validate_episodes(df)
+        bad = result.filter((pl.col("check") == "no_overlaps") & (pl.col("n_violations") > 0))
         assert bad.height == 1
 
 
@@ -1162,39 +1288,41 @@ class TestValidateEpisodes:
 
 def _make_pregnancy_result() -> PregnancyResult:
     """Create a minimal PregnancyResult for testing summarise/table/plot."""
-    episodes = pl.DataFrame({
-        "person_id": [1, 1, 2],
-        "merged_episode_id": [1, 2, 3],
-        "hip_episode_id": [1, 2, None],
-        "pps_episode_id": [None, None, 1],
-        "category": ["LB", "SA", "PREG"],
-        "episode_start_date": [
-            datetime.date(2019, 12, 1),
-            datetime.date(2021, 3, 1),
-            datetime.date(2020, 1, 1),
-        ],
-        "episode_end_date": [
-            datetime.date(2020, 9, 1),
-            datetime.date(2021, 6, 1),
-            datetime.date(2020, 6, 1),
-        ],
-        "outcome_date": [
-            datetime.date(2020, 9, 1),
-            datetime.date(2021, 6, 1),
-            None,
-        ],
-        "outcome_concept_id": [4014295, 4199459, None],
-        "n_pps_records": [0, 0, 5],
-        "source": ["HIP", "HIP", "PPS"],
-        "esd_start_date": [None, None, None],
-        "gestational_age_weeks": [39.0, 12.0, None],
-        "precision": ["high", "low", "low"],
-        "final_start_date": [
-            datetime.date(2019, 12, 5),
-            datetime.date(2021, 3, 5),
-            datetime.date(2020, 1, 1),
-        ],
-    })
+    episodes = pl.DataFrame(
+        {
+            "person_id": [1, 1, 2],
+            "merged_episode_id": [1, 2, 3],
+            "hip_episode_id": [1, 2, None],
+            "pps_episode_id": [None, None, 1],
+            "category": ["LB", "SA", "PREG"],
+            "episode_start_date": [
+                datetime.date(2019, 12, 1),
+                datetime.date(2021, 3, 1),
+                datetime.date(2020, 1, 1),
+            ],
+            "episode_end_date": [
+                datetime.date(2020, 9, 1),
+                datetime.date(2021, 6, 1),
+                datetime.date(2020, 6, 1),
+            ],
+            "outcome_date": [
+                datetime.date(2020, 9, 1),
+                datetime.date(2021, 6, 1),
+                None,
+            ],
+            "outcome_concept_id": [4014295, 4199459, None],
+            "n_pps_records": [0, 0, 5],
+            "source": ["HIP", "HIP", "PPS"],
+            "esd_start_date": [None, None, None],
+            "gestational_age_weeks": [39.0, 12.0, None],
+            "precision": ["high", "low", "low"],
+            "final_start_date": [
+                datetime.date(2019, 12, 5),
+                datetime.date(2021, 3, 5),
+                datetime.date(2020, 1, 1),
+            ],
+        }
+    )
     return PregnancyResult(
         episodes=episodes,
         hip_episodes=pl.DataFrame({"x": [1, 2]}),
@@ -1222,8 +1350,7 @@ class TestSummarisePregnancies:
         result = _make_pregnancy_result()
         sr = summarise_pregnancies(result)
         count_rows = sr.data.filter(
-            (pl.col("variable_name") == "Number episodes")
-            & (pl.col("estimate_name") == "count")
+            (pl.col("variable_name") == "Number episodes") & (pl.col("estimate_name") == "count")
         )
         assert count_rows.height >= 1
         assert count_rows["estimate_value"][0] == "3"
@@ -1232,8 +1359,7 @@ class TestSummarisePregnancies:
         result = _make_pregnancy_result()
         sr = summarise_pregnancies(result)
         count_rows = sr.data.filter(
-            (pl.col("variable_name") == "Number persons")
-            & (pl.col("estimate_name") == "count")
+            (pl.col("variable_name") == "Number persons") & (pl.col("estimate_name") == "count")
         )
         assert count_rows.height >= 1
         assert count_rows["estimate_value"][0] == "2"
@@ -1271,16 +1397,18 @@ class TestSummarisePregnancies:
 
     def test_empty_episodes_still_works(self):
         empty_result = PregnancyResult(
-            episodes=pl.DataFrame(schema={
-                "person_id": pl.Int64,
-                "merged_episode_id": pl.Int64,
-                "category": pl.Utf8,
-                "episode_start_date": pl.Date,
-                "episode_end_date": pl.Date,
-                "source": pl.Utf8,
-                "precision": pl.Utf8,
-                "gestational_age_weeks": pl.Float64,
-            }),
+            episodes=pl.DataFrame(
+                schema={
+                    "person_id": pl.Int64,
+                    "merged_episode_id": pl.Int64,
+                    "category": pl.Utf8,
+                    "episode_start_date": pl.Date,
+                    "episode_end_date": pl.Date,
+                    "source": pl.Utf8,
+                    "precision": pl.Utf8,
+                    "gestational_age_weeks": pl.Float64,
+                }
+            ),
             hip_episodes=pl.DataFrame({"x": pl.Series([], dtype=pl.Int64)}),
             pps_episodes=pl.DataFrame({"x": pl.Series([], dtype=pl.Int64)}),
             merged_episodes=pl.DataFrame({"x": pl.Series([], dtype=pl.Int64)}),
@@ -1349,38 +1477,47 @@ class TestPublicImports:
 
     def test_import_identify_pregnancies(self):
         from omopy.pregnancy import identify_pregnancies
+
         assert callable(identify_pregnancies)
 
     def test_import_pregnancy_result(self):
         from omopy.pregnancy import PregnancyResult
+
         assert PregnancyResult is not None
 
     def test_import_summarise(self):
         from omopy.pregnancy import summarise_pregnancies
+
         assert callable(summarise_pregnancies)
 
     def test_import_table(self):
         from omopy.pregnancy import table_pregnancies
+
         assert callable(table_pregnancies)
 
     def test_import_plot(self):
         from omopy.pregnancy import plot_pregnancies
+
         assert callable(plot_pregnancies)
 
     def test_import_mock(self):
         from omopy.pregnancy import mock_pregnancy_cdm
+
         assert callable(mock_pregnancy_cdm)
 
     def test_import_validate(self):
         from omopy.pregnancy import validate_episodes
+
         assert callable(validate_episodes)
 
     def test_import_outcome_categories(self):
         from omopy.pregnancy import OUTCOME_CATEGORIES
+
         assert isinstance(OUTCOME_CATEGORIES, dict)
 
     def test_all_exports(self):
         import omopy.pregnancy
+
         assert hasattr(omopy.pregnancy, "__all__")
         assert len(omopy.pregnancy.__all__) == 8
 
@@ -1394,15 +1531,19 @@ class TestEdgeCases:
     """Edge case tests for various algorithm components."""
 
     def test_hip_single_ect(self):
-        records = _make_hip_records([{
-            "person_id": 1,
-            "concept_id": 443213,
-            "record_date": datetime.date(2020, 4, 1),
-            "value_as_number": None,
-            "source_table": "condition_occurrence",
-            "category": "ECT",
-            "gest_value": None,
-        }])
+        records = _make_hip_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 443213,
+                    "record_date": datetime.date(2020, 4, 1),
+                    "value_as_number": None,
+                    "source_table": "condition_occurrence",
+                    "category": "ECT",
+                    "gest_value": None,
+                }
+            ]
+        )
         result = _run_hip(records)
         assert result.height == 1
         # ECT max term = 84 days
@@ -1411,63 +1552,69 @@ class TestEdgeCases:
 
     def test_pps_null_months_tolerated(self):
         """PPS records with null min/max months should still be grouped."""
-        records = _make_pps_records([
-            {
-                "person_id": 1,
-                "concept_id": 9999,
-                "record_date": datetime.date(2020, 1, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": None,
-                "max_month": None,
-            },
-            {
-                "person_id": 1,
-                "concept_id": 9999,
-                "record_date": datetime.date(2020, 3, 1),
-                "value_as_number": None,
-                "source_table": "observation",
-                "min_month": None,
-                "max_month": None,
-            },
-        ])
+        records = _make_pps_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 9999,
+                    "record_date": datetime.date(2020, 1, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": None,
+                    "max_month": None,
+                },
+                {
+                    "person_id": 1,
+                    "concept_id": 9999,
+                    "record_date": datetime.date(2020, 3, 1),
+                    "value_as_number": None,
+                    "source_table": "observation",
+                    "min_month": None,
+                    "max_month": None,
+                },
+            ]
+        )
         result = _run_pps(records)
         assert result.height == 1
 
     def test_merge_many_to_many(self):
         """Two HIP and two PPS episodes for one person with overlaps."""
-        hip = pl.DataFrame({
-            "person_id": [1, 1],
-            "episode_id": [1, 2],
-            "category": ["LB", "SA"],
-            "episode_start_date": [
-                datetime.date(2019, 6, 1),
-                datetime.date(2020, 6, 1),
-            ],
-            "episode_end_date": [
-                datetime.date(2020, 3, 1),
-                datetime.date(2020, 12, 1),
-            ],
-            "outcome_date": [
-                datetime.date(2020, 3, 1),
-                datetime.date(2020, 12, 1),
-            ],
-            "outcome_concept_id": [4014295, 4199459],
-        })
-        pps = pl.DataFrame({
-            "person_id": [1, 1],
-            "episode_id": [10, 11],
-            "episode_start_date": [
-                datetime.date(2019, 7, 1),
-                datetime.date(2020, 7, 1),
-            ],
-            "episode_end_date": [
-                datetime.date(2020, 2, 1),
-                datetime.date(2020, 11, 1),
-            ],
-            "n_pps_records": [4, 3],
-            "category": ["PREG", "PREG"],
-        })
+        hip = pl.DataFrame(
+            {
+                "person_id": [1, 1],
+                "episode_id": [1, 2],
+                "category": ["LB", "SA"],
+                "episode_start_date": [
+                    datetime.date(2019, 6, 1),
+                    datetime.date(2020, 6, 1),
+                ],
+                "episode_end_date": [
+                    datetime.date(2020, 3, 1),
+                    datetime.date(2020, 12, 1),
+                ],
+                "outcome_date": [
+                    datetime.date(2020, 3, 1),
+                    datetime.date(2020, 12, 1),
+                ],
+                "outcome_concept_id": [4014295, 4199459],
+            }
+        )
+        pps = pl.DataFrame(
+            {
+                "person_id": [1, 1],
+                "episode_id": [10, 11],
+                "episode_start_date": [
+                    datetime.date(2019, 7, 1),
+                    datetime.date(2020, 7, 1),
+                ],
+                "episode_end_date": [
+                    datetime.date(2020, 2, 1),
+                    datetime.date(2020, 11, 1),
+                ],
+                "n_pps_records": [4, 3],
+                "category": ["PREG", "PREG"],
+            }
+        )
         result = _merge_hipps(hip, pps)
         # Both HIP episodes overlap with their respective PPS episodes
         assert result.height == 2
@@ -1476,50 +1623,52 @@ class TestEdgeCases:
 
     def test_esd_gestational_week_out_of_range_ignored(self):
         """GW values outside 1-45 should be ignored."""
-        episodes = pl.DataFrame({
-            "person_id": [1],
-            "merged_episode_id": [1],
-            "hip_episode_id": [1],
-            "pps_episode_id": [None],
-            "category": ["LB"],
-            "episode_start_date": [datetime.date(2019, 12, 1)],
-            "episode_end_date": [datetime.date(2020, 9, 1)],
-            "outcome_date": [datetime.date(2020, 9, 1)],
-            "outcome_concept_id": [4014295],
-            "n_pps_records": [0],
-            "source": ["HIP"],
-        })
-        esd = _make_esd_records([{
-            "person_id": 1,
-            "concept_id": 4260747,
-            "record_date": datetime.date(2020, 9, 1),
-            "value_as_number": 99.0,  # Out of range
-            "source_table": "measurement",
-            "esd_category": "GW",
-            "esd_domain": "measurement",
-        }])
+        episodes = pl.DataFrame(
+            {
+                "person_id": [1],
+                "merged_episode_id": [1],
+                "hip_episode_id": [1],
+                "pps_episode_id": [None],
+                "category": ["LB"],
+                "episode_start_date": [datetime.date(2019, 12, 1)],
+                "episode_end_date": [datetime.date(2020, 9, 1)],
+                "outcome_date": [datetime.date(2020, 9, 1)],
+                "outcome_concept_id": [4014295],
+                "n_pps_records": [0],
+                "source": ["HIP"],
+            }
+        )
+        esd = _make_esd_records(
+            [
+                {
+                    "person_id": 1,
+                    "concept_id": 4260747,
+                    "record_date": datetime.date(2020, 9, 1),
+                    "value_as_number": 99.0,  # Out of range
+                    "source_table": "measurement",
+                    "esd_category": "GW",
+                    "esd_domain": "measurement",
+                }
+            ]
+        )
         result = _run_esd(episodes, esd)
         # Should fall back to low precision since 99 weeks is out of range
         assert result["precision"][0] == "low"
 
     def test_validate_custom_max_days(self):
-        df = pl.DataFrame({
-            "person_id": [1],
-            "episode_start_date": [datetime.date(2020, 1, 1)],
-            "episode_end_date": [datetime.date(2020, 7, 1)],
-        })
+        df = pl.DataFrame(
+            {
+                "person_id": [1],
+                "episode_start_date": [datetime.date(2020, 1, 1)],
+                "episode_end_date": [datetime.date(2020, 7, 1)],
+            }
+        )
         # With max_days=100, this 182-day episode should be flagged
         result = validate_episodes(df, max_days=100)
-        bad = result.filter(
-            (pl.col("check") == "max_duration")
-            & (pl.col("n_violations") > 0)
-        )
+        bad = result.filter((pl.col("check") == "max_duration") & (pl.col("n_violations") > 0))
         assert bad.height == 1
 
         # With max_days=200, it should be fine
         result2 = validate_episodes(df, max_days=200)
-        bad2 = result2.filter(
-            (pl.col("check") == "max_duration")
-            & (pl.col("n_violations") > 0)
-        )
+        bad2 = result2.filter((pl.col("check") == "max_duration") & (pl.col("n_violations") > 0))
         assert bad2.height == 0

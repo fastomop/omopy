@@ -50,13 +50,12 @@ def _additional_columns(result: SummarisedResult) -> list[str]:
 
 
 def _filter_result_type(
-    result: SummarisedResult, result_type: str,
+    result: SummarisedResult,
+    result_type: str,
 ) -> SummarisedResult:
     """Filter a SummarisedResult to rows matching the given result_type."""
     settings = result.settings
-    matching_ids = settings.filter(
-        pl.col("result_type") == result_type
-    )["result_id"].to_list()
+    matching_ids = settings.filter(pl.col("result_type") == result_type)["result_id"].to_list()
 
     if not matching_ids:
         return result
@@ -419,9 +418,7 @@ def table_proportion_of_patients_covered(
     """
     from omopy.vis import vis_omop_table
 
-    result = _filter_result_type(
-        result, "summarise_proportion_of_patients_covered"
-    )
+    result = _filter_result_type(result, "summarise_proportion_of_patients_covered")
 
     if header is None:
         header = ["cdm_name", "cohort_name"]

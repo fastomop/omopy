@@ -37,19 +37,23 @@ def _make_cohort(
     subject_id = 1
     for cid in range(1, n_cohorts + 1):
         for _ in range(n_subjects):
-            rows.append({
-                "cohort_definition_id": cid,
-                "subject_id": subject_id,
-                "cohort_start_date": datetime.date(2020, 1, 1),
-                "cohort_end_date": datetime.date(2020, 12, 31),
-            })
+            rows.append(
+                {
+                    "cohort_definition_id": cid,
+                    "subject_id": subject_id,
+                    "cohort_start_date": datetime.date(2020, 1, 1),
+                    "cohort_end_date": datetime.date(2020, 12, 31),
+                }
+            )
             subject_id += 1
 
     df = pl.DataFrame(rows)
-    settings = pl.DataFrame({
-        "cohort_definition_id": list(range(1, n_cohorts + 1)),
-        "cohort_name": [f"cohort_{i}" for i in range(1, n_cohorts + 1)],
-    })
+    settings = pl.DataFrame(
+        {
+            "cohort_definition_id": list(range(1, n_cohorts + 1)),
+            "cohort_name": [f"cohort_{i}" for i in range(1, n_cohorts + 1)],
+        }
+    )
 
     ct = CohortTable(df, settings=settings)
     if cdm is not None:
@@ -68,45 +72,55 @@ def _make_cohort_with_overlap(
 
     # Subjects only in cohort 1
     for _ in range(n_subjects_only_1):
-        rows.append({
-            "cohort_definition_id": 1,
-            "subject_id": sid,
-            "cohort_start_date": datetime.date(2020, 1, 1),
-            "cohort_end_date": datetime.date(2020, 6, 30),
-        })
+        rows.append(
+            {
+                "cohort_definition_id": 1,
+                "subject_id": sid,
+                "cohort_start_date": datetime.date(2020, 1, 1),
+                "cohort_end_date": datetime.date(2020, 6, 30),
+            }
+        )
         sid += 1
 
     # Subjects only in cohort 2
     for _ in range(n_subjects_only_2):
-        rows.append({
-            "cohort_definition_id": 2,
-            "subject_id": sid,
-            "cohort_start_date": datetime.date(2020, 3, 1),
-            "cohort_end_date": datetime.date(2020, 12, 31),
-        })
+        rows.append(
+            {
+                "cohort_definition_id": 2,
+                "subject_id": sid,
+                "cohort_start_date": datetime.date(2020, 3, 1),
+                "cohort_end_date": datetime.date(2020, 12, 31),
+            }
+        )
         sid += 1
 
     # Subjects in both cohorts
     for _ in range(n_subjects_both):
-        rows.append({
-            "cohort_definition_id": 1,
-            "subject_id": sid,
-            "cohort_start_date": datetime.date(2020, 1, 1),
-            "cohort_end_date": datetime.date(2020, 6, 30),
-        })
-        rows.append({
-            "cohort_definition_id": 2,
-            "subject_id": sid,
-            "cohort_start_date": datetime.date(2020, 3, 1),
-            "cohort_end_date": datetime.date(2020, 12, 31),
-        })
+        rows.append(
+            {
+                "cohort_definition_id": 1,
+                "subject_id": sid,
+                "cohort_start_date": datetime.date(2020, 1, 1),
+                "cohort_end_date": datetime.date(2020, 6, 30),
+            }
+        )
+        rows.append(
+            {
+                "cohort_definition_id": 2,
+                "subject_id": sid,
+                "cohort_start_date": datetime.date(2020, 3, 1),
+                "cohort_end_date": datetime.date(2020, 12, 31),
+            }
+        )
         sid += 1
 
     df = pl.DataFrame(rows)
-    settings = pl.DataFrame({
-        "cohort_definition_id": [1, 2],
-        "cohort_name": ["cohort_1", "cohort_2"],
-    })
+    settings = pl.DataFrame(
+        {
+            "cohort_definition_id": [1, 2],
+            "cohort_name": ["cohort_1", "cohort_2"],
+        }
+    )
     return CohortTable(df, settings=settings)
 
 
@@ -116,17 +130,44 @@ def _make_cohort_with_timing() -> CohortTable:
     # Subject 2: cohort_1 on Jan 1, cohort_2 on Mar 1 (60 days later)
     # Subject 3: only in cohort_1
     rows = [
-        {"cohort_definition_id": 1, "subject_id": 1, "cohort_start_date": datetime.date(2020, 1, 1), "cohort_end_date": datetime.date(2020, 6, 30)},
-        {"cohort_definition_id": 1, "subject_id": 2, "cohort_start_date": datetime.date(2020, 1, 1), "cohort_end_date": datetime.date(2020, 6, 30)},
-        {"cohort_definition_id": 1, "subject_id": 3, "cohort_start_date": datetime.date(2020, 1, 1), "cohort_end_date": datetime.date(2020, 6, 30)},
-        {"cohort_definition_id": 2, "subject_id": 1, "cohort_start_date": datetime.date(2020, 2, 1), "cohort_end_date": datetime.date(2020, 12, 31)},
-        {"cohort_definition_id": 2, "subject_id": 2, "cohort_start_date": datetime.date(2020, 3, 1), "cohort_end_date": datetime.date(2020, 12, 31)},
+        {
+            "cohort_definition_id": 1,
+            "subject_id": 1,
+            "cohort_start_date": datetime.date(2020, 1, 1),
+            "cohort_end_date": datetime.date(2020, 6, 30),
+        },
+        {
+            "cohort_definition_id": 1,
+            "subject_id": 2,
+            "cohort_start_date": datetime.date(2020, 1, 1),
+            "cohort_end_date": datetime.date(2020, 6, 30),
+        },
+        {
+            "cohort_definition_id": 1,
+            "subject_id": 3,
+            "cohort_start_date": datetime.date(2020, 1, 1),
+            "cohort_end_date": datetime.date(2020, 6, 30),
+        },
+        {
+            "cohort_definition_id": 2,
+            "subject_id": 1,
+            "cohort_start_date": datetime.date(2020, 2, 1),
+            "cohort_end_date": datetime.date(2020, 12, 31),
+        },
+        {
+            "cohort_definition_id": 2,
+            "subject_id": 2,
+            "cohort_start_date": datetime.date(2020, 3, 1),
+            "cohort_end_date": datetime.date(2020, 12, 31),
+        },
     ]
     df = pl.DataFrame(rows)
-    settings = pl.DataFrame({
-        "cohort_definition_id": [1, 2],
-        "cohort_name": ["cohort_1", "cohort_2"],
-    })
+    settings = pl.DataFrame(
+        {
+            "cohort_definition_id": [1, 2],
+            "cohort_name": ["cohort_1", "cohort_2"],
+        }
+    )
     return CohortTable(df, settings=settings)
 
 
@@ -237,10 +278,12 @@ class TestResolveStrata:
     def test_combined_strata(self):
         from omopy.characteristics._summarise import _resolve_strata
 
-        df = pl.DataFrame({
-            "sex": ["M", "M", "F", "F"],
-            "age_group": ["young", "old", "young", "old"],
-        })
+        df = pl.DataFrame(
+            {
+                "sex": ["M", "M", "F", "F"],
+                "age_group": ["young", "old", "young", "old"],
+            }
+        )
         groups = _resolve_strata(df, [["sex", "age_group"]])
 
         # 1 overall + 4 combinations
@@ -282,8 +325,7 @@ class TestSummariseCohortCount:
 
         # Find Number subjects row
         subjects = data.filter(
-            (pl.col("variable_name") == "Number subjects")
-            & (pl.col("estimate_name") == "count")
+            (pl.col("variable_name") == "Number subjects") & (pl.col("estimate_name") == "count")
         )
         assert len(subjects) == 1
         assert subjects["estimate_value"].to_list()[0] == "15"
@@ -296,8 +338,7 @@ class TestSummariseCohortCount:
         data = result.data
 
         records = data.filter(
-            (pl.col("variable_name") == "Number records")
-            & (pl.col("estimate_name") == "count")
+            (pl.col("variable_name") == "Number records") & (pl.col("estimate_name") == "count")
         )
         assert len(records) == 1
         assert records["estimate_value"].to_list()[0] == "15"
@@ -343,15 +384,17 @@ class TestSummariseCohortAttrition:
 
         # Build cohort with attrition
         cohort = _make_cohort(n_cohorts=1, n_subjects=10)
-        attrition = pl.DataFrame({
-            "cohort_definition_id": [1, 1],
-            "number_records": [100, 50],
-            "number_subjects": [80, 40],
-            "reason_id": [1, 2],
-            "reason": ["Initial qualifying events", "Exclude age < 18"],
-            "excluded_records": [0, 50],
-            "excluded_subjects": [0, 40],
-        })
+        attrition = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1],
+                "number_records": [100, 50],
+                "number_subjects": [80, 40],
+                "reason_id": [1, 2],
+                "reason": ["Initial qualifying events", "Exclude age < 18"],
+                "excluded_records": [0, 50],
+                "excluded_subjects": [0, 40],
+            }
+        )
         cohort._attrition = attrition
 
         result = summarise_cohort_attrition(cohort)
@@ -362,15 +405,17 @@ class TestSummariseCohortAttrition:
         from omopy.characteristics import summarise_cohort_attrition
 
         cohort = _make_cohort(n_cohorts=1, n_subjects=10)
-        attrition = pl.DataFrame({
-            "cohort_definition_id": [1, 1],
-            "number_records": [100, 50],
-            "number_subjects": [80, 40],
-            "reason_id": [1, 2],
-            "reason": ["Initial qualifying events", "Exclude age < 18"],
-            "excluded_records": [0, 50],
-            "excluded_subjects": [0, 40],
-        })
+        attrition = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1],
+                "number_records": [100, 50],
+                "number_subjects": [80, 40],
+                "reason_id": [1, 2],
+                "reason": ["Initial qualifying events", "Exclude age < 18"],
+                "excluded_records": [0, 50],
+                "excluded_subjects": [0, 40],
+            }
+        )
         cohort._attrition = attrition
 
         result = summarise_cohort_attrition(cohort)
@@ -389,15 +434,17 @@ class TestSummariseCohortAttrition:
         from omopy.characteristics import summarise_cohort_attrition
 
         cohort = _make_cohort(n_cohorts=1, n_subjects=10)
-        cohort._attrition = pl.DataFrame({
-            "cohort_definition_id": pl.Series([], dtype=pl.Int64),
-            "number_records": pl.Series([], dtype=pl.Int64),
-            "number_subjects": pl.Series([], dtype=pl.Int64),
-            "reason_id": pl.Series([], dtype=pl.Int64),
-            "reason": pl.Series([], dtype=pl.Utf8),
-            "excluded_records": pl.Series([], dtype=pl.Int64),
-            "excluded_subjects": pl.Series([], dtype=pl.Int64),
-        })
+        cohort._attrition = pl.DataFrame(
+            {
+                "cohort_definition_id": pl.Series([], dtype=pl.Int64),
+                "number_records": pl.Series([], dtype=pl.Int64),
+                "number_subjects": pl.Series([], dtype=pl.Int64),
+                "reason_id": pl.Series([], dtype=pl.Int64),
+                "reason": pl.Series([], dtype=pl.Utf8),
+                "excluded_records": pl.Series([], dtype=pl.Int64),
+                "excluded_subjects": pl.Series([], dtype=pl.Int64),
+            }
+        )
 
         result = summarise_cohort_attrition(cohort)
         assert isinstance(result, SummarisedResult)
@@ -464,30 +511,51 @@ class TestSummariseCohortTiming:
 
         # Add duplicate entry for a subject
         rows = [
-            {"cohort_definition_id": 1, "subject_id": 1, "cohort_start_date": datetime.date(2020, 1, 1), "cohort_end_date": datetime.date(2020, 6, 30)},
-            {"cohort_definition_id": 1, "subject_id": 1, "cohort_start_date": datetime.date(2020, 7, 1), "cohort_end_date": datetime.date(2020, 12, 31)},
-            {"cohort_definition_id": 2, "subject_id": 1, "cohort_start_date": datetime.date(2020, 2, 1), "cohort_end_date": datetime.date(2020, 12, 31)},
+            {
+                "cohort_definition_id": 1,
+                "subject_id": 1,
+                "cohort_start_date": datetime.date(2020, 1, 1),
+                "cohort_end_date": datetime.date(2020, 6, 30),
+            },
+            {
+                "cohort_definition_id": 1,
+                "subject_id": 1,
+                "cohort_start_date": datetime.date(2020, 7, 1),
+                "cohort_end_date": datetime.date(2020, 12, 31),
+            },
+            {
+                "cohort_definition_id": 2,
+                "subject_id": 1,
+                "cohort_start_date": datetime.date(2020, 2, 1),
+                "cohort_end_date": datetime.date(2020, 12, 31),
+            },
         ]
         df = pl.DataFrame(rows)
-        settings = pl.DataFrame({
-            "cohort_definition_id": [1, 2],
-            "cohort_name": ["cohort_1", "cohort_2"],
-        })
+        settings = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 2],
+                "cohort_name": ["cohort_1", "cohort_2"],
+            }
+        )
         cohort = CohortTable(df, settings=settings)
 
         result_first = summarise_cohort_timing(cohort, restrict_to_first_entry=True)
         result_all = summarise_cohort_timing(cohort, restrict_to_first_entry=False)
 
         # With restrict=True, should have fewer records
-        n_first = int(result_first.data.filter(
-            (pl.col("variable_name") == "Number records")
-            & (pl.col("estimate_name") == "count")
-        )["estimate_value"].to_list()[0])
+        n_first = int(
+            result_first.data.filter(
+                (pl.col("variable_name") == "Number records")
+                & (pl.col("estimate_name") == "count")
+            )["estimate_value"].to_list()[0]
+        )
 
-        n_all = int(result_all.data.filter(
-            (pl.col("variable_name") == "Number records")
-            & (pl.col("estimate_name") == "count")
-        )["estimate_value"].to_list()[0])
+        n_all = int(
+            result_all.data.filter(
+                (pl.col("variable_name") == "Number records")
+                & (pl.col("estimate_name") == "count")
+            )["estimate_value"].to_list()[0]
+        )
 
         assert n_first <= n_all
 
@@ -523,20 +591,26 @@ class TestSummariseCohortOverlap:
         )
 
         # Extract counts
-        only_ref = int(data.filter(
-            (pl.col("variable_name") == "Only in reference cohort")
-            & (pl.col("estimate_name") == "count")
-        )["estimate_value"].to_list()[0])
+        only_ref = int(
+            data.filter(
+                (pl.col("variable_name") == "Only in reference cohort")
+                & (pl.col("estimate_name") == "count")
+            )["estimate_value"].to_list()[0]
+        )
 
-        only_comp = int(data.filter(
-            (pl.col("variable_name") == "Only in comparator cohort")
-            & (pl.col("estimate_name") == "count")
-        )["estimate_value"].to_list()[0])
+        only_comp = int(
+            data.filter(
+                (pl.col("variable_name") == "Only in comparator cohort")
+                & (pl.col("estimate_name") == "count")
+            )["estimate_value"].to_list()[0]
+        )
 
-        in_both = int(data.filter(
-            (pl.col("variable_name") == "In both cohorts")
-            & (pl.col("estimate_name") == "count")
-        )["estimate_value"].to_list()[0])
+        in_both = int(
+            data.filter(
+                (pl.col("variable_name") == "In both cohorts")
+                & (pl.col("estimate_name") == "count")
+            )["estimate_value"].to_list()[0]
+        )
 
         assert only_ref == 3
         assert only_comp == 2
@@ -552,10 +626,12 @@ class TestSummariseCohortOverlap:
         data = result.data.filter(
             pl.col("group_level") == "cohort_1" + NAME_LEVEL_SEP + "cohort_2"
         )
-        in_both_pct = float(data.filter(
-            (pl.col("variable_name") == "In both cohorts")
-            & (pl.col("estimate_name") == "percentage")
-        )["estimate_value"].to_list()[0])
+        in_both_pct = float(
+            data.filter(
+                (pl.col("variable_name") == "In both cohorts")
+                & (pl.col("estimate_name") == "percentage")
+            )["estimate_value"].to_list()[0]
+        )
 
         assert in_both_pct == pytest.approx(40.0, abs=0.01)
 
@@ -588,12 +664,14 @@ class TestSummariseCohortCodelist:
         from omopy.characteristics import summarise_cohort_codelist
 
         cohort = _make_cohort(n_cohorts=1, n_subjects=5)
-        codelist = pl.DataFrame({
-            "cohort_definition_id": [1, 1],
-            "codelist_name": ["my_codes", "my_codes"],
-            "concept_id": [123, 456],
-            "codelist_type": ["index event", "index event"],
-        })
+        codelist = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1],
+                "codelist_name": ["my_codes", "my_codes"],
+                "concept_id": [123, 456],
+                "codelist_type": ["index event", "index event"],
+            }
+        )
         cohort._cohort_codelist = codelist
 
         result = summarise_cohort_codelist(cohort)
@@ -604,12 +682,14 @@ class TestSummariseCohortCodelist:
         from omopy.characteristics import summarise_cohort_codelist
 
         cohort = _make_cohort(n_cohorts=1, n_subjects=5)
-        codelist = pl.DataFrame({
-            "cohort_definition_id": [1, 1],
-            "codelist_name": ["my_codes", "my_codes"],
-            "concept_id": [123, 456],
-            "codelist_type": ["index event", "index event"],
-        })
+        codelist = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1],
+                "codelist_name": ["my_codes", "my_codes"],
+                "concept_id": [123, 456],
+                "codelist_type": ["index event", "index event"],
+            }
+        )
         cohort._cohort_codelist = codelist
 
         result = summarise_cohort_codelist(cohort)
@@ -626,12 +706,14 @@ class TestSummariseCohortCodelist:
         from omopy.characteristics import summarise_cohort_codelist
 
         cohort = _make_cohort(n_cohorts=1, n_subjects=5)
-        cohort._cohort_codelist = pl.DataFrame({
-            "cohort_definition_id": pl.Series([], dtype=pl.Int64),
-            "codelist_name": pl.Series([], dtype=pl.Utf8),
-            "concept_id": pl.Series([], dtype=pl.Int64),
-            "codelist_type": pl.Series([], dtype=pl.Utf8),
-        })
+        cohort._cohort_codelist = pl.DataFrame(
+            {
+                "cohort_definition_id": pl.Series([], dtype=pl.Int64),
+                "codelist_name": pl.Series([], dtype=pl.Utf8),
+                "concept_id": pl.Series([], dtype=pl.Int64),
+                "codelist_type": pl.Series([], dtype=pl.Utf8),
+            }
+        )
 
         result = summarise_cohort_codelist(cohort)
         assert len(result) == 0
@@ -726,6 +808,7 @@ class TestTableFunctions:
         # Create a count result
         cohort = _make_cohort(n_cohorts=2, n_subjects=10)
         from omopy.characteristics import summarise_cohort_count
+
         sr = summarise_cohort_count(cohort)
         table = table_cohort_count(sr, type="polars")
         assert isinstance(table, pl.DataFrame)
@@ -734,15 +817,17 @@ class TestTableFunctions:
         from omopy.characteristics import summarise_cohort_attrition, table_cohort_attrition
 
         cohort = _make_cohort(n_cohorts=1, n_subjects=10)
-        cohort._attrition = pl.DataFrame({
-            "cohort_definition_id": [1, 1],
-            "number_records": [100, 50],
-            "number_subjects": [80, 40],
-            "reason_id": [1, 2],
-            "reason": ["Initial", "Exclude"],
-            "excluded_records": [0, 50],
-            "excluded_subjects": [0, 40],
-        })
+        cohort._attrition = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1],
+                "number_records": [100, 50],
+                "number_subjects": [80, 40],
+                "reason_id": [1, 2],
+                "reason": ["Initial", "Exclude"],
+                "excluded_records": [0, 50],
+                "excluded_subjects": [0, 40],
+            }
+        )
         sr = summarise_cohort_attrition(cohort)
         table = table_cohort_attrition(sr, type="polars")
         assert isinstance(table, pl.DataFrame)
@@ -803,15 +888,17 @@ class TestPlotFunctions:
         from omopy.characteristics import summarise_cohort_attrition, plot_cohort_attrition
 
         cohort = _make_cohort(n_cohorts=1, n_subjects=10)
-        cohort._attrition = pl.DataFrame({
-            "cohort_definition_id": [1, 1],
-            "number_records": [100, 50],
-            "number_subjects": [80, 40],
-            "reason_id": [1, 2],
-            "reason": ["Initial", "Exclude"],
-            "excluded_records": [0, 50],
-            "excluded_subjects": [0, 40],
-        })
+        cohort._attrition = pl.DataFrame(
+            {
+                "cohort_definition_id": [1, 1],
+                "number_records": [100, 50],
+                "number_subjects": [80, 40],
+                "reason_id": [1, 2],
+                "reason": ["Initial", "Exclude"],
+                "excluded_records": [0, 50],
+                "excluded_subjects": [0, 40],
+            }
+        )
         sr = summarise_cohort_attrition(cohort)
         fig = plot_cohort_attrition(sr)
         assert fig is not None
@@ -962,29 +1049,35 @@ def _make_circe_json(
     import json
 
     d = {
-        "ConceptSets": [{
-            "id": 0,
-            "name": concept_name,
-            "expression": {
-                "items": [{
-                    "concept": {
-                        "CONCEPT_ID": concept_id,
-                        "CONCEPT_NAME": concept_name,
-                        "CONCEPT_CODE": "",
-                        "DOMAIN_ID": "Condition",
-                        "VOCABULARY_ID": "SNOMED",
-                        "STANDARD_CONCEPT": "S",
-                        "INVALID_REASON": "",
-                        "CONCEPT_CLASS_ID": "Disorder",
-                    },
-                    "includeDescendants": False,
-                }],
-            },
-        }],
+        "ConceptSets": [
+            {
+                "id": 0,
+                "name": concept_name,
+                "expression": {
+                    "items": [
+                        {
+                            "concept": {
+                                "CONCEPT_ID": concept_id,
+                                "CONCEPT_NAME": concept_name,
+                                "CONCEPT_CODE": "",
+                                "DOMAIN_ID": "Condition",
+                                "VOCABULARY_ID": "SNOMED",
+                                "STANDARD_CONCEPT": "S",
+                                "INVALID_REASON": "",
+                                "CONCEPT_CLASS_ID": "Disorder",
+                            },
+                            "includeDescendants": False,
+                        }
+                    ],
+                },
+            }
+        ],
         "PrimaryCriteria": {
-            "CriteriaList": [{
-                "ConditionOccurrence": {"CodesetId": 0},
-            }],
+            "CriteriaList": [
+                {
+                    "ConditionOccurrence": {"CodesetId": 0},
+                }
+            ],
             "ObservationWindow": {"PriorDays": 0, "PostDays": 0},
             "PrimaryCriteriaLimit": {"Type": primary_limit},
         },
@@ -1002,10 +1095,14 @@ def synthea_cohorts(synthea_cdm):
 
     # Generate two separate cohort sets, then combine
     vs_json = _make_circe_json(
-        _VIRAL_SINUSITIS_ID, "Viral sinusitis", primary_limit="First",
+        _VIRAL_SINUSITIS_ID,
+        "Viral sinusitis",
+        primary_limit="First",
     )
     ht_json = _make_circe_json(
-        _ESSENTIAL_HYPERTENSION_ID, "Essential hypertension", primary_limit="First",
+        _ESSENTIAL_HYPERTENSION_ID,
+        "Essential hypertension",
+        primary_limit="First",
     )
 
     vs_result = generate_cohort_set(synthea_cdm, vs_json, name="viral_sinusitis")
@@ -1020,10 +1117,12 @@ def synthea_cohorts(synthea_cdm):
     vs_df = vs_df.with_columns(pl.lit(1).cast(pl.Int64).alias("cohort_definition_id"))
 
     combined = pl.concat([vs_df, ht_df])
-    settings = pl.DataFrame({
-        "cohort_definition_id": [1, 2],
-        "cohort_name": ["viral_sinusitis", "essential_hypertension"],
-    })
+    settings = pl.DataFrame(
+        {
+            "cohort_definition_id": [1, 2],
+            "cohort_name": ["viral_sinusitis", "essential_hypertension"],
+        }
+    )
     ct = CohortTable(combined, settings=settings)
     ct.cdm = synthea_cdm
     return ct
@@ -1067,7 +1166,9 @@ class TestIntegrationCharacteristics:
         from omopy.characteristics import summarise_characteristics
 
         result = summarise_characteristics(
-            synthea_cohorts, cohort_id=[1], demographics=True,
+            synthea_cohorts,
+            cohort_id=[1],
+            demographics=True,
         )
         group_levels = set(result.data["group_level"].unique().to_list())
         assert "viral_sinusitis" in group_levels
@@ -1082,7 +1183,9 @@ class TestIntegrationCharacteristics:
         # should detect it already exists and skip re-adding.
         ct_with_sex = add_sex(synthea_cohorts, synthea_cohorts.cdm)
         result = summarise_characteristics(
-            ct_with_sex, strata=["sex"], demographics=True,
+            ct_with_sex,
+            strata=["sex"],
+            demographics=True,
         )
 
         strata_names = set(result.data["strata_name"].unique().to_list())
@@ -1158,8 +1261,7 @@ class TestIntegrationCharacteristics:
 
         result = summarise_cohort_overlap(synthea_cohorts)
         pct_rows = result.data.filter(
-            (pl.col("estimate_name") == "percentage")
-            & (pl.col("strata_name") == OVERALL)
+            (pl.col("estimate_name") == "percentage") & (pl.col("strata_name") == OVERALL)
         )
 
         # Group by group_level (pair), sum percentages

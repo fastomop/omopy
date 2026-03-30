@@ -142,7 +142,7 @@ class SummarisedResult:
                 return None
             try:
                 return float(val)
-            except (ValueError, TypeError):
+            except ValueError, TypeError:
                 return None
 
         # Build suppression mask
@@ -160,8 +160,15 @@ class SummarisedResult:
         # Get the keys of rows to suppress
         keys_to_suppress = (
             df.filter(suppress_series)
-            .select("result_id", "group_name", "group_level", "strata_name", "strata_level",
-                    "variable_name", "variable_level")
+            .select(
+                "result_id",
+                "group_name",
+                "group_level",
+                "strata_name",
+                "strata_level",
+                "variable_name",
+                "variable_level",
+            )
             .unique()
         )
 
@@ -169,8 +176,15 @@ class SummarisedResult:
             return self._clone(df)
 
         # Mark rows matching suppressed keys (all estimates for those combos)
-        _join_cols = ["result_id", "group_name", "group_level", "strata_name", "strata_level",
-                      "variable_name", "variable_level"]
+        _join_cols = [
+            "result_id",
+            "group_name",
+            "group_level",
+            "strata_name",
+            "strata_level",
+            "variable_name",
+            "variable_level",
+        ]
         matched_indices = (
             df.with_row_index("_idx")
             .join(
@@ -185,10 +199,7 @@ class SummarisedResult:
         idx_set = set(matched_indices["_idx"].to_list())
 
         # Replace estimate_value with "-" for suppressed rows
-        new_values = [
-            "-" if i in idx_set else values[i]
-            for i in range(len(df))
-        ]
+        new_values = ["-" if i in idx_set else values[i] for i in range(len(df))]
 
         result = df.with_columns(pl.Series("estimate_value", new_values))
         return self._clone(result)
@@ -292,13 +303,10 @@ class SummarisedResult:
                 separator=NAME_LEVEL_SEP,
             )
 
-        return (
-            df.with_columns(
-                pl.lit(name_value).alias(name_col),
-                level_expr.alias(level_col),
-            )
-            .drop(existing)
-        )
+        return df.with_columns(
+            pl.lit(name_value).alias(name_col),
+            level_expr.alias(level_col),
+        ).drop(existing)
 
     def unite_group(self, columns: list[str]) -> SummarisedResult:
         """Unite columns into ``group_name``/``group_level``."""
@@ -324,8 +332,11 @@ class SummarisedResult:
         ``estimate_value``, cast according to ``estimate_type``.
         """
         df = self._data
-        key_cols = [c for c in SUMMARISED_RESULT_COLUMNS
-                    if c not in ("estimate_name", "estimate_type", "estimate_value")]
+        key_cols = [
+            c
+            for c in SUMMARISED_RESULT_COLUMNS
+            if c not in ("estimate_name", "estimate_type", "estimate_value")
+        ]
 
         # Pivot
         pivoted = df.pivot(

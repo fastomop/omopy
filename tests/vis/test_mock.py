@@ -47,9 +47,12 @@ class TestMockSummarisedResult:
 
     def test_cohort_names(self):
         sr = mock_summarised_result(n_cohorts=3)
-        cohorts = sr.data.filter(
-            pl.col("group_name") == "cohort_name"
-        )["group_level"].unique().sort().to_list()
+        cohorts = (
+            sr.data.filter(pl.col("group_name") == "cohort_name")["group_level"]
+            .unique()
+            .sort()
+            .to_list()
+        )
         assert cohorts == ["cohort_1", "cohort_2", "cohort_3"]
 
     def test_estimate_types(self):

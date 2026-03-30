@@ -187,22 +187,26 @@ class TestMultiConceptSet:
 class TestConceptSetExpression:
     def test_descendants_expand(self, cdm):
         """1539403 (simvastatin) has descendants 1539411 and 1539463 in the data."""
-        cse = ConceptSetExpression({
-            "statins": [
-                ConceptEntry(concept_id=1539403, include_descendants=True),
-            ]
-        })
+        cse = ConceptSetExpression(
+            {
+                "statins": [
+                    ConceptEntry(concept_id=1539403, include_descendants=True),
+                ]
+            }
+        )
         result = generate_concept_cohort_set(cdm, cse, "statins_desc")
         df = result["statins_desc"].collect()
         assert len(df) > 0, "Descendants should match drug_exposure records"
 
     def test_no_descendants_no_match(self, cdm):
         """1539403 doesn't appear directly in drug_exposure — 0 results without descendants."""
-        cse = ConceptSetExpression({
-            "statins_exact": [
-                ConceptEntry(concept_id=1539403, include_descendants=False),
-            ]
-        })
+        cse = ConceptSetExpression(
+            {
+                "statins_exact": [
+                    ConceptEntry(concept_id=1539403, include_descendants=False),
+                ]
+            }
+        )
         result = generate_concept_cohort_set(cdm, cse, "statins_exact")
         df = result["statins_exact"].collect()
         assert len(df) == 0
@@ -210,12 +214,14 @@ class TestConceptSetExpression:
     def test_excluded_concept(self, cdm):
         """Excluding a concept should remove it from results."""
         # Include hypertension, exclude hypertension → empty
-        cse = ConceptSetExpression({
-            "nothing": [
-                ConceptEntry(concept_id=320128, include_descendants=False, is_excluded=False),
-                ConceptEntry(concept_id=320128, include_descendants=False, is_excluded=True),
-            ]
-        })
+        cse = ConceptSetExpression(
+            {
+                "nothing": [
+                    ConceptEntry(concept_id=320128, include_descendants=False, is_excluded=False),
+                    ConceptEntry(concept_id=320128, include_descendants=False, is_excluded=True),
+                ]
+            }
+        )
         result = generate_concept_cohort_set(cdm, cse, "excluded")
         df = result["excluded"].collect()
         # Should be empty since the only concept is both included and excluded
@@ -227,9 +233,7 @@ class TestConceptSetExpression:
 
     def test_dict_input(self, cdm):
         """Plain dict[str, list[int]] should work like Codelist."""
-        result = generate_concept_cohort_set(
-            cdm, {"hypertension": [320128]}, "ht_dict"
-        )
+        result = generate_concept_cohort_set(cdm, {"hypertension": [320128]}, "ht_dict")
         df = result["ht_dict"].collect()
         assert len(df) == 6
 
@@ -254,9 +258,7 @@ class TestEndDateStrategy:
     def test_event_end_date(self, cdm):
         """end='event_end_date': cohort_end_date = clinical event end date."""
         cs = Codelist({"hypertension": [320128]})
-        result = generate_concept_cohort_set(
-            cdm, cs, "ht_event_end", end="event_end_date"
-        )
+        result = generate_concept_cohort_set(cdm, cs, "ht_event_end", end="event_end_date")
         df = result["ht_event_end"].collect()
         # Hypertension has no end dates in Synthea, so end = start
         for row in df.iter_rows(named=True):
@@ -292,15 +294,11 @@ class TestLimitStrategy:
 
     def test_limit_all(self, cdm):
         cs = Codelist({"sinusitis": [257012]})
-        result = generate_concept_cohort_set(
-            cdm, cs, "sinus_all", limit="all"
-        )
+        result = generate_concept_cohort_set(cdm, cs, "sinus_all", limit="all")
         df = result["sinus_all"].collect()
         assert len(df) >= 1
         # All rows should have valid dates
-        assert df.filter(
-            pl.col("cohort_start_date") > pl.col("cohort_end_date")
-        ).is_empty()
+        assert df.filter(pl.col("cohort_start_date") > pl.col("cohort_end_date")).is_empty()
 
     def test_invalid_limit(self, cdm):
         cs = Codelist({"hypertension": [320128]})
@@ -318,9 +316,7 @@ class TestRequiredObservation:
         """Requiring 365 days prior observation should reduce the cohort."""
         cs = Codelist({"hypertension": [320128]})
         full = generate_concept_cohort_set(cdm, cs, "ht_full")
-        restricted = generate_concept_cohort_set(
-            cdm, cs, "ht_365", required_observation=(365, 0)
-        )
+        restricted = generate_concept_cohort_set(cdm, cs, "ht_365", required_observation=(365, 0))
         full_df = full["ht_full"].collect()
         restricted_df = restricted["ht_365"].collect()
         assert len(restricted_df) <= len(full_df)
@@ -328,9 +324,7 @@ class TestRequiredObservation:
     def test_zero_observation_no_filter(self, cdm):
         """required_observation=(0, 0) should not filter anything."""
         cs = Codelist({"hypertension": [320128]})
-        result = generate_concept_cohort_set(
-            cdm, cs, "ht_zero_obs", required_observation=(0, 0)
-        )
+        result = generate_concept_cohort_set(cdm, cs, "ht_zero_obs", required_observation=(0, 0))
         df = result["ht_zero_obs"].collect()
         assert len(df) == 6
 

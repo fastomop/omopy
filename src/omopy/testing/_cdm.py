@@ -164,15 +164,17 @@ def mock_test_cdm(
     months = [rng.randint(1, 12) for _ in person_ids]
     days = [rng.randint(1, 28) for _ in person_ids]
 
-    person_df = pl.DataFrame({
-        "person_id": person_ids,
-        "gender_concept_id": genders,
-        "year_of_birth": years,
-        "month_of_birth": months,
-        "day_of_birth": days,
-        "race_concept_id": [rng.choice([8515, 8516, 8527]) for _ in person_ids],
-        "ethnicity_concept_id": [rng.choice([38003563, 38003564]) for _ in person_ids],
-    })
+    person_df = pl.DataFrame(
+        {
+            "person_id": person_ids,
+            "gender_concept_id": genders,
+            "year_of_birth": years,
+            "month_of_birth": months,
+            "day_of_birth": days,
+            "race_concept_id": [rng.choice([8515, 8516, 8527]) for _ in person_ids],
+            "ethnicity_concept_id": [rng.choice([38003563, 38003564]) for _ in person_ids],
+        }
+    )
 
     # -- observation_period table -------------------------------------------
     obs_records: list[dict[str, Any]] = []
@@ -180,13 +182,15 @@ def mock_test_cdm(
         birth_year = years[i]
         start = date(max(birth_year + 18, 2000), 1, 1)
         end = date(2024, 12, 31)
-        obs_records.append({
-            "observation_period_id": pid,
-            "person_id": pid,
-            "observation_period_start_date": start,
-            "observation_period_end_date": end,
-            "period_type_concept_id": 44814724,
-        })
+        obs_records.append(
+            {
+                "observation_period_id": pid,
+                "person_id": pid,
+                "observation_period_start_date": start,
+                "observation_period_end_date": end,
+                "period_type_concept_id": 44814724,
+            }
+        )
     obs_df = pl.DataFrame(obs_records)
 
     tables: dict[str, CdmTable] = {
@@ -211,16 +215,20 @@ def mock_test_cdm(
                 cond_end = cond_start + timedelta(days=rng.randint(1, 30))
                 if cond_end > obs_end:
                     cond_end = obs_end
-                cond_records.append({
-                    "condition_occurrence_id": cond_id,
-                    "person_id": pid,
-                    "condition_concept_id": rng.choice(condition_concepts),
-                    "condition_start_date": cond_start,
-                    "condition_type_concept_id": 32020,
-                })
+                cond_records.append(
+                    {
+                        "condition_occurrence_id": cond_id,
+                        "person_id": pid,
+                        "condition_concept_id": rng.choice(condition_concepts),
+                        "condition_start_date": cond_start,
+                        "condition_type_concept_id": 32020,
+                    }
+                )
                 cond_id += 1
         tables["condition_occurrence"] = CdmTable(
-            pl.DataFrame(cond_records) if cond_records else pl.DataFrame(
+            pl.DataFrame(cond_records)
+            if cond_records
+            else pl.DataFrame(
                 schema={
                     "condition_occurrence_id": pl.Int64,
                     "person_id": pl.Int64,
@@ -249,17 +257,21 @@ def mock_test_cdm(
                 drug_end = drug_start + timedelta(days=rng.randint(7, 90))
                 if drug_end > obs_end:
                     drug_end = obs_end
-                drug_records.append({
-                    "drug_exposure_id": drug_id,
-                    "person_id": pid,
-                    "drug_concept_id": rng.choice(drug_concepts),
-                    "drug_exposure_start_date": drug_start,
-                    "drug_exposure_end_date": drug_end,
-                    "drug_type_concept_id": 32838,
-                })
+                drug_records.append(
+                    {
+                        "drug_exposure_id": drug_id,
+                        "person_id": pid,
+                        "drug_concept_id": rng.choice(drug_concepts),
+                        "drug_exposure_start_date": drug_start,
+                        "drug_exposure_end_date": drug_end,
+                        "drug_type_concept_id": 32838,
+                    }
+                )
                 drug_id += 1
         tables["drug_exposure"] = CdmTable(
-            pl.DataFrame(drug_records) if drug_records else pl.DataFrame(
+            pl.DataFrame(drug_records)
+            if drug_records
+            else pl.DataFrame(
                 schema={
                     "drug_exposure_id": pl.Int64,
                     "person_id": pl.Int64,
@@ -286,17 +298,21 @@ def mock_test_cdm(
             for _ in range(n_meas):
                 meas_offset = rng.randint(0, max(span - 1, 0))
                 meas_date = obs_start + timedelta(days=meas_offset)
-                meas_records.append({
-                    "measurement_id": meas_id,
-                    "person_id": pid,
-                    "measurement_concept_id": rng.choice(meas_concepts),
-                    "measurement_date": meas_date,
-                    "measurement_type_concept_id": 32856,
-                    "value_as_number": round(rng.uniform(0.5, 300.0), 2),
-                })
+                meas_records.append(
+                    {
+                        "measurement_id": meas_id,
+                        "person_id": pid,
+                        "measurement_concept_id": rng.choice(meas_concepts),
+                        "measurement_date": meas_date,
+                        "measurement_type_concept_id": 32856,
+                        "value_as_number": round(rng.uniform(0.5, 300.0), 2),
+                    }
+                )
                 meas_id += 1
         tables["measurement"] = CdmTable(
-            pl.DataFrame(meas_records) if meas_records else pl.DataFrame(
+            pl.DataFrame(meas_records)
+            if meas_records
+            else pl.DataFrame(
                 schema={
                     "measurement_id": pl.Int64,
                     "person_id": pl.Int64,

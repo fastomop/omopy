@@ -23,9 +23,9 @@ def _filter_result_type(
     result_type: str,
 ) -> SummarisedResult:
     """Filter a SummarisedResult to a specific result_type."""
-    matching_ids = result.settings.filter(
-        pl.col("result_type") == result_type
-    )["result_id"].to_list()
+    matching_ids = result.settings.filter(pl.col("result_type") == result_type)[
+        "result_id"
+    ].to_list()
 
     if not matching_ids:
         return result
@@ -58,8 +58,7 @@ def _extract_pathway_counts(
     Returns DataFrame with columns: pathway, freq.
     """
     data = result.data.filter(
-        (pl.col("variable_name") == "treatment_pathway")
-        & (pl.col("estimate_name") == "count")
+        (pl.col("variable_name") == "treatment_pathway") & (pl.col("estimate_name") == "count")
     )
 
     if data.height == 0:
@@ -72,14 +71,10 @@ def _extract_pathway_counts(
 
     if group_combinations:
         pathways = pathways.with_columns(
-            pl.col("pathway")
-            .str.replace_all(r"[^-]+([\+][^-]+)+", "Combination")
-            .alias("pathway")
+            pl.col("pathway").str.replace_all(r"[^-]+([\+][^-]+)+", "Combination").alias("pathway")
         )
         # Re-aggregate after combination grouping
-        pathways = pathways.group_by("pathway").agg(
-            pl.col("freq").sum()
-        )
+        pathways = pathways.group_by("pathway").agg(pl.col("freq").sum())
 
     return pathways.sort("freq", descending=True)
 
@@ -212,10 +207,26 @@ def _assign_colors(
     """Assign colors to Sankey nodes."""
     # Default plotly category20 palette
     default_palette = [
-        "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
-        "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
-        "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5",
-        "#c49c94", "#f7b6d2", "#c7c7c7", "#dbdb8d", "#9edae5",
+        "#1f77b4",
+        "#ff7f0e",
+        "#2ca02c",
+        "#d62728",
+        "#9467bd",
+        "#8c564b",
+        "#e377c2",
+        "#7f7f7f",
+        "#bcbd22",
+        "#17becf",
+        "#aec7e8",
+        "#ffbb78",
+        "#98df8a",
+        "#ff9896",
+        "#c5b0d5",
+        "#c49c94",
+        "#f7b6d2",
+        "#c7c7c7",
+        "#dbdb8d",
+        "#9edae5",
     ]
 
     if isinstance(colors, dict):
@@ -316,8 +327,16 @@ def plot_sunburst(
         color_map = colors
     else:
         palette = [
-            "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
-            "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+            "#1f77b4",
+            "#ff7f0e",
+            "#2ca02c",
+            "#d62728",
+            "#9467bd",
+            "#8c564b",
+            "#e377c2",
+            "#7f7f7f",
+            "#bcbd22",
+            "#17becf",
         ]
         if isinstance(colors, list):
             palette = colors
@@ -326,8 +345,7 @@ def plot_sunburst(
     marker_colors = [color_map.get(label, "#ccc") for label in labels]
 
     hover_template = (
-        "%{label}<br>%{percentRoot:.1%}" if unit == "percent"
-        else "%{label}<br>%{value}"
+        "%{label}<br>%{percentRoot:.1%}" if unit == "percent" else "%{label}<br>%{value}"
     )
 
     fig = go.Figure(
@@ -405,20 +423,18 @@ def plot_event_duration(
 
     # Filter by treatment group
     if treatment_groups == "group":
-        data = data.filter(
-            pl.col("variable_name").is_in(["mono-event", "combination-event"])
-        )
+        data = data.filter(pl.col("variable_name").is_in(["mono-event", "combination-event"]))
     elif treatment_groups == "individual":
-        data = data.filter(
-            ~pl.col("variable_name").is_in(["mono-event", "combination-event"])
-        )
+        data = data.filter(~pl.col("variable_name").is_in(["mono-event", "combination-event"]))
 
     # Filter by min_cell_count
     if min_cell_count > 0:
         count_data = data.filter(pl.col("estimate_name") == "count")
-        valid_events = count_data.filter(
-            pl.col("estimate_value").cast(pl.Int64) >= min_cell_count
-        ).select("variable_name", "additional_level").unique()
+        valid_events = (
+            count_data.filter(pl.col("estimate_value").cast(pl.Int64) >= min_cell_count)
+            .select("variable_name", "additional_level")
+            .unique()
+        )
         data = data.join(valid_events, on=["variable_name", "additional_level"], how="inner")
 
     if data.height == 0:
@@ -436,7 +452,7 @@ def plot_event_duration(
             if val != "NA":
                 try:
                     stats[est] = float(val)
-                except (ValueError, TypeError):
+                except ValueError, TypeError:
                     stats[est] = None
             else:
                 stats[est] = None

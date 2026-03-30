@@ -80,22 +80,26 @@ def mock_cohort_characteristics(
             }
 
             # Counts
-            rows.append({
-                **base,
-                "variable_name": "Number records",
-                "variable_level": "",
-                "estimate_name": "count",
-                "estimate_type": "integer",
-                "estimate_value": str(n_records),
-            })
-            rows.append({
-                **base,
-                "variable_name": "Number subjects",
-                "variable_level": "",
-                "estimate_name": "count",
-                "estimate_type": "integer",
-                "estimate_value": str(n_subjects),
-            })
+            rows.append(
+                {
+                    **base,
+                    "variable_name": "Number records",
+                    "variable_level": "",
+                    "estimate_name": "count",
+                    "estimate_type": "integer",
+                    "estimate_value": str(n_records),
+                }
+            )
+            rows.append(
+                {
+                    **base,
+                    "variable_name": "Number subjects",
+                    "variable_level": "",
+                    "estimate_name": "count",
+                    "estimate_type": "integer",
+                    "estimate_value": str(n_subjects),
+                }
+            )
 
             # Age (numeric)
             age_mean = rng.uniform(35.0, 75.0)
@@ -111,36 +115,42 @@ def mock_cohort_characteristics(
                 ("q75", "numeric", f"{age_mean + age_sd:.2f}"),
                 ("max", "numeric", f"{age_max:.2f}"),
             ]:
-                rows.append({
-                    **base,
-                    "variable_name": "Age",
-                    "variable_level": "",
-                    "estimate_name": est_name,
-                    "estimate_type": est_type,
-                    "estimate_value": est_value,
-                })
+                rows.append(
+                    {
+                        **base,
+                        "variable_name": "Age",
+                        "variable_level": "",
+                        "estimate_name": est_name,
+                        "estimate_type": est_type,
+                        "estimate_value": est_value,
+                    }
+                )
 
             # Sex (categorical)
             n_male = rng.randint(int(n_subjects * 0.3), int(n_subjects * 0.7))
             n_female = n_subjects - n_male
             for level, count in [("Male", n_male), ("Female", n_female)]:
                 pct = count / n_subjects * 100 if n_subjects > 0 else 0
-                rows.append({
-                    **base,
-                    "variable_name": "Sex",
-                    "variable_level": level,
-                    "estimate_name": "count",
-                    "estimate_type": "integer",
-                    "estimate_value": str(count),
-                })
-                rows.append({
-                    **base,
-                    "variable_name": "Sex",
-                    "variable_level": level,
-                    "estimate_name": "percentage",
-                    "estimate_type": "percentage",
-                    "estimate_value": f"{pct:.2f}",
-                })
+                rows.append(
+                    {
+                        **base,
+                        "variable_name": "Sex",
+                        "variable_level": level,
+                        "estimate_name": "count",
+                        "estimate_type": "integer",
+                        "estimate_value": str(count),
+                    }
+                )
+                rows.append(
+                    {
+                        **base,
+                        "variable_name": "Sex",
+                        "variable_level": level,
+                        "estimate_name": "percentage",
+                        "estimate_type": "percentage",
+                        "estimate_value": f"{pct:.2f}",
+                    }
+                )
 
             # Prior observation (numeric)
             po_mean = rng.uniform(500, 3000)
@@ -154,21 +164,25 @@ def mock_cohort_characteristics(
                 ("q75", "numeric", f"{po_mean + po_sd:.2f}"),
                 ("max", "numeric", f"{po_mean + 2 * po_sd:.2f}"),
             ]:
-                rows.append({
-                    **base,
-                    "variable_name": "Prior observation",
-                    "variable_level": "",
-                    "estimate_name": est_name,
-                    "estimate_type": est_type,
-                    "estimate_value": est_value,
-                })
+                rows.append(
+                    {
+                        **base,
+                        "variable_name": "Prior observation",
+                        "variable_level": "",
+                        "estimate_name": est_name,
+                        "estimate_type": est_type,
+                        "estimate_value": est_value,
+                    }
+                )
 
     data = pl.DataFrame(rows)
-    settings = pl.DataFrame({
-        "result_id": [result_id],
-        "result_type": ["summarise_characteristics"],
-        "package_name": [_PACKAGE_NAME],
-        "package_version": [_PACKAGE_VERSION],
-    })
+    settings = pl.DataFrame(
+        {
+            "result_id": [result_id],
+            "result_type": ["summarise_characteristics"],
+            "package_name": [_PACKAGE_NAME],
+            "package_version": [_PACKAGE_VERSION],
+        }
+    )
 
     return SummarisedResult(data, settings=settings)

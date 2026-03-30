@@ -61,17 +61,13 @@ def resolve_concept_sets(
 
         # Build the included concept IDs
         if included:
-            include_expr = _resolve_items(
-                included, concept_tbl, ancestor_tbl, relationship_tbl
-            )
+            include_expr = _resolve_items(included, concept_tbl, ancestor_tbl, relationship_tbl)
         else:
             include_expr = _empty_concept_id_table(con)
 
         # Build the excluded concept IDs
         if excluded:
-            exclude_expr = _resolve_items(
-                excluded, concept_tbl, ancestor_tbl, relationship_tbl
-            )
+            exclude_expr = _resolve_items(excluded, concept_tbl, ancestor_tbl, relationship_tbl)
             # Final = included EXCEPT excluded
             final_expr = include_expr.difference(exclude_expr)
         else:
@@ -98,17 +94,13 @@ def _resolve_items(
         cid = item.concept.concept_id
 
         # Direct concept
-        direct = concept_tbl.filter(
-            concept_tbl.concept_id == cid
-        ).select(concept_tbl.concept_id)
+        direct = concept_tbl.filter(concept_tbl.concept_id == cid).select(concept_tbl.concept_id)
         parts.append(direct)
 
         # Include descendants via concept_ancestor
         if item.include_descendants:
             descendants = (
-                ancestor_tbl.filter(
-                    ancestor_tbl.ancestor_concept_id == cid
-                )
+                ancestor_tbl.filter(ancestor_tbl.ancestor_concept_id == cid)
                 .select(ancestor_tbl.descendant_concept_id)
                 .rename(concept_id="descendant_concept_id")
             )
@@ -140,6 +132,7 @@ def _resolve_items(
 def _empty_concept_id_table(con: ibis.BaseBackend) -> ir.Table:
     """Create an empty table with a single concept_id column."""
     import pyarrow as pa
+
     empty = pa.table({"concept_id": pa.array([], type=pa.int64())})
     temp_name = "__omopy_empty_concepts"
     con.con.register(temp_name, empty)

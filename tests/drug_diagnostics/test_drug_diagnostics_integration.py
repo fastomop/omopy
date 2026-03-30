@@ -52,8 +52,9 @@ def first_ingredient_id(diag_cdm: CdmReference) -> int:
 
     # Find their ancestor ingredients
     ingredients = (
-        de_concepts
-        .join(concept_ancestor, de_concepts.concept_id == concept_ancestor.descendant_concept_id)
+        de_concepts.join(
+            concept_ancestor, de_concepts.concept_id == concept_ancestor.descendant_concept_id
+        )
         .join(concept, concept_ancestor.ancestor_concept_id == concept.concept_id)
         .filter(concept.concept_class_id == "Ingredient")
         .select(ingredient_id=concept_ancestor.ancestor_concept_id)
@@ -233,30 +234,35 @@ class TestFullPipelineIntegration:
 
     def test_table(self, diag_result: DiagnosticsResult):
         from omopy.drug_diagnostics import table_drug_diagnostics
+
         sr = summarise_drug_diagnostics(diag_result)
         table = table_drug_diagnostics(sr, type="polars")
         assert isinstance(table, pl.DataFrame)
 
     def test_table_single_check(self, diag_result: DiagnosticsResult):
         from omopy.drug_diagnostics import table_drug_diagnostics
+
         sr = summarise_drug_diagnostics(diag_result)
         table = table_drug_diagnostics(sr, check="missing", type="polars")
         assert isinstance(table, pl.DataFrame)
 
     def test_plot_missing(self, diag_result: DiagnosticsResult):
         from omopy.drug_diagnostics import plot_drug_diagnostics
+
         sr = summarise_drug_diagnostics(diag_result)
         fig = plot_drug_diagnostics(sr, check="missing")
         assert hasattr(fig, "update_layout")
 
     def test_plot_type(self, diag_result: DiagnosticsResult):
         from omopy.drug_diagnostics import plot_drug_diagnostics
+
         sr = summarise_drug_diagnostics(diag_result)
         fig = plot_drug_diagnostics(sr, check="type")
         assert hasattr(fig, "update_layout")
 
     def test_plot_exposure_duration(self, diag_result: DiagnosticsResult):
         from omopy.drug_diagnostics import plot_drug_diagnostics
+
         sr = summarise_drug_diagnostics(diag_result)
         fig = plot_drug_diagnostics(sr, check="exposure_duration")
         assert hasattr(fig, "update_layout")

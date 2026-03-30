@@ -26,10 +26,7 @@ if _sys.version_info[:3] < (3, 14, 0) or (
     import inspect as _inspect
 
     _orig_sig = _inspect.signature(_typing._eval_type)
-    if (
-        "parent_fwdref" in _orig_sig.parameters
-        and "prefer_fwd_module" not in _orig_sig.parameters
-    ):
+    if "parent_fwdref" in _orig_sig.parameters and "prefer_fwd_module" not in _orig_sig.parameters:
         _orig_eval_type = _typing._eval_type
 
         def _patched_eval_type(*args, **kwargs):  # type: ignore[no-untyped-def]

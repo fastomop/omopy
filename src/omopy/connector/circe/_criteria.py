@@ -70,29 +70,39 @@ def apply_observation_window(
     """
     # Join events to observation_period on person_id
     # where event falls within the observation period + required window
-    joined = events.join(
-        obs_period,
-        events.person_id == obs_period.person_id,
-    ).filter(
-        (events.start_date >= (
-            obs_period.observation_period_start_date
-            + ibis.literal(prior_days).cast("int64") * ibis.interval(days=1)
-        ))
-        & (events.start_date <= (
-            obs_period.observation_period_end_date
-            - ibis.literal(post_days).cast("int64") * ibis.interval(days=1)
-        ))
-    ).select(
-        # Keep event columns
-        person_id=events.person_id,
-        event_id=events.event_id,
-        start_date=events.start_date,
-        end_date=events.end_date,
-        visit_occurrence_id=events.visit_occurrence_id,
-        sort_date=events.sort_date,
-        # Add observation period boundaries
-        op_start_date=obs_period.observation_period_start_date,
-        op_end_date=obs_period.observation_period_end_date,
+    joined = (
+        events.join(
+            obs_period,
+            events.person_id == obs_period.person_id,
+        )
+        .filter(
+            (
+                events.start_date
+                >= (
+                    obs_period.observation_period_start_date
+                    + ibis.literal(prior_days).cast("int64") * ibis.interval(days=1)
+                )
+            )
+            & (
+                events.start_date
+                <= (
+                    obs_period.observation_period_end_date
+                    - ibis.literal(post_days).cast("int64") * ibis.interval(days=1)
+                )
+            )
+        )
+        .select(
+            # Keep event columns
+            person_id=events.person_id,
+            event_id=events.event_id,
+            start_date=events.start_date,
+            end_date=events.end_date,
+            visit_occurrence_id=events.visit_occurrence_id,
+            sort_date=events.sort_date,
+            # Add observation period boundaries
+            op_start_date=obs_period.observation_period_start_date,
+            op_end_date=obs_period.observation_period_end_date,
+        )
     )
 
     return joined
@@ -129,9 +139,7 @@ def apply_limit(
 
     return (
         events.mutate(
-            _rn=ibis.row_number().over(
-                ibis.window(group_by="person_id", order_by=order_col)
-            )
+            _rn=ibis.row_number().over(ibis.window(group_by="person_id", order_by=order_col))
         )
         .filter(ibis._._rn == 0)
         .drop("_rn")
@@ -209,12 +217,16 @@ def _apply_temporal_window(
 
     # Compute window boundaries
     win_start = _window_bound_expr(
-        window.start, ref_date,
-        index_events.op_start_date, index_events.op_end_date,
+        window.start,
+        ref_date,
+        index_events.op_start_date,
+        index_events.op_end_date,
     )
     win_end = _window_bound_expr(
-        window.end, ref_date,
-        index_events.op_start_date, index_events.op_end_date,
+        window.end,
+        ref_date,
+        index_events.op_start_date,
+        index_events.op_end_date,
     )
 
     # Join on person_id and apply window filter
@@ -263,14 +275,16 @@ def _evaluate_correlated_criteria(
     """
     # Build the correlated domain query
     correlated = build_domain_query(
-        cc.criteria, con, catalog, cdm_schema, codeset_tables,
+        cc.criteria,
+        con,
+        catalog,
+        cdm_schema,
+        codeset_tables,
     )
 
     # Apply temporal window(s)
     if cc.start_window:
-        joined = _apply_temporal_window(
-            correlated, index_events, cc.start_window, "start_date"
-        )
+        joined = _apply_temporal_window(correlated, index_events, cc.start_window, "start_date")
     else:
         # No temporal window — just join on person_id
         joined = correlated.join(
@@ -280,9 +294,7 @@ def _evaluate_correlated_criteria(
 
     # Apply visit restriction
     if cc.restrict_visit:
-        joined = joined.filter(
-            correlated.visit_occurrence_id == index_events.visit_occurrence_id
-        )
+        joined = joined.filter(correlated.visit_occurrence_id == index_events.visit_occurrence_id)
 
     # Count occurrences per index event
     occ = cc.occurrence or Occurrence(type=2, count=1)
@@ -296,10 +308,7 @@ def _evaluate_correlated_criteria(
         agg_expr = joined.count()
 
     # Group by index event and count
-    counts = (
-        joined.group_by([index_events.person_id, index_events.event_id])
-        .agg(cnt=agg_expr)
-    )
+    counts = joined.group_by([index_events.person_id, index_events.event_id]).agg(cnt=agg_expr)
 
     # Apply occurrence filter
     if occ.type == 0:  # Exactly
@@ -329,9 +338,10 @@ def _evaluate_demographic_criteria(
     # Join events to person table
     joined = index_events.join(
         person_tbl.select(
-            "person_id", "gender_concept_id", "year_of_birth",
-            *([c] for c in ["race_concept_id", "ethnicity_concept_id"]
-              if c in person_tbl.columns)
+            "person_id",
+            "gender_concept_id",
+            "year_of_birth",
+            *([c] for c in ["race_concept_id", "ethnicity_concept_id"] if c in person_tbl.columns),
         ),
         "person_id",
     )
@@ -348,10 +358,9 @@ def _evaluate_demographic_criteria(
         filters.append(joined.ethnicity_concept_id.isin(list(dc.ethnicity.concept_ids)))
 
     if dc.age is not None:
-        age_expr = (
-            index_events.start_date.year() - joined.year_of_birth
-        ).cast("int64")
+        age_expr = (index_events.start_date.year() - joined.year_of_birth).cast("int64")
         from omopy.connector.circe._domain_queries import _numeric_filter
+
         filters.append(_numeric_filter(age_expr, dc.age))
 
     if filters:
@@ -409,7 +418,12 @@ def evaluate_criteria_group(
     # Correlated criteria
     for cc in group.criteria_list:
         matching = _evaluate_correlated_criteria(
-            cc, index_events, con, catalog, cdm_schema, codeset_tables,
+            cc,
+            index_events,
+            con,
+            catalog,
+            cdm_schema,
+            codeset_tables,
         )
         results.append(matching)
 
@@ -421,8 +435,13 @@ def evaluate_criteria_group(
     # Nested groups (recursive)
     for sub_group in group.groups:
         matching = evaluate_criteria_group(
-            sub_group, index_events, con, catalog, cdm_schema,
-            codeset_tables, person_tbl,
+            sub_group,
+            index_events,
+            con,
+            catalog,
+            cdm_schema,
+            codeset_tables,
+            person_tbl,
         )
         results.append(matching)
 
@@ -452,16 +471,13 @@ def evaluate_criteria_group(
         # Tag each result with a criterion index
         tagged: list[ir.Table] = []
         for i, r in enumerate(results):
-            tagged.append(
-                r.mutate(criterion_idx=ibis.literal(i))
-            )
+            tagged.append(r.mutate(criterion_idx=ibis.literal(i)))
         all_matches = tagged[0]
         for t in tagged[1:]:
             all_matches = all_matches.union(t)
 
-        counts = (
-            all_matches.group_by(["person_id", "event_id"])
-            .agg(criteria_met=all_matches.criterion_idx.nunique())
+        counts = all_matches.group_by(["person_id", "event_id"]).agg(
+            criteria_met=all_matches.criterion_idx.nunique()
         )
 
         if group.type == "AT_LEAST":
@@ -523,13 +539,15 @@ def apply_inclusion_rules(
         matching = evaluate_criteria_group(
             rule.expression,
             current,
-            con, catalog, cdm_schema, codeset_tables, person_tbl,
+            con,
+            catalog,
+            cdm_schema,
+            codeset_tables,
+            person_tbl,
         )
 
         # Semi-join: keep only events that passed the rule
-        current = current.filter(
-            current.event_id.isin(matching.event_id)
-        )
+        current = current.filter(current.event_id.isin(matching.event_id))
         rule_results.append(current)
 
     return current, rule_results

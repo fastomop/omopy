@@ -81,56 +81,68 @@ def mock_incidence_prevalence(
         obs_start = study_start + datetime.timedelta(days=obs_start_offset)
         obs_end = study_start + datetime.timedelta(days=min(obs_end_offset, study_days))
 
-        person_rows.append({
-            "person_id": i,
-            "year_of_birth": year_of_birth,
-            "month_of_birth": month_of_birth,
-            "day_of_birth": day_of_birth,
-            "gender_concept_id": gender,
-            "race_concept_id": 0,
-            "ethnicity_concept_id": 0,
-        })
-        obs_rows.append({
-            "person_id": i,
-            "observation_period_id": i,
-            "observation_period_start_date": obs_start,
-            "observation_period_end_date": obs_end,
-            "period_type_concept_id": 44814724,
-        })
+        person_rows.append(
+            {
+                "person_id": i,
+                "year_of_birth": year_of_birth,
+                "month_of_birth": month_of_birth,
+                "day_of_birth": day_of_birth,
+                "gender_concept_id": gender,
+                "race_concept_id": 0,
+                "ethnicity_concept_id": 0,
+            }
+        )
+        obs_rows.append(
+            {
+                "person_id": i,
+                "observation_period_id": i,
+                "observation_period_start_date": obs_start,
+                "observation_period_end_date": obs_end,
+                "period_type_concept_id": 44814724,
+            }
+        )
 
-    person_df = pl.DataFrame(person_rows).cast({
-        "person_id": pl.Int64,
-        "year_of_birth": pl.Int32,
-        "month_of_birth": pl.Int32,
-        "day_of_birth": pl.Int32,
-        "gender_concept_id": pl.Int32,
-        "race_concept_id": pl.Int32,
-        "ethnicity_concept_id": pl.Int32,
-    })
-    obs_df = pl.DataFrame(obs_rows).cast({
-        "person_id": pl.Int64,
-        "observation_period_id": pl.Int64,
-        "observation_period_start_date": pl.Date,
-        "observation_period_end_date": pl.Date,
-        "period_type_concept_id": pl.Int64,
-    })
+    person_df = pl.DataFrame(person_rows).cast(
+        {
+            "person_id": pl.Int64,
+            "year_of_birth": pl.Int32,
+            "month_of_birth": pl.Int32,
+            "day_of_birth": pl.Int32,
+            "gender_concept_id": pl.Int32,
+            "race_concept_id": pl.Int32,
+            "ethnicity_concept_id": pl.Int32,
+        }
+    )
+    obs_df = pl.DataFrame(obs_rows).cast(
+        {
+            "person_id": pl.Int64,
+            "observation_period_id": pl.Int64,
+            "observation_period_start_date": pl.Date,
+            "observation_period_end_date": pl.Date,
+            "period_type_concept_id": pl.Int64,
+        }
+    )
 
     # Generate target cohort (everyone is in the target)
     target_rows = []
     for i, obs in enumerate(obs_rows, start=1):
-        target_rows.append({
-            "cohort_definition_id": 1,
-            "subject_id": obs["person_id"],
-            "cohort_start_date": obs["observation_period_start_date"],
-            "cohort_end_date": obs["observation_period_end_date"],
-        })
+        target_rows.append(
+            {
+                "cohort_definition_id": 1,
+                "subject_id": obs["person_id"],
+                "cohort_start_date": obs["observation_period_start_date"],
+                "cohort_end_date": obs["observation_period_end_date"],
+            }
+        )
 
-    target_df = pl.DataFrame(target_rows).cast({
-        "cohort_definition_id": pl.Int64,
-        "subject_id": pl.Int64,
-        "cohort_start_date": pl.Date,
-        "cohort_end_date": pl.Date,
-    })
+    target_df = pl.DataFrame(target_rows).cast(
+        {
+            "cohort_definition_id": pl.Int64,
+            "subject_id": pl.Int64,
+            "cohort_start_date": pl.Date,
+            "cohort_end_date": pl.Date,
+        }
+    )
 
     # Generate outcome cohort
     outcome_rows = []
@@ -143,15 +155,15 @@ def mock_incidence_prevalence(
                 event_offset = random.randint(1, obs_duration - 1)
                 event_date = obs_start + datetime.timedelta(days=event_offset)
                 # Outcome lasts 30 days or until obs end
-                event_end = min(
-                    event_date + datetime.timedelta(days=30), obs_end
+                event_end = min(event_date + datetime.timedelta(days=30), obs_end)
+                outcome_rows.append(
+                    {
+                        "cohort_definition_id": 1,
+                        "subject_id": obs["person_id"],
+                        "cohort_start_date": event_date,
+                        "cohort_end_date": event_end,
+                    }
                 )
-                outcome_rows.append({
-                    "cohort_definition_id": 1,
-                    "subject_id": obs["person_id"],
-                    "cohort_start_date": event_date,
-                    "cohort_end_date": event_end,
-                })
 
     outcome_df = pl.DataFrame(
         outcome_rows,
@@ -164,15 +176,19 @@ def mock_incidence_prevalence(
     )
 
     # Build CDM
-    target_settings = pl.DataFrame({
-        "cohort_definition_id": [1],
-        "cohort_name": ["target"],
-    }).cast({"cohort_definition_id": pl.Int64})
+    target_settings = pl.DataFrame(
+        {
+            "cohort_definition_id": [1],
+            "cohort_name": ["target"],
+        }
+    ).cast({"cohort_definition_id": pl.Int64})
 
-    outcome_settings = pl.DataFrame({
-        "cohort_definition_id": [1],
-        "cohort_name": ["outcome"],
-    }).cast({"cohort_definition_id": pl.Int64})
+    outcome_settings = pl.DataFrame(
+        {
+            "cohort_definition_id": [1],
+            "cohort_name": ["outcome"],
+        }
+    ).cast({"cohort_definition_id": pl.Int64})
 
     cdm = CdmReference(
         tables={
@@ -182,12 +198,8 @@ def mock_incidence_prevalence(
         cdm_name="mock",
     )
 
-    cdm["target"] = CohortTable(
-        target_df, tbl_name="target", settings=target_settings
-    )
-    cdm["outcome"] = CohortTable(
-        outcome_df, tbl_name="outcome", settings=outcome_settings
-    )
+    cdm["target"] = CohortTable(target_df, tbl_name="target", settings=target_settings)
+    cdm["outcome"] = CohortTable(outcome_df, tbl_name="outcome", settings=outcome_settings)
 
     return cdm
 

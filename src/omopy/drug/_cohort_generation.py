@@ -93,11 +93,13 @@ def generate_drug_utilisation_cohort_set(
     # Build cohort definitions
     cohort_defs = []
     for idx, (cname, concept_ids) in enumerate(concept_set.items(), start=1):
-        cohort_defs.append({
-            "cohort_definition_id": idx,
-            "cohort_name": cname,
-            "concept_ids": list(concept_ids),
-        })
+        cohort_defs.append(
+            {
+                "cohort_definition_id": idx,
+                "cohort_name": cname,
+                "concept_ids": list(concept_ids),
+            }
+        )
 
     if not cohort_defs:
         return _empty_drug_cohort(cdm, name, [], gap_era)
@@ -121,9 +123,12 @@ def generate_drug_utilisation_cohort_set(
 
         # Upload concept IDs as a temp table
         import pyarrow as pa
-        arrow_ids = pa.table({
-            "concept_id": pa.array(cids, type=pa.int64()),
-        })
+
+        arrow_ids = pa.table(
+            {
+                "concept_id": pa.array(cids, type=pa.int64()),
+            }
+        )
         tmp_name = f"__omopy_drug_ids_{name}_{cid}"
         con.con.register(tmp_name, arrow_ids)
         temp_tables.append(tmp_name)
@@ -131,17 +136,20 @@ def generate_drug_utilisation_cohort_set(
         ids_tbl = con.table(tmp_name)
 
         # Expand descendants
-        descendants = (
-            ids_tbl
-            .join(concept_ancestor, ids_tbl.concept_id == concept_ancestor.ancestor_concept_id)
-            .select(concept_id=concept_ancestor.descendant_concept_id.cast("int64"))
+        descendants = ids_tbl.join(
+            concept_ancestor, ids_tbl.concept_id == concept_ancestor.ancestor_concept_id
+        ).select(concept_id=concept_ancestor.descendant_concept_id.cast("int64"))
+        all_resolved = (
+            ids_tbl.select(concept_id=ids_tbl.concept_id.cast("int64"))
+            .union(descendants)
+            .distinct()
         )
-        all_resolved = ids_tbl.select(concept_id=ids_tbl.concept_id.cast("int64")).union(descendants).distinct()
 
         # Filter to standard Drug concepts only
         drug_concepts = (
-            all_resolved
-            .join(concept_tbl, all_resolved.concept_id == concept_tbl.concept_id.cast("int64"))
+            all_resolved.join(
+                concept_tbl, all_resolved.concept_id == concept_tbl.concept_id.cast("int64")
+            )
             .filter(concept_tbl.standard_concept == "S")
             .filter(concept_tbl.domain_id == "Drug")
             .select(concept_id=all_resolved.concept_id)
@@ -151,17 +159,21 @@ def generate_drug_utilisation_cohort_set(
         # Collect codelist (materialise eagerly — small data)
         cl_arrow = drug_concepts.to_pyarrow()
         for row_cid in cl_arrow.column("concept_id").to_pylist():
-            codelist_rows.append({
-                "cohort_definition_id": cid,
-                "codelist_name": cdef["cohort_name"],
-                "concept_id": int(row_cid),
-                "codelist_type": "index event",
-            })
+            codelist_rows.append(
+                {
+                    "cohort_definition_id": cid,
+                    "codelist_name": cdef["cohort_name"],
+                    "concept_id": int(row_cid),
+                    "codelist_type": "index event",
+                }
+            )
 
         # Join with drug_exposure
         events = (
-            drug_exposure
-            .join(drug_concepts, drug_exposure.drug_concept_id.cast("int64") == drug_concepts.concept_id)
+            drug_exposure.join(
+                drug_concepts,
+                drug_exposure.drug_concept_id.cast("int64") == drug_concepts.concept_id,
+            )
             .select(
                 subject_id=drug_exposure.person_id,
                 cohort_start_date=drug_exposure.drug_exposure_start_date,
@@ -180,8 +192,7 @@ def generate_drug_utilisation_cohort_set(
             obs_end=obs_period.observation_period_end_date,
         )
         events = (
-            events
-            .join(obs, "subject_id")
+            events.join(obs, "subject_id")
             .filter(
                 (ibis._.obs_start <= ibis._.cohort_start_date)
                 & (ibis._.cohort_start_date <= ibis._.obs_end)
@@ -222,11 +233,9 @@ def generate_drug_utilisation_cohort_set(
 
         subset_persons = subset_data.select(subject_id=subset_data.subject_id)
         if subset_cohort_id is not None:
-            subset_persons = (
-                subset_data
-                .filter(subset_data.cohort_definition_id.isin(subset_cohort_id))
-                .select(subject_id=subset_data.subject_id)
-            )
+            subset_persons = subset_data.filter(
+                subset_data.cohort_definition_id.isin(subset_cohort_id)
+            ).select(subject_id=subset_data.subject_id)
         subset_persons = subset_persons.distinct()
         combined = combined.join(subset_persons, "subject_id").select(
             "cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date"
@@ -246,12 +255,14 @@ def generate_drug_utilisation_cohort_set(
             except Exception:
                 pass
 
-    cohort_df = pl.from_arrow(cohort_arrow).cast({
-        "cohort_definition_id": pl.Int64,
-        "subject_id": pl.Int64,
-        "cohort_start_date": pl.Date,
-        "cohort_end_date": pl.Date,
-    })
+    cohort_df = pl.from_arrow(cohort_arrow).cast(
+        {
+            "cohort_definition_id": pl.Int64,
+            "subject_id": pl.Int64,
+            "cohort_start_date": pl.Date,
+            "cohort_end_date": pl.Date,
+        }
+    )
 
     # Build settings
     settings_rows = []
@@ -269,17 +280,21 @@ def generate_drug_utilisation_cohort_set(
 
     # Build codelist
     if codelist_rows:
-        codelist_df = pl.DataFrame(codelist_rows).cast({
-            "cohort_definition_id": pl.Int64,
-            "concept_id": pl.Int64,
-        })
+        codelist_df = pl.DataFrame(codelist_rows).cast(
+            {
+                "cohort_definition_id": pl.Int64,
+                "concept_id": pl.Int64,
+            }
+        )
     else:
-        codelist_df = pl.DataFrame(schema={
-            "cohort_definition_id": pl.Int64,
-            "codelist_name": pl.Utf8,
-            "concept_id": pl.Int64,
-            "codelist_type": pl.Utf8,
-        })
+        codelist_df = pl.DataFrame(
+            schema={
+                "cohort_definition_id": pl.Int64,
+                "codelist_name": pl.Utf8,
+                "concept_id": pl.Int64,
+                "codelist_type": pl.Utf8,
+            }
+        )
 
     cohort_table = CohortTable(
         data=cohort_df,
@@ -402,6 +417,7 @@ def generate_atc_cohort_set(
     # Handle list of ATC names by querying each and merging
     if isinstance(atc_name, list):
         from omopy.generics.codelist import Codelist
+
         codelist = Codelist()
         for an in atc_name:
             cl = get_atc_codes(cdm, an, level=level)
@@ -476,7 +492,9 @@ def erafy_cohort(
         tbl_source=cohort._tbl_source if hasattr(cohort, "_tbl_source") else "local",
         settings=new_settings,
         attrition=new_attrition,
-        cohort_codelist=cohort.cohort_codelist.clone() if len(cohort.cohort_codelist) > 0 else None,
+        cohort_codelist=cohort.cohort_codelist.clone()
+        if len(cohort.cohort_codelist) > 0
+        else None,
     )
 
 
@@ -566,8 +584,7 @@ def _erafy_ibis(tbl: ir.Table, gap_era: int) -> ir.Table:
     tbl = tbl.mutate(_island_id=island_id)
 
     collapsed = (
-        tbl
-        .group_by("cohort_definition_id", "subject_id", "_island_id")
+        tbl.group_by("cohort_definition_id", "subject_id", "_island_id")
         .agg(
             cohort_start_date=tbl.cohort_start_date.min(),
             cohort_end_date=tbl.cohort_end_date.max(),
@@ -592,16 +609,12 @@ def _erafy_polars(df: pl.DataFrame, gap_era: int) -> pl.DataFrame:
 
     # Running max of extended end within group
     df = df.with_columns(
-        _cum_max=pl.col("_ext_end")
-        .cum_max()
-        .over("cohort_definition_id", "subject_id"),
+        _cum_max=pl.col("_ext_end").cum_max().over("cohort_definition_id", "subject_id"),
     )
 
     # Lag cum_max to get prev max
     df = df.with_columns(
-        _prev_max=pl.col("_cum_max")
-        .shift(1)
-        .over("cohort_definition_id", "subject_id"),
+        _prev_max=pl.col("_cum_max").shift(1).over("cohort_definition_id", "subject_id"),
     )
 
     # New island flag
@@ -615,15 +628,12 @@ def _erafy_polars(df: pl.DataFrame, gap_era: int) -> pl.DataFrame:
 
     # Island ID = cumulative sum of is_new
     df = df.with_columns(
-        _island=pl.col("_is_new")
-        .cum_sum()
-        .over("cohort_definition_id", "subject_id"),
+        _island=pl.col("_is_new").cum_sum().over("cohort_definition_id", "subject_id"),
     )
 
     # Aggregate per island
     result = (
-        df
-        .group_by("cohort_definition_id", "subject_id", "_island")
+        df.group_by("cohort_definition_id", "subject_id", "_island")
         .agg(
             pl.col("cohort_start_date").min(),
             pl.col("cohort_end_date").max(),
@@ -641,13 +651,9 @@ def _build_attrition(
     reason: str,
 ) -> pl.DataFrame:
     """Build initial attrition DataFrame from materialised cohort."""
-    counts = (
-        cohort_df
-        .group_by("cohort_definition_id")
-        .agg(
-            pl.len().alias("number_records"),
-            pl.col("subject_id").n_unique().alias("number_subjects"),
-        )
+    counts = cohort_df.group_by("cohort_definition_id").agg(
+        pl.len().alias("number_records"),
+        pl.col("subject_id").n_unique().alias("number_subjects"),
     )
     rows = []
     for cdef in cohort_defs:
@@ -655,23 +661,27 @@ def _build_attrition(
         match = counts.filter(pl.col("cohort_definition_id") == cid)
         nr = match["number_records"][0] if len(match) > 0 else 0
         ns = match["number_subjects"][0] if len(match) > 0 else 0
-        rows.append({
-            "cohort_definition_id": cid,
-            "number_records": nr,
-            "number_subjects": ns,
-            "reason_id": 1,
-            "reason": reason,
-            "excluded_records": 0,
-            "excluded_subjects": 0,
-        })
-    return pl.DataFrame(rows).cast({
-        "cohort_definition_id": pl.Int64,
-        "number_records": pl.Int64,
-        "number_subjects": pl.Int64,
-        "reason_id": pl.Int64,
-        "excluded_records": pl.Int64,
-        "excluded_subjects": pl.Int64,
-    })
+        rows.append(
+            {
+                "cohort_definition_id": cid,
+                "number_records": nr,
+                "number_subjects": ns,
+                "reason_id": 1,
+                "reason": reason,
+                "excluded_records": 0,
+                "excluded_subjects": 0,
+            }
+        )
+    return pl.DataFrame(rows).cast(
+        {
+            "cohort_definition_id": pl.Int64,
+            "number_records": pl.Int64,
+            "number_subjects": pl.Int64,
+            "reason_id": pl.Int64,
+            "excluded_records": pl.Int64,
+            "excluded_subjects": pl.Int64,
+        }
+    )
 
 
 def _build_attrition_from_df(
@@ -681,8 +691,7 @@ def _build_attrition_from_df(
 ) -> pl.DataFrame:
     """Build attrition from cohort DataFrame and existing settings."""
     cohort_defs = [
-        {"cohort_definition_id": row["cohort_definition_id"]}
-        for row in settings.to_dicts()
+        {"cohort_definition_id": row["cohort_definition_id"]} for row in settings.to_dicts()
     ]
     return _build_attrition(cohort_df, cohort_defs, reason)
 
@@ -694,12 +703,14 @@ def _empty_drug_cohort(
     gap_era: int,
 ) -> CdmReference:
     """Create an empty drug utilisation cohort."""
-    empty_df = pl.DataFrame(schema={
-        "cohort_definition_id": pl.Int64,
-        "subject_id": pl.Int64,
-        "cohort_start_date": pl.Date,
-        "cohort_end_date": pl.Date,
-    })
+    empty_df = pl.DataFrame(
+        schema={
+            "cohort_definition_id": pl.Int64,
+            "subject_id": pl.Int64,
+            "cohort_start_date": pl.Date,
+            "cohort_end_date": pl.Date,
+        }
+    )
 
     if cohort_defs:
         settings_rows = [
@@ -715,7 +726,9 @@ def _empty_drug_cohort(
 
     settings_df = pl.DataFrame(settings_rows).cast({"cohort_definition_id": pl.Int64})
 
-    attrition_df = _build_attrition(empty_df, cohort_defs or [{"cohort_definition_id": 1}], "Initial qualifying events")
+    attrition_df = _build_attrition(
+        empty_df, cohort_defs or [{"cohort_definition_id": 1}], "Initial qualifying events"
+    )
 
     cohort_table = CohortTable(
         data=empty_df,
