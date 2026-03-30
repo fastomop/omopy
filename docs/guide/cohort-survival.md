@@ -185,16 +185,16 @@ from omopy.survival import (
 )
 
 # Survival summary table (median, RMST, quantiles)
-tbl = table_survival(result, output="polars")
+tbl = table_survival(result, type="polars")
 
 # Risk table (n at risk, events, censored per interval)
-events_tbl = table_survival_events(result, output="polars")
+events_tbl = table_survival_events(result, type="polars")
 
 # Attrition table (step-by-step counts)
-att_tbl = table_survival_attrition(result, output="polars")
+att_tbl = table_survival_attrition(result, type="polars")
 ```
 
-You can also request `output="gt"` for a `great_tables.GT` object for
+You can also request `type="gt"` for a `great_tables.GT` object for
 rich HTML display.
 
 ### Table Options

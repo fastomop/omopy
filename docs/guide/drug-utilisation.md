@@ -326,10 +326,10 @@ from omopy.drug import (
 )
 
 # Polars DataFrame with formatted columns
-df = table_drug_utilisation(result, output="polars")
+df = table_drug_utilisation(result, type="polars")
 
 # great_tables GT object for rich display
-gt = table_drug_utilisation(result, output="gt")
+gt = table_drug_utilisation(result, type="gt")
 ```
 
 | Function | Input result_type |

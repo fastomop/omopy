@@ -14,7 +14,7 @@ codelist = get_candidate_codes(
     cdm,
     keywords=["sinusitis"],
     domains=["Condition"],
-    standard=True,
+    standard_concept="S",
 )
 print(codelist)
 # Codelist({"sinusitis": [40481087, 257012, 4283893, ...]})
@@ -26,11 +26,11 @@ print(codelist)
 codelist = get_candidate_codes(
     cdm,
     keywords=["diabetes", "mellitus"],
-    domains=["Condition"],          # restrict to specific domains
-    standard=True,                   # standard concepts only
-    vocabularies=["SNOMED"],         # restrict to specific vocabularies
-    concept_classes=["Disorder"],    # restrict to concept classes
-    exclude_keywords=["insipidus"],  # exclude concepts matching these
+    domains=["Condition"],              # restrict to specific domains
+    standard_concept="S",               # standard concepts only
+    vocabulary_id=["SNOMED"],           # restrict to specific vocabularies
+    concept_class_id=["Disorder"],      # restrict to concept classes
+    exclude=["insipidus"],              # exclude concepts matching these
 )
 ```
 
@@ -43,7 +43,7 @@ from omopy.codelist import get_mappings
 mapped = get_mappings(
     cdm,
     codelist,
-    relationship="Maps to",
+    relationship_id="Maps to",
 )
 ```
 
@@ -65,10 +65,10 @@ ancestors = get_ancestors(cdm, codelist)
 from omopy.codelist import get_drug_ingredient_codes, get_atc_codes
 
 # Find drug ingredients by keyword
-ingredients = get_drug_ingredient_codes(cdm, keywords=["ibuprofen"])
+ingredients = get_drug_ingredient_codes(cdm, ingredient="ibuprofen")
 
 # Find ATC codes
-atc = get_atc_codes(cdm, level=3, keywords=["anti-inflammatory"])
+atc = get_atc_codes(cdm, atc_name="anti-inflammatory", level="3")
 ```
 
 ## Codelist Operations
@@ -92,13 +92,13 @@ comparison = compare_codelists(codelist_a, codelist_b)
 from omopy.codelist import subset_by_domain, subset_by_vocabulary, subset_to_codes_in_use
 
 # Keep only Condition concepts
-conditions_only = subset_by_domain(cdm, codelist, domain="Condition")
+conditions_only = subset_by_domain(codelist, cdm, domain_id="Condition")
 
 # Keep only SNOMED concepts
-snomed_only = subset_by_vocabulary(cdm, codelist, vocabulary="SNOMED")
+snomed_only = subset_by_vocabulary(codelist, cdm, vocabulary_id="SNOMED")
 
 # Keep only concepts that appear in the data
-in_use = subset_to_codes_in_use(cdm, codelist)
+in_use = subset_to_codes_in_use(codelist, cdm)
 ```
 
 ## Stratification
@@ -107,14 +107,14 @@ in_use = subset_to_codes_in_use(cdm, codelist)
 from omopy.codelist import stratify_by_domain, stratify_by_vocabulary, stratify_by_concept_class
 
 # Split by domain
-by_domain = stratify_by_domain(cdm, codelist)
+by_domain = stratify_by_domain(codelist, cdm)
 # {"Condition": Codelist(...), "Drug": Codelist(...), ...}
 
 # Split by vocabulary
-by_vocab = stratify_by_vocabulary(cdm, codelist)
+by_vocab = stratify_by_vocabulary(codelist, cdm)
 
 # Split by concept class
-by_class = stratify_by_concept_class(cdm, codelist)
+by_class = stratify_by_concept_class(codelist, cdm)
 ```
 
 ## Diagnostics
@@ -123,10 +123,10 @@ by_class = stratify_by_concept_class(cdm, codelist)
 from omopy.codelist import summarise_code_use, summarise_orphan_codes
 
 # How often do codelist concepts appear in the data?
-usage = summarise_code_use(cdm, codelist)
+usage = summarise_code_use(codelist, cdm)
 print(usage)  # Polars DataFrame with counts per concept per domain
 
 # Find orphan codes (in hierarchy but not in codelist, yet present in data)
-orphans = summarise_orphan_codes(cdm, codelist)
+orphans = summarise_orphan_codes(codelist, cdm)
 print(orphans)
 ```

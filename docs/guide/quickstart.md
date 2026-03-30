@@ -116,7 +116,7 @@ candidates = get_candidate_codes(
     cdm,
     keywords=["sinusitis"],
     domains=["Condition"],
-    standard=True,
+    standard_concept="S",
 )
 print(candidates)
 

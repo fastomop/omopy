@@ -22,7 +22,7 @@ __all__ = [
 
 def get_descendants(
     cdm: CdmReference,
-    concept_id: int | list[int],
+    concept_id: Codelist | int | list[int],
     *,
     include_self: bool = True,
     name: str | None = None,
@@ -34,7 +34,8 @@ def get_descendants(
     cdm
         CDM reference with access to ``concept_ancestor`` and ``concept``.
     concept_id
-        One or more ancestor concept IDs.
+        One or more ancestor concept IDs, or a :class:`Codelist` whose
+        concept IDs will be extracted automatically.
     include_self
         If True, include the input concept(s) themselves.
     name
@@ -45,7 +46,15 @@ def get_descendants(
     Codelist
         A codelist mapping name to descendant concept IDs (standard only).
     """
-    ids = [concept_id] if isinstance(concept_id, int) else list(concept_id)
+    if isinstance(concept_id, Codelist):
+        ids = sorted(concept_id.all_concept_ids)
+        if name is None:
+            names = concept_id.names
+            name = f"descendants_{'_'.join(names)}" if names else None
+    elif isinstance(concept_id, int):
+        ids = [concept_id]
+    else:
+        ids = list(concept_id)
 
     ca = _get_ibis_table(cdm["concept_ancestor"])
     concept = _get_ibis_table(cdm["concept"])
@@ -83,7 +92,7 @@ def get_descendants(
 
 def get_ancestors(
     cdm: CdmReference,
-    concept_id: int | list[int],
+    concept_id: Codelist | int | list[int],
     *,
     include_self: bool = True,
     name: str | None = None,
@@ -95,7 +104,8 @@ def get_ancestors(
     cdm
         CDM reference with access to ``concept_ancestor`` and ``concept``.
     concept_id
-        One or more descendant concept IDs.
+        One or more descendant concept IDs, or a :class:`Codelist` whose
+        concept IDs will be extracted automatically.
     include_self
         If True, include the input concept(s) themselves.
     name
@@ -106,7 +116,15 @@ def get_ancestors(
     Codelist
         A codelist mapping name to ancestor concept IDs (standard only).
     """
-    ids = [concept_id] if isinstance(concept_id, int) else list(concept_id)
+    if isinstance(concept_id, Codelist):
+        ids = sorted(concept_id.all_concept_ids)
+        if name is None:
+            names = concept_id.names
+            name = f"ancestors_{'_'.join(names)}" if names else None
+    elif isinstance(concept_id, int):
+        ids = [concept_id]
+    else:
+        ids = list(concept_id)
 
     ca = _get_ibis_table(cdm["concept_ancestor"])
     concept = _get_ibis_table(cdm["concept"])

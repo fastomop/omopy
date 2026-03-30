@@ -46,8 +46,8 @@ with_age = add_age(cdm["my_cohort"], cdm)
 # Then categorise
 with_groups = add_categories(
     with_age,
-    column_name="age",
-    categories={"0-17": [0, 17], "18-64": [18, 64], "65+": [65, 150]},
+    variable="age",
+    categories={"age_group": {"0-17": (0, 17), "18-64": (18, 64), "65+": (65, 150)}},
 )
 ```
 
@@ -66,18 +66,18 @@ from omopy.profiles import (
 # Binary flag: does the patient have a diabetes record?
 with_flag = add_cohort_intersect_flag(
     cdm["hypertension"],
+    "diabetes_cohort",
     cdm,
-    target_cohort_table="diabetes_cohort",
-    target_cohort_id=1,
+    target_cohort_id=[1],
     window=(0, float("inf")),  # any time after index
 )
 
 # Count of intersections
 with_count = add_cohort_intersect_count(
     cdm["hypertension"],
+    "diabetes_cohort",
     cdm,
-    target_cohort_table="diabetes_cohort",
-    target_cohort_id=1,
+    target_cohort_id=[1],
     window=(-365, -1),  # in the year before index
 )
 ```
@@ -97,16 +97,16 @@ from omopy.profiles import (
 # Any drug exposure in the 6 months before?
 with_flag = add_table_intersect_flag(
     cdm["my_cohort"],
+    "drug_exposure",
     cdm,
-    table_name="drug_exposure",
     window=(-180, -1),
 )
 
 # Date of first condition after index
 with_date = add_table_intersect_date(
     cdm["my_cohort"],
+    "condition_occurrence",
     cdm,
-    table_name="condition_occurrence",
     window=(0, 365),
     order="first",
 )
@@ -121,13 +121,13 @@ from omopy.profiles import (
     add_concept_intersect_flag,
     add_concept_intersect_count,
 )
+from omopy.generics import Codelist
 
 # Has the patient had a specific lab measurement?
 with_flag = add_concept_intersect_flag(
     cdm["my_cohort"],
+    Codelist({"systolic_bp": [3004249]}),
     cdm,
-    concept_ids=[3004249],  # Systolic blood pressure
-    table_name="measurement",
     window=(-30, 0),
 )
 ```

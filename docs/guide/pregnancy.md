@@ -55,14 +55,15 @@ cdm = cdm_from_con(con, cdm_schema="cdm")
 
 ```python
 from omopy.pregnancy import identify_pregnancies
+import datetime
 
 result = identify_pregnancies(
     cdm,
-    start_date="2015-01-01",       # Study window start
-    end_date="2023-12-31",         # Study window end
-    age_bounds=(12, 55),           # Age range (years)
-    just_gestation=False,          # Include non-gestation evidence
-    min_cell_count=5,              # Privacy threshold
+    start_date=datetime.date(2015, 1, 1),  # Study window start
+    end_date=datetime.date(2023, 12, 31),  # Study window end
+    age_bounds=(10, 55),                   # Age range (years)
+    just_gestation=False,                  # Include non-gestation evidence
+    min_cell_count=5,                      # Privacy threshold
 )
 ```
 
@@ -84,10 +85,10 @@ result.metadata            # Dict with pipeline parameters and counts
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `start_date` | `None` | Study window start (ISO format or `None` for all) |
-| `end_date` | `None` | Study window end (ISO format or `None` for all) |
-| `age_bounds` | `(12, 55)` | Min/max age at pregnancy start |
-| `just_gestation` | `False` | If `True`, only use gestation-related evidence |
+| `start_date` | `None` | Study window start (`datetime.date` or `None` for all) |
+| `end_date` | `None` | Study window end (`datetime.date` or `None` for all) |
+| `age_bounds` | `(10, 55)` | Min/max age at pregnancy start |
+| `just_gestation` | `True` | If `True`, only use gestation-related evidence |
 | `min_cell_count` | `5` | Privacy suppression threshold |
 
 ### Episode DataFrame Columns

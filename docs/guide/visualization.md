@@ -88,7 +88,7 @@ Replace suppressed counts (from minimum cell count rules) with `<N`:
 ```python
 from omopy.vis import format_min_cell_count
 
-result = format_min_cell_count(result, min_cell_count=5)
+result = format_min_cell_count(result)
 ```
 
 ## Tables
@@ -189,7 +189,9 @@ from omopy.vis import box_plot
 fig = box_plot(
     result,
     x="cohort_name",
-    y="age",
+    lower="q25",
+    middle="median",
+    upper="q75",
     colour="sex",
     facet=["strata_1", "strata_2"],  # 2-element list for row/col grid
     title="Age Distribution",
@@ -204,13 +206,11 @@ fig = box_plot(
 from omopy.vis import TableStyle, default_table_style, vis_omop_table
 
 style = TableStyle(
-    title_size=16,
+    font_size=14,
     title_align="center",
-    subtitle_size=12,
-    column_header_background="#4472C4",
-    column_header_color="white",
-    body_font_size=11,
-    group_label_background="#D9E2F3",
+    header_background="#4472C4",
+    header_color="white",
+    group_background="#D9E2F3",
 )
 
 table = vis_omop_table(result, style=style, title="Styled Table")
@@ -226,8 +226,7 @@ style = PlotStyle(
     font_size=14,
     font_family="Arial",
     background_color="#F8F8F8",
-    show_grid=True,
-    legend_position="right",
+    show_legend=True,
 )
 
 fig = scatter_plot(result, x="age", y="count", style=style)

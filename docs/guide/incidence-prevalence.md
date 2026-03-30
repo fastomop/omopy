@@ -174,10 +174,10 @@ Format results as display-ready tables:
 from omopy.incidence import table_incidence, table_prevalence
 
 # Polars DataFrame with formatted columns
-df = table_incidence(result, output="polars")
+df = table_incidence(result, type="polars")
 
 # great_tables GT object for rich display
-gt = table_incidence(result, output="gt")
+gt = table_incidence(result, type="gt")
 ```
 
 Attrition tables show how many persons were excluded at each step:
@@ -232,7 +232,7 @@ Generate synthetic incidence/prevalence data for testing and prototyping:
 from omopy.incidence import mock_incidence_prevalence
 
 mock_cdm = mock_incidence_prevalence(
-    n_persons=1000,
+    sample_size=1000,
     seed=42,
 )
 

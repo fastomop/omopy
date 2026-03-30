@@ -186,10 +186,10 @@ from omopy.characteristics import (
 result = summarise_characteristics(cdm["my_cohort"], demographics=True)
 
 # Polars DataFrame with formatted columns
-df = table_characteristics(result, output="polars")
+df = table_characteristics(result, type="polars")
 
 # great_tables GT object for rich display
-gt = table_characteristics(result, output="gt")
+gt = table_characteristics(result, type="gt")
 ```
 
 Available table functions:

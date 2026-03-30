@@ -107,11 +107,11 @@ print(cdm["condition_occurrence"].collect())
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `seed` | `42` | Random seed for reproducibility |
-| `n_persons` | `10` | Number of persons to generate |
+| `n_persons` | `5` | Number of persons to generate |
 | `cdm_version` | `"5.4"` | CDM version (`"5.3"` or `"5.4"`) |
 | `include_conditions` | `True` | Generate condition_occurrence records |
 | `include_drugs` | `True` | Generate drug_exposure records |
-| `include_measurements` | `True` | Generate measurement records |
+| `include_measurements` | `False` | Generate measurement records |
 
 ## Data Validation
 

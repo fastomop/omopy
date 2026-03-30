@@ -54,8 +54,8 @@ carries metadata (table name, source, CDM back-reference).
 `CdmTable` supports Ibis-style operations while preserving metadata:
 
 ```python
-# Filter
-young = person.filter(person._tbl.year_of_birth > 1990)
+# Filter (use .data to access the underlying Ibis expression)
+young = person.filter(person.data.year_of_birth > 1990)
 
 # Select columns
 subset = person.select("person_id", "gender_concept_id")
@@ -89,8 +89,8 @@ small = cdm_subset(cdm, person_ids=[1, 2, 3, 4, 5])
 # Random sample
 sample = cdm_sample(cdm, n=100)
 
-# By cohort membership
-subset = cdm_subset_cohort(cdm, cdm["my_cohort"], cohort_definition_id=1)
+# By cohort membership (pass the cohort table name as a string)
+subset = cdm_subset_cohort(cdm, "my_cohort", cohort_id=[1])
 ```
 
 All subsetting operations return a **new** `CdmReference` with filters applied
