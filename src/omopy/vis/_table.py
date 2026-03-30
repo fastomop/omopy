@@ -323,7 +323,10 @@ def _to_gt_table(
 
     if group_column and len(group_column) > 0:
         if not group_as_column:
-            groupname_col = group_column[0]
+            candidate = group_column[0]
+            # Only use as groupname if the column actually exists in the DataFrame
+            if candidate in pdf.columns:
+                groupname_col = candidate
         else:
             groupname_col = None
 
