@@ -85,6 +85,8 @@ nav:
       - Cohort Survival: guide/cohort-survival.md
       - Treatment Patterns: guide/treatment-patterns.md
       - Drug Diagnostics: guide/drug-diagnostics.md
+      - Pregnancy Identification: guide/pregnancy.md
+      - Test Data Generation: guide/testing.md
   - API Reference:
       - omopy.generics: reference/generics.md
       - omopy.connector: reference/connector.md
@@ -97,6 +99,8 @@ nav:
       - omopy.survival: reference/survival.md
       - omopy.treatment: reference/treatment.md
       - omopy.drug_diagnostics: reference/drug_diagnostics.md
+      - omopy.pregnancy: reference/pregnancy.md
+      - omopy.testing: reference/testing.md
   - Project:
       - Rewrite Roadmap: roadmap.md
       - Audit Trail: audit-trail.md

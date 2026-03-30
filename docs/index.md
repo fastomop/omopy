@@ -28,6 +28,8 @@ structures via [Pydantic](https://docs.pydantic.dev/) and
 | [`omopy.survival`](reference/survival.md) | CohortSurvival | Kaplan-Meier survival, competing risks, survival plots |
 | [`omopy.treatment`](reference/treatment.md) | TreatmentPatterns | Treatment pathway analysis, Sankey and sunburst plots |
 | [`omopy.drug_diagnostics`](reference/drug_diagnostics.md) | DrugExposureDiagnostics | Drug exposure quality checks and diagnostics |
+| [`omopy.pregnancy`](reference/pregnancy.md) | PregnancyIdentifier | Pregnancy episode identification (HIPPS algorithm) |
+| [`omopy.testing`](reference/testing.md) | TestGenerator | Test data generation for OMOP CDM studies |
 
 ## Quick Example
 
@@ -79,5 +81,7 @@ print(df)
 | Phase 5B | `omopy.survival` | Complete (80 tests) |
 | Phase 6A | `omopy.treatment` | Complete (127 tests) |
 | Phase 6B | `omopy.drug_diagnostics` | Complete (80 tests) |
+| Phase 7A | `omopy.pregnancy` | Complete (122 tests) |
+| Phase 8A | `omopy.testing` | Complete (63 tests) |
 
-**Total: 1434 tests, all passing.**
+**Total: 1619 tests, all passing.**

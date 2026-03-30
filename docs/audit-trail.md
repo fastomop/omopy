@@ -40,6 +40,8 @@ All commits are on the `main` branch, in chronological order:
 | `fca5c83` | 2026-03-22 | docs: fix documentation errors found during comprehensive audit |
 | TBD | 2026-03-30 | feat: add omopy.treatment module (Phase 6A — TreatmentPatterns equivalent) |
 | TBD | 2026-03-30 | feat: add omopy.drug_diagnostics module (Phase 6B — DrugExposureDiagnostics equivalent) |
+| TBD | 2026-03-30 | feat: add omopy.pregnancy module (Phase 7A — PregnancyIdentifier equivalent) |
+| TBD | 2026-03-30 | feat: add omopy.testing module (Phase 8A — TestGenerator equivalent) |
 
 ---
 
@@ -950,6 +952,152 @@ equivalent of the R `DrugExposureDiagnostics` package.
 
 ---
 
+## Phase 7A: Pregnancy (PregnancyIdentifier equivalent)
+
+### What was built
+
+The `omopy.pregnancy` module (11 source files, ~2,318 lines) provides
+pregnancy episode identification using the HIPPS algorithm — the Python
+equivalent of the R `PregnancyIdentifier` package.
+
+### Source files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `__init__.py` | 59 | 8 exports, module docstring |
+| `_concepts.py` | ~220 | `OUTCOME_CATEGORIES`, HIP_CONCEPTS, MATCHO_OUTCOME_LIMITS, MATCHO_TERM_DURATIONS, PPS_CONCEPTS, ESD_CONCEPTS, GESTATIONAL_AGE_CONCEPTS |
+| `_init.py` | ~229 | `_init_pregnancies()` — load concepts, extract records from CDM |
+| `_hip.py` | ~237 | `_run_hip()` — HIP outcome-anchored algorithm (2-pass) |
+| `_pps.py` | ~179 | `_run_pps()` — PPS gestational-timing algorithm |
+| `_merge.py` | ~197 | `_merge_hipps()` — merge HIP+PPS episodes |
+| `_esd.py` | ~170 | `_run_esd()` — Episode Start Date refinement |
+| `_identify.py` | ~170 | `identify_pregnancies()` orchestrator, `PregnancyResult` model |
+| `_summarise.py` | ~239 | `summarise_pregnancies()` |
+| `_table.py` | ~67 | `table_pregnancies()` |
+| `_plot.py` | ~103 | `plot_pregnancies()` |
+| `_mock.py` | ~448 | `mock_pregnancy_cdm()`, `validate_episodes()` |
+
+### Public API (8 exports)
+
+- **1 pipeline:** `identify_pregnancies` — Main entry point
+- **1 model:** `PregnancyResult` — Pydantic result container
+- **3 summarise/table/plot:** `summarise_pregnancies`, `table_pregnancies`, `plot_pregnancies`
+- **2 utilities:** `mock_pregnancy_cdm`, `validate_episodes`
+- **1 constant:** `OUTCOME_CATEGORIES`
+
+### Internal algorithms
+
+**HIPPS pipeline** (`_identify.py` orchestrator):
+
+1. **Init** (`_init.py`) — Load concept definitions, extract pregnancy-related
+   records from condition_occurrence, procedure_occurrence, observation,
+   measurement tables. Filter by study window and age bounds.
+
+2. **HIP** (`_hip.py`) — Outcome-anchored algorithm. Pass 1: identify outcome
+   events (live birth, stillbirth, abortion, etc.) and assign MATCHO-based
+   gestational term durations. Pass 2: work backwards from outcome dates to
+   estimate episode start dates, resolving conflicts between overlapping
+   episodes using priority rules.
+
+3. **PPS** (`_pps.py`) — Gestational-timing algorithm. Locate gestational age
+   markers (weeks-of-gestation codes) and estimate episode start by
+   subtracting the gestational age from the record date. Build episodes
+   around these timing anchors.
+
+4. **Merge** (`_merge.py`) — Combine HIP and PPS episodes. When episodes from
+   both sources overlap for the same person, prefer the one with higher
+   confidence. Non-overlapping episodes from both sources are kept.
+
+5. **ESD** (`_esd.py`) — Episode Start Date refinement. Look for LMP (Last
+   Menstrual Period) records and early prenatal visits that can provide
+   more precise start date estimates than the algorithmic defaults.
+
+### Tests: 122 passing (106 unit + 16 integration)
+
+- Unit tests cover each pipeline stage independently with mock data
+- Integration tests run the full pipeline against the Synthea database
+  (which has limited pregnancy data — tests handle empty/small results)
+
+### Key design decisions
+
+1. **Separate pipeline stages as separate files.** Each stage of the HIPPS
+   algorithm is in its own module (`_hip.py`, `_pps.py`, `_merge.py`,
+   `_esd.py`), making the complex algorithm easy to test independently.
+
+2. **PregnancyResult stores intermediate results.** The result contains
+   `hip_episodes`, `pps_episodes`, and `merged_episodes` in addition to
+   the final `episodes`, enabling debugging and validation of each stage.
+
+3. **Concept tables as module-level constants.** All HIPPS concept sets
+   (outcome codes, gestational age codes, term duration tables) are defined
+   in `_concepts.py` as frozen dicts, making them easy to review and update.
+
+4. **Graceful handling of sparse data.** The Synthea database has very few
+   pregnancy-related concepts. The algorithm handles empty intermediate
+   results without errors, returning empty episode DataFrames.
+
+### Problems encountered
+
+1. **Synthea pregnancy data sparsity.** The test database has very few
+   pregnancy-related condition/procedure codes. Integration tests validate
+   that the pipeline runs without errors and returns valid (possibly empty)
+   results, rather than asserting specific counts.
+
+---
+
+## Phase 8A: Testing (TestGenerator equivalent)
+
+### What was built
+
+The `omopy.testing` module (5 source files, ~815 lines) provides test data
+generation for OMOP CDM studies — the Python equivalent of the R
+`TestGenerator` package.
+
+### Source files
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `__init__.py` | 62 | 6 exports, module docstring with workflow example |
+| `_read.py` | ~206 | `read_patients()`, `validate_patient_data()` — Excel/CSV reading and CDM validation |
+| `_cdm.py` | ~316 | `patients_cdm()`, `mock_test_cdm()` — JSON loading and synthetic CDM generation |
+| `_generate.py` | ~107 | `generate_test_tables()` — Blank Excel template generation |
+| `_plot.py` | ~124 | `graph_cohort()` — Plotly cohort timeline visualization |
+
+### Public API (6 exports)
+
+- **2 read/validate:** `read_patients`, `validate_patient_data`
+- **2 CDM construction:** `patients_cdm`, `mock_test_cdm`
+- **1 template generation:** `generate_test_tables`
+- **1 visualization:** `graph_cohort`
+
+### Tests: 63 passing (all unit, no database needed)
+
+- Tests cover all 6 exports with various input scenarios
+- Mock CDM tests validate correct schema and row counts
+- Template generation tests verify Excel file structure
+- Validation tests check both valid and invalid data
+- Graph tests verify Plotly figure structure
+
+### Key design decisions
+
+1. **openpyxl for Excel I/O.** The R package uses readxl/writexl; the Python
+   equivalent uses openpyxl for both reading and writing Excel files. This
+   is an optional dependency — the module raises a clear error if openpyxl
+   is not installed.
+
+2. **JSON as intermediate format.** Patient data can be exported to JSON for
+   version control and deterministic test fixtures. The JSON format stores
+   table names as keys and arrays of row objects as values.
+
+3. **Polars-backed CdmReference.** Both `patients_cdm()` and `mock_test_cdm()`
+   create CdmReference objects backed by Polars DataFrames (no database),
+   making them fast to construct and usable in any test environment.
+
+4. **No database dependency.** All 63 tests run without any database
+   connection, making the testing module itself fast and portable.
+
+---
+
 ## Codebase Statistics
 
 ### Source code
@@ -967,8 +1115,10 @@ equivalent of the R `DrugExposureDiagnostics` package.
 | `omopy.survival` | 7 | 2,548 |
 | `omopy.treatment` | 6 | 2,634 |
 | `omopy.drug_diagnostics` | 6 | 1,830 |
+| `omopy.pregnancy` | 11 | 2,318 |
+| `omopy.testing` | 5 | 815 |
 | `omopy.__init__` | 1 | 46 |
-| **Total** | **103** | **~36,188** |
+| **Total** | **119** | **~39,321** |
 
 ### Tests
 
@@ -985,10 +1135,12 @@ equivalent of the R `DrugExposureDiagnostics` package.
 | `tests/survival/` | 2 | 851 | 80 |
 | `tests/treatment/` | 2 | 1,560 | 127 |
 | `tests/drug_diagnostics/` | 3 | 1,250 | 80 |
+| `tests/pregnancy/` | 3 | ~1,200 | 122 |
+| `tests/testing/` | 2 | ~700 | 63 |
 | `tests/conftest.py` | 1 | 41 | — |
-| **Total** | **65** | **~16,425** | **1,434** |
+| **Total** | **70** | **~18,325** | **1,619** |
 
-### Public API: 257 exports total
+### Public API: 271 exports total
 
 - `omopy.generics`: 38 (10 classes, 5 enums, 1 type alias, 8 constants, 14 functions)
 - `omopy.connector`: 26 (2 classes, 1 type alias, 23 functions)
@@ -1001,6 +1153,8 @@ equivalent of the R `DrugExposureDiagnostics` package.
 - `omopy.survival`: 11 (11 functions)
 - `omopy.treatment`: 11 (2 classes, 9 functions)
 - `omopy.drug_diagnostics`: 8 (1 constant, 1 class, 6 functions)
+- `omopy.pregnancy`: 8 (1 constant, 1 class, 6 functions)
+- `omopy.testing`: 6 (6 functions)
 
 ### Dependencies
 
@@ -1019,6 +1173,7 @@ Core runtime dependencies:
 | `plotly` | >= 6.6.0 | Plot rendering |
 | `scipy` | >= 1.15.0 | Statistical confidence intervals |
 | `lifelines` | >= 0.29 | Kaplan-Meier survival analysis |
+| `openpyxl` | >= 3.1 | Excel reading/writing (testing module) |
 
 ---
 
@@ -1045,6 +1200,6 @@ uv run mypy src/omopy
 
 ## What Comes Next
 
-See [Roadmap](roadmap.md) for the detailed plan covering the remaining
-2 DARWIN-EU packages to be implemented as OMOPy modules.
-Next up: Phase 7A (`omopy.pregnancy` — PregnancyIdentifier).
+All 13 planned phases are now **COMPLETE** (1,619 tests passing).
+See [Roadmap](roadmap.md) for potential future work on the 3 low-priority
+packages (DashboardExport, CdmOnboarding, DarwinBenchmark).

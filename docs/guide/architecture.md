@@ -18,7 +18,9 @@ omopy/
 ├── omopy.drug             ← Drug utilisation (Phase 5A)
 ├── omopy.survival         ← Cohort survival analysis (Phase 5B)
 ├── omopy.treatment        ← Treatment pathway analysis (Phase 6A)
-└── omopy.drug_diagnostics ← Drug exposure diagnostics (Phase 6B)
+├── omopy.drug_diagnostics ← Drug exposure diagnostics (Phase 6B)
+├── omopy.pregnancy        ← Pregnancy episode identification (Phase 7A)
+└── omopy.testing          ← Test data generation (Phase 8A)
 ```
 
 ## Layer Dependencies
@@ -37,6 +39,9 @@ Layer 3:  omopy.characteristics    │
               ▲
 Layer 4:  omopy.drug
           omopy.drug_diagnostics
+          omopy.pregnancy
+
+Layer 5:  omopy.testing (independent — only needs generics + connector)
 ```
 
 Each higher-level module depends only on modules below it. `omopy.generics` has

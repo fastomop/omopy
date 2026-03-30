@@ -22,8 +22,8 @@ classifies each one, and lays out a phased plan for incorporating them into the
 | 9 | **CohortSurvival** | Analytics R package | ~21 | **Done** | `omopy.survival` |
 | 10 | **TreatmentPatterns** | Analytics R package | ~10 | **Done** | `omopy.treatment` |
 | 11 | **DrugExposureDiagnostics** | Analytics R package | ~7 | **Done** | `omopy.drug_diagnostics` |
-| 12 | **PregnancyIdentifier** | Clinical R package | TBD | Planned | `omopy.pregnancy` |
-| 13 | **TestGenerator** | Testing R package | TBD | Planned | `omopy.testing` |
+| 12 | **PregnancyIdentifier** | Clinical R package | ~14 | **Done** | `omopy.pregnancy` |
+| 13 | **TestGenerator** | Testing R package | ~7 | **Done** | `omopy.testing` |
 | 14 | **DashboardExport** | Tooling (data export) | ~3 | Low priority | `omopy.export` (maybe) |
 | 15 | **CdmOnboarding** | Tooling (QA/onboarding) | TBD | Partial candidate | `omopy.onboarding` (partial) |
 | 16 | **DarwinBenchmark** | Tooling (benchmarking) | TBD | Later | `omopy.benchmark` (extend existing) |
@@ -36,8 +36,8 @@ classifies each one, and lays out a phased plan for incorporating them into the
 
 ### Classification Summary
 
-- **Already implemented (11):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence, DrugUtilisation, CohortSurvival, TreatmentPatterns, DrugExposureDiagnostics
-- **Candidates for rewrite (2):** PregnancyIdentifier, TestGenerator
+- **Already implemented (13):** omopgenerics, CDMConnector, PatientProfiles, CodelistGenerator, visOmopResults, CohortCharacteristics, IncidencePrevalence, DrugUtilisation, CohortSurvival, TreatmentPatterns, DrugExposureDiagnostics, PregnancyIdentifier, TestGenerator
+- **Candidates for rewrite (0):** All planned packages implemented
 - **Low priority / partial (3):** DashboardExport, CdmOnboarding, DarwinBenchmark
 - **Out of scope (6):** DarwinShinyModules, ReportGenerator, execution-engine, TestReleaseGitAction, .github, EunomiaDatasets (data only, consumed directly)
 
@@ -276,42 +276,57 @@ These packages depend on Layer 4 or are parallel to it.
 
 ### Phase 7: Specialized Clinical Algorithms
 
-#### Phase 7A: `omopy.pregnancy` (PregnancyIdentifier)
+#### Phase 7A: `omopy.pregnancy` (PregnancyIdentifier) — COMPLETE ✅
 
-**R package:** Exports TBD (newly released)
+**R package:** PregnancyIdentifier (v3.2.2, 14 exports)
 
-**Scope:** Identify pregnancy episodes from OMOP CDM data using the HIPPS
-algorithm. Map scattered pregnancy-related codes to structured episodes
-with inferred start/end dates and outcome categories.
+**Implemented:**
 
-**Dependencies:** CDMConnector, PatientProfiles, omopgenerics (all done).
-CohortCharacteristics (Phase 4A), IncidencePrevalence (Phase 4B).
+- **Core pipeline (1):** `identify_pregnancies()` — Main entry point running full
+  HIPPS algorithm (init → HIP → PPS → merge → ESD)
+- **Result container (1):** `PregnancyResult` — Pydantic model holding episodes,
+  hip_episodes, pps_episodes, merged_episodes, metadata
+- **Summarise (1):** `summarise_pregnancies()` — Convert to SummarisedResult
+- **Table (1):** `table_pregnancies()` — Wrapper around `vis_omop_table()`
+- **Plot (1):** `plot_pregnancies()` — Outcome distribution, gestational age,
+  timeline plots
+- **Utilities (2):** `mock_pregnancy_cdm()`, `validate_episodes()`
+- **Constants (1):** `OUTCOME_CATEGORIES` — 8 outcome category definitions
 
-**Estimated effort:** Medium-large. The HIPPS algorithm has complex logic
-for episode identification, conflict resolution, and date inference.
+**Key algorithms:**
 
-**Estimated size:** ~2,000-3,000 lines of source, ~120-180 tests.
+- **HIP** (outcome-anchored) — Two-pass algorithm locating pregnancy outcome codes
+  and working backwards to estimate start dates
+- **PPS** (gestational-timing) — Locates gestational age markers and estimates
+  start from timing information
+- **HIPPS merge** — Combines HIP and PPS episodes with conflict resolution
+- **ESD** (Episode Start Date) — Refines start dates using LMP records and
+  prenatal visit evidence
+
+**Tests: 122** (106 unit + 16 integration against Synthea database)
+
+**Source: ~2,318 lines** across 11 files
 
 ---
 
 ### Phase 8: Testing Infrastructure
 
-#### Phase 8A: `omopy.testing` (TestGenerator)
+#### Phase 8A: `omopy.testing` (TestGenerator) — COMPLETE ✅
 
-**R package:** Exports TBD
+**R package:** TestGenerator (v0.4.0, 7 exports)
 
-**Scope:** Create deterministic test fixtures for OMOP CDM studies. Read
-micro-populations from Excel/CSV, generate JSON test definitions, and
-populate mock CDM databases. This is the testing infrastructure that
-enables Python-based study development.
+**Implemented:**
 
-**Dependencies:** CDMConnector, omopgenerics (done).
+- **Read/validate (2):** `read_patients()` (Excel/CSV → dict of DataFrames),
+  `validate_patient_data()` (validate against CDM spec)
+- **CDM construction (2):** `patients_cdm()` (JSON → Polars CdmReference),
+  `mock_test_cdm()` (synthetic mock CDM)
+- **Template generation (1):** `generate_test_tables()` (blank Excel templates)
+- **Visualization (1):** `graph_cohort()` (Plotly cohort timeline)
 
-**Estimated effort:** Small-medium. The core logic is data transformation
-(Excel/CSV → CDM tables). Can leverage existing `data/synthea.duckdb`
-patterns.
+**Tests: 63** (all unit, no database needed)
 
-**Estimated size:** ~800-1,200 lines of source, ~50-80 tests.
+**Source: ~815 lines** across 5 files
 
 ---
 
@@ -353,11 +368,9 @@ These repositories are out of scope for the monorepo:
 | 5B | `omopy.survival` | 2,548 | 80 | **Done** |
 | 6A | `omopy.treatment` | 2,596 | 127 | **Done** |
 | 6B | `omopy.drug_diagnostics` | 1,830 | 80 | **Done** |
-| 7A | `omopy.pregnancy` | 2,000-3,000 | 120-180 | Planned |
-| 8A | `omopy.testing` | 800-1,200 | 50-80 | Planned |
-| | **Total (done)** | **~36,104** | **1,434** | |
-| | **Total (planned)** | **~2,800-4,200** | **~170-260** | |
-| | **Grand total** | **~38,904-40,304** | **~1,604-1,694** | |
+| 7A | `omopy.pregnancy` | 2,318 | 122 | **Done** |
+| 8A | `omopy.testing` | 815 | 63 | **Done** |
+| | **Total** | **~38,237** | **1,619** | |
 
 ---
 
@@ -369,24 +382,15 @@ Now ─────────────────────────�
 Phase 4A: characteristics ✅──┐
                                ├──► Phase 5A: drug ✅──► Phase 6B: drug_diagnostics ✅
 Phase 4B: incidence ✅────────┤
-                               ├──► Phase 7A: pregnancy
+                               ├──► Phase 7A: pregnancy ✅
 Phase 5B: survival ✅─────────┘
 
 Phase 6A: treatment ✅ (independent, completed)
 
-Phase 8A: testing (independent, can start anytime after Phase 2)
+Phase 8A: testing ✅ (independent, completed)
 ```
 
-Phases 4A and 4B can run in **parallel** — they share the same dependencies
-(generics, connector, profiles) but do not depend on each other.
-
-Phase 5B (survival) can also start in parallel with Phase 4, since it only
-depends on Layers 0-2 plus `lifelines`.
-
-Phase 6A (treatment) is also independent — it only needs CDMConnector.
-
-The critical path is:
-**Phase 4A/4B → Phase 5A (drug) → Phase 6B (drug_diagnostics) → Phase 7A (pregnancy)**
+All 13 phases are now **COMPLETE**.
 
 ---
 
