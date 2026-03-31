@@ -3,14 +3,15 @@ name = "omopy"
 version = "0.1.0"
 description = "Pythonic, type-safe interface for OMOP CDM databases"
 readme = "README.md"
-license = { text = "Apache-2.0" }
+license = { text = "MIT" }
 requires-python = ">=3.14"
-authors = [{ name = "OMOPy Contributors" }]
-keywords = ["omop", "cdm", "ohdsi", "observational-health", "epidemiology"]
+authors = [{ name = "DARWIN EU Coordination Centre" }]
+keywords = ["omop", "cdm", "ohdsi", "observational-health", "epidemiology", "darwin-eu"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
     "Typing :: Typed",
@@ -31,7 +32,15 @@ dependencies = [
     "scipy>=1.15.0",
     "lifelines>=0.29",
     "openpyxl>=3.1.5",
+    "nbconvert>=7.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/darwin-eu/omopy"
+Documentation = "https://darwin-eu.github.io/omopy"
+Repository = "https://github.com/darwin-eu/omopy"
+Issues = "https://github.com/darwin-eu/omopy/issues"
+Changelog = "https://github.com/darwin-eu/omopy/releases"
 
 [project.optional-dependencies]
 # Database backends (Phase 1+)
@@ -106,7 +115,7 @@ target-version = "py314"
 line-length = 99
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "TCH", "RUF"]
+select = "E,F,W,I,N,UP,B,A,SIM,TCH,RUF"
 
 [tool.mypy]
 python_version = "3.14"
