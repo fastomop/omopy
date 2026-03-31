@@ -6,7 +6,14 @@ readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.14"
 authors = [{ name = "DARWIN EU Coordination Centre" }]
-keywords = ["omop", "cdm", "ohdsi", "observational-health", "epidemiology", "darwin-eu"]
+keywords = [
+    "omop",
+    "cdm",
+    "ohdsi",
+    "observational-health",
+    "epidemiology",
+    "darwin-eu",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -112,10 +119,12 @@ markers = [
 
 [tool.ruff]
 target-version = "py314"
-line-length = 99
+line-length = 88
+indent-width = 4
+exclude = ["build", "dist", "omopy.egg-info", ".venv"]
 
 [tool.ruff.lint]
-select = "E,F,W,I,N,UP,B,A,SIM,TCH,RUF"
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "RUF"]
 
 [tool.mypy]
 python_version = "3.14"
