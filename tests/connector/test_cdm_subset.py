@@ -11,8 +11,8 @@ Key test data:
 
 from __future__ import annotations
 
-import pytest
 import polars as pl
+import pytest
 
 from omopy.connector import (
     cdm_from_con,
@@ -22,7 +22,6 @@ from omopy.connector import (
 )
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.codelist import Codelist
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -64,7 +63,9 @@ class TestCdmSubsetCohort:
 
     def test_subset_person_ids_match(self, cdm_with_cohort):
         """Person IDs in subset should match the cohort subject IDs."""
-        cohort_subjects = sorted(cdm_with_cohort["hypertension"].collect()["subject_id"].to_list())
+        cohort_subjects = sorted(
+            cdm_with_cohort["hypertension"].collect()["subject_id"].to_list()
+        )
         subset = cdm_subset_cohort(cdm_with_cohort, "hypertension")
         subset_persons = sorted(subset["person"].collect()["person_id"].to_list())
         assert subset_persons == cohort_subjects
@@ -156,7 +157,10 @@ class TestCdmSample:
 
     def test_sample_reduces_clinical_tables(self, cdm):
         result = cdm_sample(cdm, 5)
-        assert result["condition_occurrence"].count() <= cdm["condition_occurrence"].count()
+        assert (
+            result["condition_occurrence"].count()
+            <= cdm["condition_occurrence"].count()
+        )
         assert result["drug_exposure"].count() <= cdm["drug_exposure"].count()
 
     def test_sample_preserves_vocabulary(self, cdm):
@@ -188,6 +192,8 @@ class TestCdmSample:
                 "ethnicity_concept_id": [0, 0, 0],
             }
         )
-        local_cdm = CdmReference(tables={"person": CdmTable(data=person_df, tbl_name="person")})
+        local_cdm = CdmReference(
+            tables={"person": CdmTable(data=person_df, tbl_name="person")}
+        )
         with pytest.raises(TypeError, match="DbSource"):
             cdm_sample(local_cdm, 2)

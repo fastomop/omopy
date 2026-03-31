@@ -20,14 +20,13 @@ import polars as pl
 from pydantic import BaseModel, ConfigDict
 
 from omopy.generics.cdm_reference import CdmReference
-
 from omopy.pregnancy._esd import _run_esd
 from omopy.pregnancy._hip import _run_hip
 from omopy.pregnancy._init import _init_pregnancies
 from omopy.pregnancy._merge import _merge_hipps
 from omopy.pregnancy._pps import _run_pps
 
-__all__ = ["identify_pregnancies", "PregnancyResult"]
+__all__ = ["PregnancyResult", "identify_pregnancies"]
 
 log = logging.getLogger(__name__)
 

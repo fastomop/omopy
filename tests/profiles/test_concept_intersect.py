@@ -8,7 +8,6 @@ Key condition concepts: 40481087 (Viral sinusitis, 4 occ/3 persons),
 from __future__ import annotations
 
 import polars as pl
-import pytest
 
 from omopy.generics.codelist import Codelist
 from omopy.profiles import (

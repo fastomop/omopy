@@ -18,30 +18,30 @@ This is the Python equivalent of R's ``addDrugUtilisation()``,
 
 from __future__ import annotations
 
-from typing import Any, Literal
+import contextlib
+from typing import Any
 
 import ibis
-import ibis.expr.types as ir
 import polars as pl
 
+from omopy.connector.db_source import DbSource
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.codelist import Codelist
 from omopy.generics.cohort_table import CohortTable
-from omopy.connector.db_source import DbSource
 
 __all__ = [
-    "add_drug_utilisation",
-    "add_number_exposures",
-    "add_number_eras",
+    "add_cumulative_dose",
+    "add_cumulative_quantity",
     "add_days_exposed",
     "add_days_prescribed",
-    "add_time_to_exposure",
+    "add_drug_restart",
+    "add_drug_utilisation",
+    "add_initial_daily_dose",
     "add_initial_exposure_duration",
     "add_initial_quantity",
-    "add_cumulative_quantity",
-    "add_initial_daily_dose",
-    "add_cumulative_dose",
-    "add_drug_restart",
+    "add_number_eras",
+    "add_number_exposures",
+    "add_time_to_exposure",
 ]
 
 
@@ -625,11 +625,13 @@ def add_drug_restart(
         follow_up_days_list = list(follow_up_days)
 
     # Collect cohort
-    cohort_df = cohort.collect() if not isinstance(cohort.data, pl.DataFrame) else cohort.data
+    cohort_df = (
+        cohort.collect() if not isinstance(cohort.data, pl.DataFrame) else cohort.data
+    )
 
     # Step 1: Compute censor_days (days of remaining observation after cohort_end_date)
-    from omopy.profiles import add_future_observation
     from omopy.generics.cdm_table import CdmTable
+    from omopy.profiles import add_future_observation
 
     temp_table = CdmTable(
         data=cohort_df.rename({"cohort_end_date": "cohort_start_date_tmp"})
@@ -647,7 +649,9 @@ def add_drug_restart(
         future_observation_name="_censor_days",
     )
     enriched_df = (
-        enriched.collect() if not isinstance(enriched.data, pl.DataFrame) else enriched.data
+        enriched.collect()
+        if not isinstance(enriched.data, pl.DataFrame)
+        else enriched.data
     )
 
     # If censor_date column provided, take minimum
@@ -696,11 +700,15 @@ def add_drug_restart(
         switch_ct = switch_cohort_table
 
     switch_df = (
-        switch_ct.collect() if not isinstance(switch_ct.data, pl.DataFrame) else switch_ct.data
+        switch_ct.collect()
+        if not isinstance(switch_ct.data, pl.DataFrame)
+        else switch_ct.data
     )
 
     if switch_cohort_id is not None:
-        switch_df = switch_df.filter(pl.col("cohort_definition_id").is_in(switch_cohort_id))
+        switch_df = switch_df.filter(
+            pl.col("cohort_definition_id").is_in(switch_cohort_id)
+        )
 
     # Distinct switch entries
     switch_entries = switch_df.select(
@@ -773,7 +781,9 @@ def add_drug_restart(
     result_df = switch_agg
     for fud in follow_up_days_list:
         fud_effective = (
-            fud if not (isinstance(fud, float) and fud == float("inf")) else 99999999999999
+            fud
+            if not (isinstance(fud, float) and fud == float("inf"))
+            else 99999999999999
         )
         col_name = f"drug_restart_{_format_fud(fud)}"
 
@@ -786,17 +796,26 @@ def add_drug_restart(
             )
             .then(pl.lit("restart and switch"))
             .when(
-                pl.col("_restart_days").is_not_null() & (pl.col("_restart_days") <= fud_effective)
+                pl.col("_restart_days").is_not_null()
+                & (pl.col("_restart_days") <= fud_effective)
             )
             .then(pl.lit("restart"))
-            .when(pl.col("_switch_days").is_not_null() & (pl.col("_switch_days") <= fud_effective))
+            .when(
+                pl.col("_switch_days").is_not_null()
+                & (pl.col("_switch_days") <= fud_effective)
+            )
             .then(pl.lit("switch"))
             .otherwise(pl.lit("untreated"))
             .alias(col_name),
         )
 
     # Join back to original cohort
-    join_keys = ["cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date"]
+    join_keys = [
+        "cohort_definition_id",
+        "subject_id",
+        "cohort_start_date",
+        "cohort_end_date",
+    ]
     restart_cols = [f"drug_restart_{_format_fud(fud)}" for fud in follow_up_days_list]
     result_slim = result_df.select(*join_keys, *restart_cols)
 
@@ -882,7 +901,9 @@ def _add_drug_use_internal(
         raise ValueError(msg)
 
     # Collect cohort data
-    cohort_df = cohort.collect() if not isinstance(cohort.data, pl.DataFrame) else cohort.data
+    cohort_df = (
+        cohort.collect() if not isinstance(cohort.data, pl.DataFrame) else cohort.data
+    )
 
     # Build drug data per concept set entry and compute metrics
     con = source.connection
@@ -925,7 +946,9 @@ def _add_drug_use_internal(
             )
 
         if days_prescribed:
-            _compute_days_prescribed(drug_data, concept_name, index_date, censor_date, all_metrics)
+            _compute_days_prescribed(
+                drug_data, concept_name, index_date, censor_date, all_metrics
+            )
 
         if time_to_exposure:
             _compute_time_to_exposure(drug_data, concept_name, index_date, all_metrics)
@@ -969,7 +992,7 @@ def _add_drug_use_internal(
     result_df = cohort_df
     join_keys = ["subject_id", index_date, censor_date]
 
-    for metric_name, metric_df in all_metrics.items():
+    for _metric_name, metric_df in all_metrics.items():
         result_df = result_df.join(metric_df, on=join_keys, how="left")
 
     # Fill nulls with defaults
@@ -1087,7 +1110,8 @@ def _build_drug_data(
         drug_records = (
             drug_exposure.join(
                 all_concept_ids,
-                drug_exposure.drug_concept_id.cast("int64") == all_concept_ids.concept_id,
+                drug_exposure.drug_concept_id.cast("int64")
+                == all_concept_ids.concept_id,
             )
             .select(
                 subject_id=drug_exposure.person_id,
@@ -1157,10 +1181,8 @@ def _build_drug_data(
 
     finally:
         for tmp in [tmp_ids, tmp_persons]:
-            try:
+            with contextlib.suppress(Exception):
                 con.con.unregister(tmp)
-            except Exception:
-                pass
 
 
 # ---------------------------------------------------------------------------
@@ -1215,8 +1237,12 @@ def _compute_days_exposed(
 
     # Clip era dates to window
     erafied = erafied.with_columns(
-        _era_start=pl.max_horizontal(pl.col("drug_exposure_start_date"), pl.col(index_date)),
-        _era_end=pl.min_horizontal(pl.col("drug_exposure_end_date"), pl.col(censor_date)),
+        _era_start=pl.max_horizontal(
+            pl.col("drug_exposure_start_date"), pl.col(index_date)
+        ),
+        _era_end=pl.min_horizontal(
+            pl.col("drug_exposure_end_date"), pl.col(censor_date)
+        ),
     )
 
     # Duration = end - start + 1
@@ -1226,7 +1252,9 @@ def _compute_days_exposed(
         .clip(lower_bound=0),
     )
 
-    result = erafied.group_by(join_keys).agg(pl.col("_era_days").sum().cast(pl.Int64).alias(col))
+    result = erafied.group_by(join_keys).agg(
+        pl.col("_era_days").sum().cast(pl.Int64).alias(col)
+    )
     all_metrics[col] = result
 
 
@@ -1243,8 +1271,12 @@ def _compute_days_prescribed(
 
     # Clip exposure dates to window
     clipped = drug_data.with_columns(
-        _clip_start=pl.max_horizontal(pl.col("drug_exposure_start_date"), pl.col(index_date)),
-        _clip_end=pl.min_horizontal(pl.col("drug_exposure_end_date"), pl.col(censor_date)),
+        _clip_start=pl.max_horizontal(
+            pl.col("drug_exposure_start_date"), pl.col(index_date)
+        ),
+        _clip_end=pl.min_horizontal(
+            pl.col("drug_exposure_end_date"), pl.col(censor_date)
+        ),
     )
 
     clipped = clipped.with_columns(
@@ -1253,7 +1285,9 @@ def _compute_days_prescribed(
         .clip(lower_bound=0),
     )
 
-    result = clipped.group_by(join_keys).agg(pl.col("_exp_days").sum().cast(pl.Int64).alias(col))
+    result = clipped.group_by(join_keys).agg(
+        pl.col("_exp_days").sum().cast(pl.Int64).alias(col)
+    )
     all_metrics[col] = result
 
 
@@ -1304,7 +1338,9 @@ def _compute_initial_exposure_duration(
     # Duration = end - start + 1, take max among ties
     first_records = first_records.with_columns(
         _duration=(
-            (pl.col("drug_exposure_end_date") - pl.col("drug_exposure_start_date")).dt.total_days()
+            (
+                pl.col("drug_exposure_end_date") - pl.col("drug_exposure_start_date")
+            ).dt.total_days()
             + 1
         ).cast(pl.Int64),
     )
@@ -1385,11 +1421,17 @@ def _compute_initial_daily_dose(
 
     # Clip to window
     first_records = first_records.with_columns(
-        _clip_start=pl.max_horizontal(pl.col("drug_exposure_start_date"), pl.col(index_date)),
-        _clip_end=pl.min_horizontal(pl.col("drug_exposure_end_date"), pl.col(censor_date)),
+        _clip_start=pl.max_horizontal(
+            pl.col("drug_exposure_start_date"), pl.col(index_date)
+        ),
+        _clip_end=pl.min_horizontal(
+            pl.col("drug_exposure_end_date"), pl.col(censor_date)
+        ),
     )
     first_records = first_records.with_columns(
-        _exp_duration=((pl.col("_clip_end") - pl.col("_clip_start")).dt.total_days() + 1)
+        _exp_duration=(
+            (pl.col("_clip_end") - pl.col("_clip_start")).dt.total_days() + 1
+        )
         .cast(pl.Int64)
         .clip(lower_bound=1),
     )
@@ -1441,11 +1483,17 @@ def _compute_cumulative_dose(
 
     # Clip all records to window
     clipped = drug_data.with_columns(
-        _clip_start=pl.max_horizontal(pl.col("drug_exposure_start_date"), pl.col(index_date)),
-        _clip_end=pl.min_horizontal(pl.col("drug_exposure_end_date"), pl.col(censor_date)),
+        _clip_start=pl.max_horizontal(
+            pl.col("drug_exposure_start_date"), pl.col(index_date)
+        ),
+        _clip_end=pl.min_horizontal(
+            pl.col("drug_exposure_end_date"), pl.col(censor_date)
+        ),
     )
     clipped = clipped.with_columns(
-        _exp_duration=((pl.col("_clip_end") - pl.col("_clip_start")).dt.total_days() + 1)
+        _exp_duration=(
+            (pl.col("_clip_end") - pl.col("_clip_start")).dt.total_days() + 1
+        )
         .cast(pl.Int64)
         .clip(lower_bound=1),
     )
@@ -1500,12 +1548,11 @@ def _compute_daily_dose_polars(
     ``_dose_unit`` columns added.
     """
     from omopy.drug._daily_dose import (
-        _get_ibis_or_memtable,
-        _patterns_to_arrow,
-        _join_with_patterns,
-        _join_exposure_with_strength,
-        _standardise_units,
         _apply_formula,
+        _join_exposure_with_strength,
+        _join_with_patterns,
+        _patterns_to_arrow,
+        _standardise_units,
     )
 
     if len(df) == 0:
@@ -1557,7 +1604,9 @@ def _compute_daily_dose_polars(
         else:
             result = result.mutate(
                 _days_exposed=(
-                    (result.drug_exposure_end_date - result.drug_exposure_start_date).cast("int64")
+                    (
+                        result.drug_exposure_end_date - result.drug_exposure_start_date
+                    ).cast("int64")
                     + 1
                 ),
             )
@@ -1586,10 +1635,8 @@ def _compute_daily_dose_polars(
         return result_df
 
     finally:
-        try:
+        with contextlib.suppress(Exception):
             con.con.unregister(tmp_patterns)
-        except Exception:
-            pass
 
 
 # ---------------------------------------------------------------------------

@@ -13,12 +13,12 @@ vocabulary tables.
 from __future__ import annotations
 
 __all__ = [
-    "OUTCOME_CATEGORIES",
-    "HIP_CONCEPTS",
-    "PPS_CONCEPTS",
     "ESD_CONCEPTS",
+    "HIP_CONCEPTS",
     "MATCHO_OUTCOME_LIMITS",
     "MATCHO_TERM_DURATIONS",
+    "OUTCOME_CATEGORIES",
+    "PPS_CONCEPTS",
 ]
 
 
@@ -49,9 +49,17 @@ HIP_CONCEPTS: dict[int, dict] = {
     4302541: {"name": "Single live birth", "category": "LB", "gest_value": 40},
     4092289: {"name": "Delivery of live newborn", "category": "LB", "gest_value": 40},
     4128331: {"name": "Normal delivery", "category": "LB", "gest_value": 40},
-    4324765: {"name": "Delivery by cesarean section", "category": "LB", "gest_value": 38},
+    4324765: {
+        "name": "Delivery by cesarean section",
+        "category": "LB",
+        "gest_value": 38,
+    },
     440059: {"name": "Cesarean section", "category": "LB", "gest_value": 38},
-    4032243: {"name": "Outcome of delivery - live birth", "category": "LB", "gest_value": 40},
+    4032243: {
+        "name": "Outcome of delivery - live birth",
+        "category": "LB",
+        "gest_value": 40,
+    },
     4195928: {"name": "Born alive", "category": "LB", "gest_value": 40},
     4129922: {"name": "Twin live born", "category": "LB", "gest_value": 37},
     4138969: {"name": "Premature delivery", "category": "LB", "gest_value": 34},
@@ -63,10 +71,18 @@ HIP_CONCEPTS: dict[int, dict] = {
     4067106: {"name": "Late fetal death", "category": "SB", "gest_value": 28},
     # ---- Abortion (AB) ----
     4067814: {"name": "Induced abortion", "category": "AB", "gest_value": None},
-    4090551: {"name": "Elective termination of pregnancy", "category": "AB", "gest_value": None},
+    4090551: {
+        "name": "Elective termination of pregnancy",
+        "category": "AB",
+        "gest_value": None,
+    },
     4144921: {"name": "Legal abortion", "category": "AB", "gest_value": None},
     4264339: {"name": "Therapeutic abortion", "category": "AB", "gest_value": None},
-    46273478: {"name": "Induced termination of pregnancy", "category": "AB", "gest_value": None},
+    46273478: {
+        "name": "Induced termination of pregnancy",
+        "category": "AB",
+        "gest_value": None,
+    },
     # ---- Spontaneous abortion (SA) ----
     4199459: {"name": "Spontaneous abortion", "category": "SA", "gest_value": None},
     4071712: {"name": "Miscarriage", "category": "SA", "gest_value": None},
@@ -76,15 +92,31 @@ HIP_CONCEPTS: dict[int, dict] = {
     # ---- Delivery unspecified (DELIV) ----
     4063381: {"name": "Delivery procedure", "category": "DELIV", "gest_value": 39},
     4148250: {"name": "Forceps delivery", "category": "DELIV", "gest_value": 39},
-    4127886: {"name": "Vacuum extraction delivery", "category": "DELIV", "gest_value": 39},
+    4127886: {
+        "name": "Vacuum extraction delivery",
+        "category": "DELIV",
+        "gest_value": 39,
+    },
     4142115: {"name": "Vaginal delivery", "category": "DELIV", "gest_value": 39},
     4241044: {"name": "Induction of labor", "category": "DELIV", "gest_value": 39},
     # ---- Ectopic pregnancy (ECT) ----
     443213: {"name": "Ectopic pregnancy", "category": "ECT", "gest_value": None},
     4060360: {"name": "Tubal pregnancy", "category": "ECT", "gest_value": None},
-    4170147: {"name": "Cornual ectopic pregnancy", "category": "ECT", "gest_value": None},
-    4148218: {"name": "Abdominal ectopic pregnancy", "category": "ECT", "gest_value": None},
-    4141992: {"name": "Cervical ectopic pregnancy", "category": "ECT", "gest_value": None},
+    4170147: {
+        "name": "Cornual ectopic pregnancy",
+        "category": "ECT",
+        "gest_value": None,
+    },
+    4148218: {
+        "name": "Abdominal ectopic pregnancy",
+        "category": "ECT",
+        "gest_value": None,
+    },
+    4141992: {
+        "name": "Cervical ectopic pregnancy",
+        "category": "ECT",
+        "gest_value": None,
+    },
 }
 
 # Convenience: concept_id -> category
@@ -165,7 +197,11 @@ PPS_CONCEPTS: dict[int, dict] = {
     # Prenatal visit observations
     4047564: {"name": "First trimester screening", "min_month": 2, "max_month": 4},
     4048384: {"name": "Second trimester screening", "min_month": 4, "max_month": 7},
-    4200046: {"name": "Third trimester pregnancy examination", "min_month": 7, "max_month": 10},
+    4200046: {
+        "name": "Third trimester pregnancy examination",
+        "min_month": 7,
+        "max_month": 10,
+    },
     4048098: {"name": "Prenatal visit - first", "min_month": 1, "max_month": 3},
     4230360: {"name": "Prenatal care supervision", "min_month": 1, "max_month": 10},
     # Ultrasound / imaging
@@ -196,17 +232,53 @@ PPS_CONCEPT_IDS: frozenset[int] = frozenset(PPS_CONCEPTS.keys())
 
 ESD_CONCEPTS: dict[int, dict] = {
     # Gestational week measurements
-    4260747: {"name": "Gestational age in weeks", "domain": "measurement", "category": "GW"},
-    3036277: {"name": "Gestational age at birth", "domain": "measurement", "category": "GW"},
-    3013451: {"name": "Gestational age by LMP", "domain": "measurement", "category": "GW"},
-    3018923: {"name": "Gestational age by ultrasound", "domain": "measurement", "category": "GW"},
+    4260747: {
+        "name": "Gestational age in weeks",
+        "domain": "measurement",
+        "category": "GW",
+    },
+    3036277: {
+        "name": "Gestational age at birth",
+        "domain": "measurement",
+        "category": "GW",
+    },
+    3013451: {
+        "name": "Gestational age by LMP",
+        "domain": "measurement",
+        "category": "GW",
+    },
+    3018923: {
+        "name": "Gestational age by ultrasound",
+        "domain": "measurement",
+        "category": "GW",
+    },
     # Gestational range (trimester) observations
-    4299535: {"name": "First trimester of pregnancy", "domain": "condition", "category": "GR3m"},
-    4128160: {"name": "Second trimester of pregnancy", "domain": "condition", "category": "GR3m"},
-    4219502: {"name": "Third trimester of pregnancy", "domain": "condition", "category": "GR3m"},
+    4299535: {
+        "name": "First trimester of pregnancy",
+        "domain": "condition",
+        "category": "GR3m",
+    },
+    4128160: {
+        "name": "Second trimester of pregnancy",
+        "domain": "condition",
+        "category": "GR3m",
+    },
+    4219502: {
+        "name": "Third trimester of pregnancy",
+        "domain": "condition",
+        "category": "GR3m",
+    },
     # Additional GW measurements
-    3017731: {"name": "Fetal biometry gestational age", "domain": "measurement", "category": "GW"},
-    3004501: {"name": "Estimated gestational age", "domain": "measurement", "category": "GW"},
+    3017731: {
+        "name": "Fetal biometry gestational age",
+        "domain": "measurement",
+        "category": "GW",
+    },
+    3004501: {
+        "name": "Estimated gestational age",
+        "domain": "measurement",
+        "category": "GW",
+    },
 }
 
 # Convenience: set of all ESD concept IDs

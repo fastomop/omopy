@@ -6,12 +6,10 @@ mapped concepts (via ``concept_relationship``), and handling exclusions.
 
 from __future__ import annotations
 
-from typing import Any
-
 import ibis
 import ibis.expr.types as ir
 
-from omopy.connector.circe._types import ConceptSet, ConceptItem
+from omopy.connector.circe._types import ConceptItem, ConceptSet
 
 __all__ = ["resolve_concept_sets"]
 
@@ -61,13 +59,17 @@ def resolve_concept_sets(
 
         # Build the included concept IDs
         if included:
-            include_expr = _resolve_items(included, concept_tbl, ancestor_tbl, relationship_tbl)
+            include_expr = _resolve_items(
+                included, concept_tbl, ancestor_tbl, relationship_tbl
+            )
         else:
             include_expr = _empty_concept_id_table(con)
 
         # Build the excluded concept IDs
         if excluded:
-            exclude_expr = _resolve_items(excluded, concept_tbl, ancestor_tbl, relationship_tbl)
+            exclude_expr = _resolve_items(
+                excluded, concept_tbl, ancestor_tbl, relationship_tbl
+            )
             # Final = included EXCEPT excluded
             final_expr = include_expr.difference(exclude_expr)
         else:
@@ -94,7 +96,9 @@ def _resolve_items(
         cid = item.concept.concept_id
 
         # Direct concept
-        direct = concept_tbl.filter(concept_tbl.concept_id == cid).select(concept_tbl.concept_id)
+        direct = concept_tbl.filter(concept_tbl.concept_id == cid).select(
+            concept_tbl.concept_id
+        )
         parts.append(direct)
 
         # Include descendants via concept_ancestor

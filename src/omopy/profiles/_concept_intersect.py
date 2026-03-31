@@ -28,7 +28,7 @@ import ibis.expr.types as ir
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.cdm_table import CdmTable
 from omopy.generics.codelist import Codelist
-from omopy.profiles._columns import _TABLE_COLUMNS, person_id_column
+from omopy.profiles._columns import _TABLE_COLUMNS
 from omopy.profiles._demographics import _get_ibis_table, _resolve_cdm
 from omopy.profiles._intersect import _add_intersect
 from omopy.profiles._windows import Window, validate_windows
@@ -110,7 +110,7 @@ def _build_concept_overlap_table(
     # Group concept IDs by (concept_set_idx, domain) → list of concept_ids
     # domain → list of (concept_set_id, concept_id) pairs
     domain_concepts: dict[str, list[tuple[int, int]]] = {}
-    for set_name, set_id in zip(set_names, set_ids):
+    for set_name, set_id in zip(set_names, set_ids, strict=False):
         for cid in concept_set[set_name]:
             domain = concept_to_domain.get(cid, "")
             if domain in _DOMAIN_TO_TABLE:
@@ -136,7 +136,9 @@ def _build_concept_overlap_table(
 
         # Filter domain table to only relevant concept IDs
         filtered = domain_tbl.filter(
-            domain_tbl[concept_col].cast("int64").isin([ibis.literal(int(c)) for c in domain_cids])
+            domain_tbl[concept_col]
+            .cast("int64")
+            .isin([ibis.literal(int(c)) for c in domain_cids])
         )
 
         # Build the CASE for concept_set_id assignment

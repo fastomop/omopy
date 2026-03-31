@@ -1,13 +1,14 @@
-"""Tests for omopy.codelist._diagnostics — summarise_code_use / summarise_orphan_codes."""
+"""Tests for omopy.codelist._diagnostics.
+
+Covers summarise_code_use / summarise_orphan_codes.
+"""
 
 from __future__ import annotations
 
 import polars as pl
-import pytest
 
 from omopy.codelist import summarise_code_use, summarise_orphan_codes
 from omopy.generics.codelist import Codelist
-
 
 # ---------------------------------------------------------------------------
 # summarise_code_use
@@ -125,7 +126,10 @@ class TestSummariseOrphanCodes:
             assert "count" in result.columns
 
     def test_orphan_descendants_found(self, synthea_cdm):
-        """4283893 has descendants 40481087 and 257012 which are orphans if not in codelist."""
+        """4283893 has descendants 40481087 and 257012.
+
+        These are orphans if not in codelist.
+        """
         cl = Codelist({"sinusitis": [4283893]})
         result = summarise_orphan_codes(cl, synthea_cdm)
         if len(result) > 0:

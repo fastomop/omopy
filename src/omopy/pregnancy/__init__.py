@@ -43,17 +43,17 @@ from omopy.pregnancy._summarise import summarise_pregnancies
 from omopy.pregnancy._table import table_pregnancies
 
 __all__ = [
-    # Core pipeline
-    "identify_pregnancies",
+    # Constants
+    "OUTCOME_CATEGORIES",
     # Result container
     "PregnancyResult",
+    # Core pipeline
+    "identify_pregnancies",
+    # Utilities
+    "mock_pregnancy_cdm",
+    "plot_pregnancies",
     # Summarise / table / plot
     "summarise_pregnancies",
     "table_pregnancies",
-    "plot_pregnancies",
-    # Utilities
-    "mock_pregnancy_cdm",
     "validate_episodes",
-    # Constants
-    "OUTCOME_CATEGORIES",
 ]

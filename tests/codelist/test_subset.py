@@ -1,12 +1,16 @@
-"""Tests for omopy.codelist._subset — subset_to_codes_in_use, subset_by_domain/vocabulary."""
+"""Tests for omopy.codelist._subset.
+
+Covers subset_to_codes_in_use, subset_by_domain/vocabulary.
+"""
 
 from __future__ import annotations
 
-import pytest
-
-from omopy.codelist import subset_by_domain, subset_by_vocabulary, subset_to_codes_in_use
+from omopy.codelist import (
+    subset_by_domain,
+    subset_by_vocabulary,
+    subset_to_codes_in_use,
+)
 from omopy.generics.codelist import Codelist
-
 
 # ---------------------------------------------------------------------------
 # subset_by_domain

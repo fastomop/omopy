@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-
 from omopy.codelist import get_ancestors, get_descendants
 from omopy.generics.codelist import Codelist
-
 
 # ---------------------------------------------------------------------------
 # get_descendants
@@ -123,7 +120,10 @@ class TestGetAncestors:
         assert 316866 in ids
 
     def test_viral_sinusitis_ancestors(self, synthea_cdm):
-        """40481087 (Viral sinusitis) has 31 ancestor rows — should return many ancestors."""
+        """40481087 (Viral sinusitis) has 31 ancestor rows.
+
+        Should return many ancestors.
+        """
         cl = get_ancestors(synthea_cdm, 40481087, include_self=True)
         key = next(iter(cl))
         ids = cl[key]

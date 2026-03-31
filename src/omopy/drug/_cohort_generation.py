@@ -11,23 +11,23 @@ This is the Python equivalent of R's ``generateDrugUtilisationCohortSet()``,
 
 from __future__ import annotations
 
-from typing import Any, Literal
+import contextlib
 
 import ibis
 import ibis.expr.types as ir
 import polars as pl
 
+from omopy.connector.db_source import DbSource
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.codelist import Codelist
 from omopy.generics.cohort_table import CohortTable
-from omopy.connector.db_source import DbSource
 
 __all__ = [
+    "cohort_gap_era",
+    "erafy_cohort",
+    "generate_atc_cohort_set",
     "generate_drug_utilisation_cohort_set",
     "generate_ingredient_cohort_set",
-    "generate_atc_cohort_set",
-    "erafy_cohort",
-    "cohort_gap_era",
 ]
 
 
@@ -148,7 +148,8 @@ def generate_drug_utilisation_cohort_set(
         # Filter to standard Drug concepts only
         drug_concepts = (
             all_resolved.join(
-                concept_tbl, all_resolved.concept_id == concept_tbl.concept_id.cast("int64")
+                concept_tbl,
+                all_resolved.concept_id == concept_tbl.concept_id.cast("int64"),
             )
             .filter(concept_tbl.standard_concept == "S")
             .filter(concept_tbl.domain_id == "Drug")
@@ -200,7 +201,12 @@ def generate_drug_utilisation_cohort_set(
             .mutate(
                 cohort_end_date=ibis.least(ibis._.cohort_end_date, ibis._.obs_end),
             )
-            .select("cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date")
+            .select(
+                "cohort_definition_id",
+                "subject_id",
+                "cohort_start_date",
+                "cohort_end_date",
+            )
         )
 
         all_parts.append(events)
@@ -208,10 +214,8 @@ def generate_drug_utilisation_cohort_set(
     if not all_parts:
         # Clean up temp tables before returning empty cohort
         for tmp in temp_tables:
-            try:
+            with contextlib.suppress(Exception):
                 con.con.unregister(tmp)
-            except Exception:
-                pass
         return _empty_drug_cohort(cdm, name, cohort_defs, gap_era)
 
     # Union all parts
@@ -250,10 +254,8 @@ def generate_drug_utilisation_cohort_set(
     finally:
         # Clean up temp tables after materialisation
         for tmp in temp_tables:
-            try:
+            with contextlib.suppress(Exception):
                 con.con.unregister(tmp)
-            except Exception:
-                pass
 
     cohort_df = pl.from_arrow(cohort_arrow).cast(
         {
@@ -483,7 +485,9 @@ def erafy_cohort(
         erafied = pl.concat([erafied, rest])
 
     new_settings = cohort.settings.clone()
-    new_attrition = _build_attrition_from_df(erafied, cohort.settings, "Era-fy cohort records")
+    new_attrition = _build_attrition_from_df(
+        erafied, cohort.settings, "Era-fy cohort records"
+    )
     tbl_name = name or cohort._tbl_name
 
     return CohortTable(
@@ -498,7 +502,9 @@ def erafy_cohort(
     )
 
 
-def cohort_gap_era(cohort: CohortTable, cohort_id: list[int] | None = None) -> dict[int, int]:
+def cohort_gap_era(
+    cohort: CohortTable, cohort_id: list[int] | None = None
+) -> dict[int, int]:
     """Retrieve the gap_era setting for each cohort definition.
 
     Parameters
@@ -515,7 +521,11 @@ def cohort_gap_era(cohort: CohortTable, cohort_id: list[int] | None = None) -> d
     """
     settings = cohort.settings
     if "gap_era" not in settings.columns:
-        msg = "Cohort settings do not contain 'gap_era'. Was this cohort created by generate_drug_utilisation_cohort_set?"
+        msg = (
+            "Cohort settings do not contain 'gap_era'. "
+            "Was this cohort created by "
+            "generate_drug_utilisation_cohort_set?"
+        )
         raise ValueError(msg)
 
     if cohort_id is not None:
@@ -525,6 +535,7 @@ def cohort_gap_era(cohort: CohortTable, cohort_id: list[int] | None = None) -> d
         zip(
             settings["cohort_definition_id"].to_list(),
             settings["gap_era"].to_list(),
+            strict=False,
         )
     )
 
@@ -609,12 +620,16 @@ def _erafy_polars(df: pl.DataFrame, gap_era: int) -> pl.DataFrame:
 
     # Running max of extended end within group
     df = df.with_columns(
-        _cum_max=pl.col("_ext_end").cum_max().over("cohort_definition_id", "subject_id"),
+        _cum_max=pl.col("_ext_end")
+        .cum_max()
+        .over("cohort_definition_id", "subject_id"),
     )
 
     # Lag cum_max to get prev max
     df = df.with_columns(
-        _prev_max=pl.col("_cum_max").shift(1).over("cohort_definition_id", "subject_id"),
+        _prev_max=pl.col("_cum_max")
+        .shift(1)
+        .over("cohort_definition_id", "subject_id"),
     )
 
     # New island flag
@@ -691,7 +706,8 @@ def _build_attrition_from_df(
 ) -> pl.DataFrame:
     """Build attrition from cohort DataFrame and existing settings."""
     cohort_defs = [
-        {"cohort_definition_id": row["cohort_definition_id"]} for row in settings.to_dicts()
+        {"cohort_definition_id": row["cohort_definition_id"]}
+        for row in settings.to_dicts()
     ]
     return _build_attrition(cohort_df, cohort_defs, reason)
 
@@ -716,18 +732,24 @@ def _empty_drug_cohort(
         settings_rows = [
             {
                 "cohort_definition_id": cdef["cohort_definition_id"],
-                "cohort_name": cdef.get("cohort_name", f"cohort_{cdef['cohort_definition_id']}"),
+                "cohort_name": cdef.get(
+                    "cohort_name", f"cohort_{cdef['cohort_definition_id']}"
+                ),
                 "gap_era": gap_era,
             }
             for cdef in cohort_defs
         ]
     else:
-        settings_rows = [{"cohort_definition_id": 1, "cohort_name": name, "gap_era": gap_era}]
+        settings_rows = [
+            {"cohort_definition_id": 1, "cohort_name": name, "gap_era": gap_era}
+        ]
 
     settings_df = pl.DataFrame(settings_rows).cast({"cohort_definition_id": pl.Int64})
 
     attrition_df = _build_attrition(
-        empty_df, cohort_defs or [{"cohort_definition_id": 1}], "Initial qualifying events"
+        empty_df,
+        cohort_defs or [{"cohort_definition_id": 1}],
+        "Initial qualifying events",
     )
 
     cohort_table = CohortTable(

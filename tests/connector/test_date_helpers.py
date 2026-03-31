@@ -16,7 +16,6 @@ from omopy.connector.date_helpers import (
     datepart,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -62,13 +61,17 @@ class TestDateadd:
     """Tests for the dateadd function."""
 
     def test_add_days_literal(self, date_table):
-        result = date_table.mutate(new_date=dateadd(date_table, "start_date", 10)).to_pyarrow()
+        result = date_table.mutate(
+            new_date=dateadd(date_table, "start_date", 10)
+        ).to_pyarrow()
         expected = datetime.date(2020, 1, 25)
         actual = result.column("new_date")[0].as_py()
         assert actual == expected
 
     def test_add_negative_days(self, date_table):
-        result = date_table.mutate(new_date=dateadd(date_table, "start_date", -10)).to_pyarrow()
+        result = date_table.mutate(
+            new_date=dateadd(date_table, "start_date", -10)
+        ).to_pyarrow()
         expected = datetime.date(2020, 1, 5)
         actual = result.column("new_date")[0].as_py()
         assert actual == expected
@@ -165,19 +168,25 @@ class TestDatepart:
     """Tests for the datepart function."""
 
     def test_extract_year(self, date_table):
-        result = date_table.mutate(yr=datepart(date_table, "start_date", "year")).to_pyarrow()
+        result = date_table.mutate(
+            yr=datepart(date_table, "start_date", "year")
+        ).to_pyarrow()
         assert result.column("yr")[0].as_py() == 2020
         assert result.column("yr")[1].as_py() == 2021
         assert result.column("yr")[2].as_py() == 2019
 
     def test_extract_month(self, date_table):
-        result = date_table.mutate(mo=datepart(date_table, "start_date", "month")).to_pyarrow()
+        result = date_table.mutate(
+            mo=datepart(date_table, "start_date", "month")
+        ).to_pyarrow()
         assert result.column("mo")[0].as_py() == 1
         assert result.column("mo")[1].as_py() == 6
         assert result.column("mo")[2].as_py() == 12
 
     def test_extract_day(self, date_table):
-        result = date_table.mutate(dy=datepart(date_table, "start_date", "day")).to_pyarrow()
+        result = date_table.mutate(
+            dy=datepart(date_table, "start_date", "day")
+        ).to_pyarrow()
         assert result.column("dy")[0].as_py() == 15
         assert result.column("dy")[1].as_py() == 30
         assert result.column("dy")[2].as_py() == 31

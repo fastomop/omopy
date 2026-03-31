@@ -8,7 +8,7 @@ from typing import Any
 
 import polars as pl
 
-from omopy.generics import CdmSchema, CdmVersion, TableGroup
+from omopy.generics import CdmSchema, CdmVersion
 
 __all__ = ["read_patients", "validate_patient_data"]
 
@@ -28,7 +28,10 @@ def _resolve_version(cdm_version: str) -> CdmVersion:
     try:
         return _CDM_VERSION_MAP[cdm_version]
     except KeyError:
-        msg = f"Unsupported CDM version {cdm_version!r}. Supported: {list(_CDM_VERSION_MAP)}"
+        msg = (
+            f"Unsupported CDM version {cdm_version!r}."
+            f" Supported: {list(_CDM_VERSION_MAP)}"
+        )
         raise ValueError(msg) from None
 
 
@@ -60,11 +63,11 @@ def _read_xlsx(path: Path) -> dict[str, pl.DataFrame]:
         rows = list(ws.iter_rows(values_only=True))
         if not rows:
             continue
-        headers = [str(h).strip() if h is not None else f"_col{i}" for i, h in enumerate(rows[0])]
-        if len(rows) > 1:
-            data_rows = rows[1:]
-        else:
-            data_rows = []
+        headers = [
+            str(h).strip() if h is not None else f"_col{i}"
+            for i, h in enumerate(rows[0])
+        ]
+        data_rows = rows[1:] if len(rows) > 1 else []
         # Build column-oriented dict
         col_data: dict[str, list[Any]] = {h: [] for h in headers}
         for row in data_rows:
@@ -121,7 +124,9 @@ def validate_patient_data(
             continue
 
         # Check columns against spec
-        col_errors = schema.validate_columns(table_name, df.columns, check_required=True)
+        col_errors = schema.validate_columns(
+            table_name, df.columns, check_required=True
+        )
         errors.extend(col_errors)
 
     return errors
@@ -172,7 +177,10 @@ def read_patients(
     elif p.is_dir():
         data = _read_csv_dir(p)
     else:
-        msg = f"Unsupported path: {p}. Provide an .xlsx file or a directory of .csv files."
+        msg = (
+            f"Unsupported path: {p}. Provide an .xlsx"
+            " file or a directory of .csv files."
+        )
         raise ValueError(msg)
 
     if not data:

@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-
 from omopy.codelist import get_candidate_codes, get_mappings
 from omopy.generics.codelist import Codelist
-
 
 # ---------------------------------------------------------------------------
 # get_candidate_codes
@@ -45,7 +42,11 @@ class TestGetCandidateCodes:
         key_lower = next(iter(cl_lower))
         key_upper = next(iter(cl_upper))
         key_mixed = next(iter(cl_mixed))
-        assert set(cl_lower[key_lower]) == set(cl_upper[key_upper]) == set(cl_mixed[key_mixed])
+        assert (
+            set(cl_lower[key_lower])
+            == set(cl_upper[key_upper])
+            == set(cl_mixed[key_mixed])
+        )
 
     def test_domain_filter(self, synthea_cdm):
         """Filtering by domain restricts results."""
@@ -106,7 +107,9 @@ class TestGetCandidateCodes:
         # Without descendants
         cl_no_desc = get_candidate_codes(synthea_cdm, "sinusitis")
         # With descendants
-        cl_desc = get_candidate_codes(synthea_cdm, "sinusitis", include_descendants=True)
+        cl_desc = get_candidate_codes(
+            synthea_cdm, "sinusitis", include_descendants=True
+        )
         key_no = next(iter(cl_no_desc))
         key_yes = next(iter(cl_desc))
         # With descendants should have at least as many concepts

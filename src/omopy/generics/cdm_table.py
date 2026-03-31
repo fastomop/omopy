@@ -55,7 +55,7 @@ class CdmTable:
     to produce a new CdmTable that inherits the metadata.
     """
 
-    __slots__ = ("_data", "_tbl_name", "_tbl_source", "_cdm_ref")
+    __slots__ = ("_cdm_ref", "_data", "_tbl_name", "_tbl_source")
 
     def __init__(
         self,
@@ -171,7 +171,9 @@ class CdmTable:
         """Join with another table, preserving this table's metadata."""
         other_data = other.data if isinstance(other, CdmTable) else other
         if isinstance(self._data, (pl.DataFrame, pl.LazyFrame)):
-            return self._with_data(self._data.join(other_data, on=on, how=how, **kwargs))
+            return self._with_data(
+                self._data.join(other_data, on=on, how=how, **kwargs)
+            )
         if hasattr(self._data, "join"):
             return self._with_data(self._data.join(other_data, on, how=how, **kwargs))
         msg = f"join not supported for {type(self._data).__name__}"

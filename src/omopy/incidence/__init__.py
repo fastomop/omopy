@@ -62,6 +62,18 @@ from omopy.incidence._estimate import (
     estimate_period_prevalence,
     estimate_point_prevalence,
 )
+from omopy.incidence._mock import (
+    benchmark_incidence_prevalence,
+    mock_incidence_prevalence,
+)
+from omopy.incidence._plot import (
+    available_incidence_grouping,
+    available_prevalence_grouping,
+    plot_incidence,
+    plot_incidence_population,
+    plot_prevalence,
+    plot_prevalence_population,
+)
 from omopy.incidence._result import (
     as_incidence_result,
     as_prevalence_result,
@@ -74,46 +86,34 @@ from omopy.incidence._table import (
     table_prevalence,
     table_prevalence_attrition,
 )
-from omopy.incidence._plot import (
-    available_incidence_grouping,
-    available_prevalence_grouping,
-    plot_incidence,
-    plot_incidence_population,
-    plot_prevalence,
-    plot_prevalence_population,
-)
-from omopy.incidence._mock import (
-    benchmark_incidence_prevalence,
-    mock_incidence_prevalence,
-)
 
 __all__ = [
-    # Denominator generation
-    "generate_denominator_cohort_set",
-    "generate_target_denominator_cohort_set",
-    # Core estimation
-    "estimate_incidence",
-    "estimate_point_prevalence",
-    "estimate_period_prevalence",
     # Result conversion
     "as_incidence_result",
     "as_prevalence_result",
-    # Tables
-    "table_incidence",
-    "table_prevalence",
-    "table_incidence_attrition",
-    "table_prevalence_attrition",
+    # Grouping helpers
+    "available_incidence_grouping",
+    "available_prevalence_grouping",
+    "benchmark_incidence_prevalence",
+    # Core estimation
+    "estimate_incidence",
+    "estimate_period_prevalence",
+    "estimate_point_prevalence",
+    # Denominator generation
+    "generate_denominator_cohort_set",
+    "generate_target_denominator_cohort_set",
+    # Utilities
+    "mock_incidence_prevalence",
     "options_table_incidence",
     "options_table_prevalence",
     # Plots
     "plot_incidence",
-    "plot_prevalence",
     "plot_incidence_population",
+    "plot_prevalence",
     "plot_prevalence_population",
-    # Grouping helpers
-    "available_incidence_grouping",
-    "available_prevalence_grouping",
-    # Utilities
-    "mock_incidence_prevalence",
-    "benchmark_incidence_prevalence",
+    # Tables
+    "table_incidence",
+    "table_incidence_attrition",
+    "table_prevalence",
+    "table_prevalence_attrition",
 ]

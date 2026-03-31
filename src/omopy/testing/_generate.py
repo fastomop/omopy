@@ -23,7 +23,10 @@ def _resolve_version(cdm_version: str) -> CdmVersion:
     try:
         return _CDM_VERSION_MAP[cdm_version]
     except KeyError:
-        msg = f"Unsupported CDM version {cdm_version!r}. Supported: {list(_CDM_VERSION_MAP)}"
+        msg = (
+            f"Unsupported CDM version {cdm_version!r}."
+            f" Supported: {list(_CDM_VERSION_MAP)}"
+        )
         raise ValueError(msg) from None
 
 

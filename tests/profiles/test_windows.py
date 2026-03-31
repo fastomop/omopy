@@ -7,13 +7,11 @@ import math
 import pytest
 
 from omopy.profiles._windows import (
-    Window,
     _to_snake_case,
     format_name_style,
     validate_windows,
     window_name,
 )
-
 
 # ---------------------------------------------------------------------------
 # validate_windows
@@ -38,7 +36,7 @@ class TestValidateWindows:
         assert math.isinf(result[0][1]) and result[0][1] > 0
 
     def test_invalid_order_raises(self):
-        with pytest.raises(ValueError, match="lower bound.*upper bound"):
+        with pytest.raises(ValueError, match=r"lower bound.*upper bound"):
             validate_windows((5, 3))
 
     def test_wrong_length_raises(self):

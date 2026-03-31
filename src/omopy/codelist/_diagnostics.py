@@ -12,13 +12,11 @@ This is the Python equivalent of R's ``summariseCodeUse()`` and
 
 from __future__ import annotations
 
-import polars as pl
 import ibis
-import ibis.expr.types as ir
+import polars as pl
 
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.codelist import Codelist
-from omopy.generics.summarised_result import SummarisedResult
 from omopy.profiles._columns import _TABLE_COLUMNS
 from omopy.profiles._demographics import _get_ibis_table
 
@@ -75,7 +73,9 @@ def summarise_code_use(
 
         # Get concept info (domain, name, vocabulary)
         concept_info = concept.filter(
-            concept["concept_id"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
+            concept["concept_id"]
+            .cast("int64")
+            .isin([ibis.literal(int(c)) for c in ids])
         ).select(
             concept_id=concept["concept_id"].cast("int64"),
             concept_name=concept["concept_name"],
@@ -248,7 +248,9 @@ def summarise_orphan_codes(
             cr = _get_ibis_table(cdm["concept_relationship"])
             mapped = (
                 cr.filter(
-                    cr["concept_id_1"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
+                    cr["concept_id_1"]
+                    .cast("int64")
+                    .isin([ibis.literal(int(c)) for c in ids])
                     & (cr["relationship_id"] == ibis.literal("Maps to"))
                 )
                 .select(concept_id=cr["concept_id_2"].cast("int64"))

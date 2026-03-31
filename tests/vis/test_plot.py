@@ -88,9 +88,10 @@ class TestScatterPlot:
         assert fig.layout.title.text == "My Plot"
 
     def test_with_axis_titles(self, tidy_df: pl.DataFrame):
-        import plotly.graph_objects as go
 
-        fig = scatter_plot(tidy_df, x="cohort_name", y="count", x_title="Cohort", y_title="Count")
+        fig = scatter_plot(
+            tidy_df, x="cohort_name", y="count", x_title="Cohort", y_title="Count"
+        )
         assert fig.layout.xaxis.title.text == "Cohort"
         assert fig.layout.yaxis.title.text == "Count"
 

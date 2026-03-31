@@ -1,7 +1,9 @@
-"""Import / export utilities for codelists, concept set expressions, and summarised results.
+"""Import / export utilities for codelists, concept set expressions,
+and summarised results.
 
-Mirrors R's ``exportCodelist``, ``importCodelist``, ``exportSummarisedResult``,
-``importSummarisedResult``, ``exportConceptSetExpression``, ``importConceptSetExpression``.
+Mirrors R's ``exportCodelist``, ``importCodelist``,
+``exportSummarisedResult``, ``importSummarisedResult``,
+``exportConceptSetExpression``, ``importConceptSetExpression``.
 """
 
 from __future__ import annotations
@@ -13,7 +15,6 @@ from typing import Any
 
 import polars as pl
 
-from omopy.generics._types import OVERALL
 from omopy.generics.codelist import Codelist, ConceptEntry, ConceptSetExpression
 from omopy.generics.summarised_result import (
     SETTINGS_REQUIRED_COLUMNS,
@@ -23,10 +24,10 @@ from omopy.generics.summarised_result import (
 
 __all__ = [
     "export_codelist",
-    "import_codelist",
     "export_concept_set_expression",
-    "import_concept_set_expression",
     "export_summarised_result",
+    "import_codelist",
+    "import_concept_set_expression",
     "import_summarised_result",
 ]
 
@@ -229,21 +230,33 @@ def _parse_cse_entries(data: list[dict[str, Any]]) -> list[ConceptEntry]:
         entries.append(
             ConceptEntry(
                 concept_id=int(concept.get("CONCEPT_ID", concept.get("concept_id", 0))),
-                concept_name=str(concept.get("CONCEPT_NAME", concept.get("concept_name", ""))),
+                concept_name=str(
+                    concept.get("CONCEPT_NAME", concept.get("concept_name", ""))
+                ),
                 domain_id=str(concept.get("DOMAIN_ID", concept.get("domain_id", ""))),
-                vocabulary_id=str(concept.get("VOCABULARY_ID", concept.get("vocabulary_id", ""))),
+                vocabulary_id=str(
+                    concept.get("VOCABULARY_ID", concept.get("vocabulary_id", ""))
+                ),
                 concept_class_id=str(
                     concept.get("CONCEPT_CLASS_ID", concept.get("concept_class_id", ""))
                 ),
                 standard_concept=str(
                     concept.get("STANDARD_CONCEPT", concept.get("standard_concept", ""))
                 ),
-                concept_code=str(concept.get("CONCEPT_CODE", concept.get("concept_code", ""))),
-                is_excluded=bool(item.get("isExcluded", item.get("is_excluded", False))),
-                include_descendants=bool(
-                    item.get("includeDescendants", item.get("include_descendants", True))
+                concept_code=str(
+                    concept.get("CONCEPT_CODE", concept.get("concept_code", ""))
                 ),
-                include_mapped=bool(item.get("includeMapped", item.get("include_mapped", False))),
+                is_excluded=bool(
+                    item.get("isExcluded", item.get("is_excluded", False))
+                ),
+                include_descendants=bool(
+                    item.get(
+                        "includeDescendants", item.get("include_descendants", True)
+                    )
+                ),
+                include_mapped=bool(
+                    item.get("includeMapped", item.get("include_mapped", False))
+                ),
             )
         )
     return entries

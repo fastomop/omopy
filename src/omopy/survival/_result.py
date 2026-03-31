@@ -10,11 +10,9 @@ the CohortSurvival package.
 
 from __future__ import annotations
 
-from typing import Any
-
 import polars as pl
 
-from omopy.generics._types import NAME_LEVEL_SEP, OVERALL
+from omopy.generics._types import OVERALL
 from omopy.generics.summarised_result import SummarisedResult
 
 __all__ = ["as_survival_result"]
@@ -44,7 +42,6 @@ def as_survival_result(result: SummarisedResult) -> dict[str, pl.DataFrame]:
         ``"attrition"``, each containing a wide-format Polars DataFrame.
     """
     data = result.data
-    settings = result.settings
 
     # Identify estimate type rows
     key_cols = [
@@ -63,22 +60,32 @@ def as_survival_result(result: SummarisedResult) -> dict[str, pl.DataFrame]:
         "additional_name"
     ].str.contains("eventgap")
     estimates_long = data.filter(est_mask)
-    estimates = _pivot_wide(estimates_long, key_cols + ["additional_name", "additional_level"])
+    estimates = _pivot_wide(
+        estimates_long, [*key_cols, "additional_name", "additional_level"]
+    )
 
     # --- Events ---
     evt_mask = data["additional_name"].str.contains("eventgap")
     events_long = data.filter(evt_mask)
-    events = _pivot_wide(events_long, key_cols + ["additional_name", "additional_level"])
+    events = _pivot_wide(
+        events_long, [*key_cols, "additional_name", "additional_level"]
+    )
 
     # --- Summary ---
-    sum_mask = (data["additional_name"] == OVERALL) & ~data["strata_name"].str.contains("reason")
+    sum_mask = (data["additional_name"] == OVERALL) & ~data["strata_name"].str.contains(
+        "reason"
+    )
     summary_long = data.filter(sum_mask)
-    summary = _pivot_wide(summary_long, key_cols + ["additional_name", "additional_level"])
+    summary = _pivot_wide(
+        summary_long, [*key_cols, "additional_name", "additional_level"]
+    )
 
     # --- Attrition ---
     attr_mask = data["strata_name"].str.contains("reason")
     attrition_long = data.filter(attr_mask)
-    attrition = _pivot_wide(attrition_long, key_cols + ["additional_name", "additional_level"])
+    attrition = _pivot_wide(
+        attrition_long, [*key_cols, "additional_name", "additional_level"]
+    )
 
     return {
         "estimates": estimates,

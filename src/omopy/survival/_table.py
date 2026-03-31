@@ -13,6 +13,7 @@ This is the Python equivalent of R's ``tableSurvival()``,
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 import polars as pl
@@ -130,12 +131,10 @@ def table_survival(
     if time_divisor != 1.0:
         for col in est_cols:
             if "survival" in col or "mean" in col:
-                try:
+                with contextlib.suppress(Exception):
                     out = out.with_columns(
                         pl.col(col).cast(pl.Float64).truediv(time_divisor).alias(col)
                     )
-                except Exception:
-                    pass
 
     # Add time-point estimates if requested
     if times is not None:
@@ -148,12 +147,16 @@ def table_survival(
                     at_time = estimates_wide.filter(pl.col("additional_level") == t_str)
                     if len(at_time) > 0 and "estimate" in at_time.columns:
                         label = (
-                            f"S(t={t})" if time_scale == "days" else f"S(t={t / time_divisor:.1f})"
+                            f"S(t={t})"
+                            if time_scale == "days"
+                            else f"S(t={t / time_divisor:.1f})"
                         )
                         # Join with out
                         merge_cols = [c for c in available if c in at_time.columns]
                         if merge_cols:
-                            at_time = at_time.select(*merge_cols, pl.col("estimate").alias(label))
+                            at_time = at_time.select(
+                                *merge_cols, pl.col("estimate").alias(label)
+                            )
                             out = out.join(at_time, on=merge_cols, how="left")
 
     # Rename columns
@@ -167,9 +170,12 @@ def table_survival(
             out = out.rename({old: new})
 
     # Filter out 'overall' strata label if it's uninformative
-    if "Strata" in out.columns:
-        if out["Strata"].n_unique() == 1 and out["Strata"][0] == OVERALL:
-            out = out.drop("Strata")
+    if (
+        "Strata" in out.columns
+        and out["Strata"].n_unique() == 1
+        and out["Strata"][0] == OVERALL
+    ):
+        out = out.drop("Strata")
 
     if type == "gt":
         try:
@@ -237,7 +243,10 @@ def table_survival_events(
     if "additional_level" in out.columns:
         # Split "time &&& eventgap" format
         out = out.with_columns(
-            pl.col("additional_level").str.split(" &&& ").list.first().alias("Time (days)")
+            pl.col("additional_level")
+            .str.split(" &&& ")
+            .list.first()
+            .alias("Time (days)")
         ).drop("additional_level")
 
     # Rename columns
@@ -253,9 +262,12 @@ def table_survival_events(
         if old in out.columns:
             out = out.rename({old: new})
 
-    if "Strata" in out.columns:
-        if out["Strata"].n_unique() == 1 and out["Strata"][0] == OVERALL:
-            out = out.drop("Strata")
+    if (
+        "Strata" in out.columns
+        and out["Strata"].n_unique() == 1
+        and out["Strata"][0] == OVERALL
+    ):
+        out = out.drop("Strata")
 
     if type == "gt":
         try:
@@ -338,11 +350,4 @@ def table_survival_attrition(
 
 def _time_divisor(time_scale: str) -> float:
     """Get divisor for converting days to time_scale."""
-    if time_scale == "days":
-        return 1.0
-    elif time_scale == "months":
-        return 30.4375  # average days per month
-    elif time_scale == "years":
-        return 365.25
-    else:
-        return 1.0
+    return {"days": 1.0, "months": 30.4375, "years": 365.25}.get(time_scale, 1.0)

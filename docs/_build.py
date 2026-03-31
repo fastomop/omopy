@@ -24,7 +24,10 @@ if sys.version_info[:3] < (3, 14, 0) or (
     and not hasattr(typing._eval_type, "__wrapped__")
 ):
     _orig_sig = inspect.signature(typing._eval_type)
-    if "parent_fwdref" in _orig_sig.parameters and "prefer_fwd_module" not in _orig_sig.parameters:
+    if (
+        "parent_fwdref" in _orig_sig.parameters
+        and "prefer_fwd_module" not in _orig_sig.parameters
+    ):
         _orig_eval_type = typing._eval_type
 
         def _patched_eval_type(*args, **kwargs):  # type: ignore[no-untyped-def]

@@ -15,7 +15,9 @@ Core workflow::
     )
 
     # 1. Generate blank Excel template
-    path = generate_test_tables(["person", "observation_period", "condition_occurrence"])
+    path = generate_test_tables(
+        ["person", "observation_period", "condition_occurrence"]
+    )
 
     # 2. Fill in the template, then read and validate
     data = read_patients("my_patients.xlsx", output_path="patients.json")
@@ -31,11 +33,6 @@ Core workflow::
 """
 
 # -- Read / validate -------------------------------------------------------
-from omopy.testing._read import (
-    read_patients,
-    validate_patient_data,
-)
-
 # -- CDM construction ------------------------------------------------------
 from omopy.testing._cdm import (
     mock_test_cdm,
@@ -47,16 +44,20 @@ from omopy.testing._generate import generate_test_tables
 
 # -- Plotting ---------------------------------------------------------------
 from omopy.testing._plot import graph_cohort
+from omopy.testing._read import (
+    read_patients,
+    validate_patient_data,
+)
 
 __all__ = [
-    # Read / validate
-    "read_patients",
-    "validate_patient_data",
-    # CDM construction
-    "patients_cdm",
-    "mock_test_cdm",
     # Template generation
     "generate_test_tables",
     # Plotting
     "graph_cohort",
+    "mock_test_cdm",
+    # CDM construction
+    "patients_cdm",
+    # Read / validate
+    "read_patients",
+    "validate_patient_data",
 ]

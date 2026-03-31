@@ -33,6 +33,17 @@ from omopy.drug_diagnostics._checks import (
     execute_checks,
 )
 
+# -- Mock / testing ----------------------------------------------------------
+from omopy.drug_diagnostics._mock import (
+    benchmark_drug_diagnostics,
+    mock_drug_exposure,
+)
+
+# -- Plot rendering ----------------------------------------------------------
+from omopy.drug_diagnostics._plot import (
+    plot_drug_diagnostics,
+)
+
 # -- Summarise ---------------------------------------------------------------
 from omopy.drug_diagnostics._summarise import (
     summarise_drug_diagnostics,
@@ -43,31 +54,20 @@ from omopy.drug_diagnostics._table import (
     table_drug_diagnostics,
 )
 
-# -- Plot rendering ----------------------------------------------------------
-from omopy.drug_diagnostics._plot import (
-    plot_drug_diagnostics,
-)
-
-# -- Mock / testing ----------------------------------------------------------
-from omopy.drug_diagnostics._mock import (
-    benchmark_drug_diagnostics,
-    mock_drug_exposure,
-)
-
 __all__ = [
     # Constants (1)
     "AVAILABLE_CHECKS",
     # Core types (1)
     "DiagnosticsResult",
+    "benchmark_drug_diagnostics",
     # Computation (1)
     "execute_checks",
+    # Mock (2)
+    "mock_drug_exposure",
+    # Plot (1)
+    "plot_drug_diagnostics",
     # Summarise (1)
     "summarise_drug_diagnostics",
     # Table (1)
     "table_drug_diagnostics",
-    # Plot (1)
-    "plot_drug_diagnostics",
-    # Mock (2)
-    "mock_drug_exposure",
-    "benchmark_drug_diagnostics",
 ]

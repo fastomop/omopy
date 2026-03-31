@@ -42,10 +42,7 @@ def tbl_group(
     >>> tbl_group(["clinical", "derived"])
     ['person', 'observation_period', ..., 'drug_era', ...]
     """
-    if isinstance(group, (str, TableGroup)):
-        groups = [group]
-    else:
-        groups = list(group)
+    groups = [group] if isinstance(group, (str, TableGroup)) else list(group)
 
     schema = CdmSchema(CdmVersion(str(cdm_version)))
 

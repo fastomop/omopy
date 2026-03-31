@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-__all__ = ["Codelist", "ConceptSetExpression", "ConceptEntry"]
+__all__ = ["Codelist", "ConceptEntry", "ConceptSetExpression"]
 
 
 # ---------------------------------------------------------------------------
@@ -64,7 +64,9 @@ class Codelist(dict[str, list[int]]):
         assert cl["diabetes"] == [201826, 442793]
     """
 
-    def __init__(self, data: dict[str, list[int]] | None = None, /, **kwargs: list[int]) -> None:
+    def __init__(
+        self, data: dict[str, list[int]] | None = None, /, **kwargs: list[int]
+    ) -> None:
         super().__init__()
         if data:
             self.update(data)
@@ -78,12 +80,17 @@ class Codelist(dict[str, list[int]]):
                 msg = f"Codelist keys must be strings, got {type(name).__name__}"
                 raise TypeError(msg)
             if not isinstance(ids, list):
-                msg = f"Codelist values must be lists, got {type(ids).__name__} for key {name!r}"
+                msg = (
+                    f"Codelist values must be lists,"
+                    f" got {type(ids).__name__} for key {name!r}"
+                )
                 raise TypeError(msg)
             for i, cid in enumerate(ids):
                 if not isinstance(cid, int):
                     msg = (
-                        f"Concept IDs must be integers, got {type(cid).__name__} at {name!r}[{i}]"
+                        "Concept IDs must be integers,"
+                        f" got {type(cid).__name__}"
+                        f" at {name!r}[{i}]"
                     )
                     raise TypeError(msg)
 
@@ -92,7 +99,7 @@ class Codelist(dict[str, list[int]]):
             msg = f"Codelist keys must be strings, got {type(key).__name__}"
             raise TypeError(msg)
         if not isinstance(value, list) or not all(isinstance(v, int) for v in value):
-            msg = f"Codelist values must be lists of integers"
+            msg = "Codelist values must be lists of integers"
             raise TypeError(msg)
         super().__setitem__(key, value)
 
@@ -150,7 +157,10 @@ class ConceptSetExpression(dict[str, list[ConceptEntry]]):
         return list(self.keys())
 
     def to_codelist(self) -> Codelist:
-        """Convert to a simple Codelist (dropping flags, keeping only included concepts)."""
+        """Convert to a simple Codelist.
+
+        Drops flags, keeping only included concepts.
+        """
         result: dict[str, list[int]] = {}
         for name, entries in self.items():
             result[name] = [e.concept_id for e in entries if not e.is_excluded]

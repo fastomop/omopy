@@ -12,7 +12,7 @@ This is the Python equivalent of R's ``dateadd.R``.
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
 import ibis
 import ibis.expr.types as ir
@@ -76,10 +76,7 @@ def dateadd(
         msg = f"interval must be 'day', 'month', or 'year', got {interval!r}"
         raise ValueError(msg)
 
-    if isinstance(expr, ir.Table):
-        date_expr = expr[date_col]
-    else:
-        date_expr = expr
+    date_expr = expr[date_col] if isinstance(expr, ir.Table) else expr
 
     # Resolve the number: literal int or column reference
     if isinstance(number, str):
@@ -270,10 +267,7 @@ def dateadd_polars(
 
     out_col = result_col or date_col
 
-    if isinstance(number, str):
-        num_expr = pl.col(number)
-    else:
-        num_expr = pl.lit(number)
+    num_expr = pl.col(number) if isinstance(number, str) else pl.lit(number)
 
     if interval == "day":
         duration = pl.duration(days=num_expr)
@@ -282,14 +276,18 @@ def dateadd_polars(
         # Polars has offset_by for exact month arithmetic
         return (
             df.with_columns(
-                pl.col(date_col).dt.offset_by(pl.format("{}mo", num_expr)).alias(out_col)
+                pl.col(date_col)
+                .dt.offset_by(pl.format("{}mo", num_expr))
+                .alias(out_col)
             )
             if isinstance(number, int)
             else df.with_columns((pl.col(date_col) + duration).alias(out_col))
         )
     else:  # year
         if isinstance(number, int):
-            return df.with_columns(pl.col(date_col).dt.offset_by(f"{number}y").alias(out_col))
+            return df.with_columns(
+                pl.col(date_col).dt.offset_by(f"{number}y").alias(out_col)
+            )
         else:
             duration = pl.duration(days=num_expr * 365)
 
@@ -342,7 +340,9 @@ def datediff_polars(
         m2 = pl.col(end_col).dt.month().cast(pl.Int64)
         d2 = pl.col(end_col).dt.day().cast(pl.Int64)
         return df.with_columns(
-            ((y2 * 1200 + m2 * 100 + d2 - (y1 * 1200 + m1 * 100 + d1)) // 100).alias(result_col)
+            ((y2 * 1200 + m2 * 100 + d2 - (y1 * 1200 + m1 * 100 + d1)) // 100).alias(
+                result_col
+            )
         )
     else:  # year
         # Cast all parts to Int64 to avoid i8 overflow
@@ -353,7 +353,7 @@ def datediff_polars(
         m2 = pl.col(end_col).dt.month().cast(pl.Int64)
         d2 = pl.col(end_col).dt.day().cast(pl.Int64)
         return df.with_columns(
-            ((y2 * 10000 + m2 * 100 + d2 - (y1 * 10000 + m1 * 100 + d1)) // 10000).alias(
-                result_col
-            )
+            (
+                (y2 * 10000 + m2 * 100 + d2 - (y1 * 10000 + m1 * 100 + d1)) // 10000
+            ).alias(result_col)
         )

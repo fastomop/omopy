@@ -205,7 +205,9 @@ class TestFormatEstimateName:
         assert "N" in names
 
     def test_combined_pattern(self, sr: SummarisedResult):
-        result = format_estimate_name(sr, estimate_name={"N (%)": "<count> (<percentage>%)"})
+        result = format_estimate_name(
+            sr, estimate_name={"N (%)": "<count> (<percentage>%)"}
+        )
         names = result.data["estimate_name"].unique().to_list()
         assert "N (%)" in names
         # Check that the value contains both pieces
@@ -215,7 +217,9 @@ class TestFormatEstimateName:
             assert "%" in val
 
     def test_keep_not_formatted(self, sr: SummarisedResult):
-        result = format_estimate_name(sr, estimate_name={"N": "<count>"}, keep_not_formatted=True)
+        result = format_estimate_name(
+            sr, estimate_name={"N": "<count>"}, keep_not_formatted=True
+        )
         names = set(result.data["estimate_name"].unique().to_list())
         # mean, sd should still be there
         assert "mean" in names or "sd" in names

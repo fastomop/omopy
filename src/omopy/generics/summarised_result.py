@@ -23,7 +23,7 @@ import polars as pl
 
 from omopy.generics._types import GROUP_COUNT_VARIABLES, NAME_LEVEL_SEP, OVERALL
 
-__all__ = ["SummarisedResult", "SUMMARISED_RESULT_COLUMNS", "SETTINGS_REQUIRED_COLUMNS"]
+__all__ = ["SETTINGS_REQUIRED_COLUMNS", "SUMMARISED_RESULT_COLUMNS", "SummarisedResult"]
 
 SUMMARISED_RESULT_COLUMNS: tuple[str, ...] = (
     "result_id",
@@ -73,7 +73,9 @@ class SummarisedResult:
     ) -> None:
         self._validate_data(data)
         self._data = data
-        self._settings = settings if settings is not None else self._default_settings(data)
+        self._settings = (
+            settings if settings is not None else self._default_settings(data)
+        )
         self._validate_settings(self._settings)
 
     @staticmethod
@@ -234,8 +236,11 @@ class SummarisedResult:
                 if col_name in df.columns:
                     continue
                 # Extract values for matching rows at this index
-                extracted = split_levels.list.get(idx, null_on_oob=True).str.strip_chars()
-                # Create a full-length null series, then place extracted values at matching positions
+                extracted = split_levels.list.get(
+                    idx, null_on_oob=True
+                ).str.strip_chars()
+                # Create a full-length null series, then place
+                # extracted values at matching positions
                 full_col = pl.Series(col_name, [None] * len(df), dtype=pl.Utf8)
                 # Use row indices to scatter extracted values
                 match_indices = df.with_row_index("__idx").filter(mask)["__idx"]
@@ -320,7 +325,9 @@ class SummarisedResult:
 
     def unite_additional(self, columns: list[str]) -> SummarisedResult:
         """Unite columns into ``additional_name``/``additional_level``."""
-        df = self._unite_name_level(self._data, columns, "additional_name", "additional_level")
+        df = self._unite_name_level(
+            self._data, columns, "additional_name", "additional_level"
+        )
         return self._clone(df)
 
     # -- Pivot estimates ----------------------------------------------------
@@ -407,7 +414,8 @@ class SummarisedResult:
         """Internal: filter rows where name-level pairs match."""
         df = self._data
         for name, level in pairs.items():
-            # The name must appear in the name column (possibly among &&& separated values)
+            # The name must appear in the name column
+            # (possibly among &&& separated values)
             df = df.filter(pl.col(name_col).str.contains(name))
             # And the corresponding level must appear in the level column
             df = df.filter(pl.col(level_col).str.contains(level))
@@ -416,7 +424,10 @@ class SummarisedResult:
     # -- Tidy ---------------------------------------------------------------
 
     def tidy(self) -> pl.DataFrame:
-        """Convert to a tidy DataFrame: add settings + split all name-level pairs + pivot."""
+        """Convert to a tidy DataFrame.
+
+        Add settings + split all name-level pairs + pivot.
+        """
         df = self.add_settings()
         df = self._split_name_level(df, "group_name", "group_level")
         df = self._split_name_level(df, "strata_name", "strata_level")

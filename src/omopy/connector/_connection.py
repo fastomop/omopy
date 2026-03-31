@@ -110,7 +110,8 @@ def _list_tables_in_schema(con: IbisConnection, schema: str) -> set[str]:
         # Fallback: try raw SQL
         try:
             result = con.raw_sql(
-                f"SELECT table_name FROM information_schema.tables WHERE table_schema = '{schema}'"
+                "SELECT table_name FROM information_schema.tables"
+                f" WHERE table_schema = '{schema}'"
             )
             return {row[0] for row in result.fetchall()}
         except Exception:

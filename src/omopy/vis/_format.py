@@ -11,11 +11,9 @@ This module provides the format pipeline:
 from __future__ import annotations
 
 import re
-from typing import Literal
 
 import polars as pl
 
-from omopy.generics._types import NAME_LEVEL_SEP, OVERALL
 from omopy.generics.summarised_result import SUMMARISED_RESULT_COLUMNS, SummarisedResult
 
 __all__ = [
@@ -248,7 +246,9 @@ def format_estimate_name(
         # Add unformatted at the end
         max_order = len(order)
         new_df = new_df.with_columns(
-            pl.col("estimate_name").replace_strict(order, default=max_order).alias("_sort_order")
+            pl.col("estimate_name")
+            .replace_strict(order, default=max_order)
+            .alias("_sort_order")
         )
         new_df = new_df.sort("_sort_order").drop("_sort_order")
 
@@ -292,10 +292,7 @@ def format_header(
     Returns:
         A pivoted :class:`~polars.DataFrame` with encoded column names.
     """
-    if isinstance(result, SummarisedResult):
-        df = result.data
-    else:
-        df = result
+    df = result.data if isinstance(result, SummarisedResult) else result
 
     if not header:
         return df
@@ -308,7 +305,7 @@ def format_header(
         return df
 
     # Non-header columns become the index
-    index_cols = [c for c in df.columns if c not in actual_cols and c != "estimate_value"]
+    [c for c in df.columns if c not in actual_cols and c != "estimate_value"]
 
     # If estimate_value is not present, nothing to pivot
     if "estimate_value" not in df.columns:
@@ -325,7 +322,12 @@ def format_header(
             subset = df.filter(pl.col(col) == val).drop(col)
             # Rename estimate_value to encoded column name
             encoded_name = _encode_header_name(
-                col, str(val), label_strings, delim, include_header_name, include_header_key
+                col,
+                str(val),
+                label_strings,
+                delim,
+                include_header_name,
+                include_header_key,
             )
             subset = subset.rename({"estimate_value": encoded_name})
             pivoted_parts.append(subset)

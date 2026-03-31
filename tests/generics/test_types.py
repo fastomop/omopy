@@ -9,12 +9,10 @@ from omopy.generics._types import (
     SUPPORTED_CDM_VERSIONS,
     CdmDataType,
     CdmVersion,
-    CdmVersionLiteral,
     TableGroup,
     TableSchema,
     TableType,
 )
-
 
 # ---------------------------------------------------------------------------
 # Constants

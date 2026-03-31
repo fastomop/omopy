@@ -18,8 +18,8 @@ from omopy.generics._types import OVERALL
 from omopy.generics.summarised_result import SummarisedResult
 
 __all__ = [
-    "mock_drug_utilisation",
     "benchmark_drug_utilisation",
+    "mock_drug_utilisation",
 ]
 
 _PACKAGE_NAME = "omopy.drug"

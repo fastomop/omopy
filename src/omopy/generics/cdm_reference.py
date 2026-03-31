@@ -81,7 +81,7 @@ class CdmReference:
         cdm["my_cohort"] = my_cohort_table  # insert new table
     """
 
-    __slots__ = ("_tables", "_cdm_version", "_cdm_name", "_cdm_source")
+    __slots__ = ("_cdm_name", "_cdm_source", "_cdm_version", "_tables")
 
     def __init__(
         self,
@@ -107,7 +107,9 @@ class CdmReference:
         try:
             return self._tables[table_name]
         except KeyError:
-            msg = f"Table '{table_name}' not found in CDM. Available: {self.table_names}"
+            msg = (
+                f"Table '{table_name}' not found in CDM. Available: {self.table_names}"
+            )
             raise KeyError(msg) from None
 
     def __setitem__(self, table_name: str, table: CdmTable) -> None:
@@ -161,7 +163,11 @@ class CdmReference:
     @property
     def cohort_tables(self) -> dict[str, CohortTable]:
         """All tables that are CohortTable instances."""
-        return {name: tbl for name, tbl in self._tables.items() if isinstance(tbl, CohortTable)}
+        return {
+            name: tbl
+            for name, tbl in self._tables.items()
+            if isinstance(tbl, CohortTable)
+        }
 
     # -- Snapshot / summary -------------------------------------------------
 
@@ -170,7 +176,9 @@ class CdmReference:
         info: dict[str, Any] = {
             "cdm_name": self._cdm_name,
             "cdm_version": str(self._cdm_version),
-            "source_type": self._cdm_source.source_type if self._cdm_source else "local",
+            "source_type": self._cdm_source.source_type
+            if self._cdm_source
+            else "local",
             "tables": {},
         }
         for name, tbl in self._tables.items():
@@ -204,4 +212,6 @@ class CdmReference:
         name = self._cdm_name or "(unnamed)"
         ver = self._cdm_version
         source = self._cdm_source.source_type if self._cdm_source else "local"
-        return f"CdmReference(name={name!r}, version={ver}, source={source}, tables={n})"
+        return (
+            f"CdmReference(name={name!r}, version={ver}, source={source}, tables={n})"
+        )

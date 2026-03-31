@@ -28,11 +28,10 @@ import ibis.expr.types as ir
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.cdm_table import CdmTable
 from omopy.profiles._columns import person_id_column
-from omopy.profiles._demographics import _get_ibis_table, _resolve_cdm
+from omopy.profiles._demographics import _get_ibis_table
 from omopy.profiles._windows import (
     Window,
     format_name_style,
-    validate_windows,
     window_name,
 )
 
@@ -109,16 +108,13 @@ def _add_intersect(
     """
     tbl = _get_ibis_table(x)
     pid = person_id_column(tbl.columns)
-    orig_cols = list(tbl.columns)
+    list(tbl.columns)
 
     # ── Add synthetic row ID for reliable join-back ─────────────────
     tbl_with_id = tbl.mutate(**{_ROW_ID: ibis.row_number()})
 
     # Normalize value to list
-    if isinstance(value, str):
-        values = [value]
-    else:
-        values = list(value)
+    values = [value] if isinstance(value, str) else list(value)
 
     # Normalize id_name
     if filter_variable is None or filter_id is None:
@@ -171,7 +167,8 @@ def _add_intersect(
             # Apply censor date filter
             if censor_date is not None:
                 joined = joined.filter(
-                    joined["_ov_start"].isnull() | (joined["_ov_start"] <= joined[censor_date])
+                    joined["_ov_start"].isnull()
+                    | (joined["_ov_start"] <= joined[censor_date])
                 )
 
             # Apply in-observation filter
@@ -243,11 +240,13 @@ def _prepare_overlap_table(
                 target_table[filter_variable].cast("int64") == ibis.literal(fid),
                 idn,
             )
-            for fid, idn in zip(filter_id, id_name)
+            for fid, idn in zip(filter_id, id_name, strict=False)
         ]
         select_dict["_id_name"] = ibis.cases(*cases, else_=ibis.null().cast("string"))
 
-        result = target_table.select(**select_dict).filter(lambda t: t["_id_name"].notnull())
+        result = target_table.select(**select_dict).filter(
+            lambda t: t["_id_name"].notnull()
+        )
     else:
         select_dict["_id_name"] = ibis.literal(id_name[0] if id_name else "all")
         result = target_table.select(**select_dict)
@@ -392,7 +391,8 @@ def _compute_value(
                     (
                         result2["_date_diff"].notnull(),
                         (
-                            result2["_idx_date"] + result2["_date_diff"] * ibis.interval(days=1)
+                            result2["_idx_date"]
+                            + result2["_date_diff"] * ibis.interval(days=1)
                         ).cast("date"),
                     ),
                     else_=ibis.null().cast("date"),

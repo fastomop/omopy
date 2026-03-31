@@ -22,7 +22,6 @@ from pydantic import BaseModel, ConfigDict
 
 from omopy.generics import CdmReference, CohortTable
 
-
 # ---------------------------------------------------------------------------
 # Public types
 # ---------------------------------------------------------------------------
@@ -161,12 +160,18 @@ def _ingest_cohort_data(
         df = df.rename({"subject_id": "person_id"})
 
     # Join with person table for demographics
-    person_df = cdm["person"].collect().select("person_id", "year_of_birth", "gender_concept_id")
+    person_df = (
+        cdm["person"]
+        .collect()
+        .select("person_id", "year_of_birth", "gender_concept_id")
+    )
 
     # Map gender concept to sex label
     gender_map = {8507: "Male", 8532: "Female"}
     person_df = person_df.with_columns(
-        pl.col("gender_concept_id").replace_strict(gender_map, default="Unknown").alias("sex")
+        pl.col("gender_concept_id")
+        .replace_strict(gender_map, default="Unknown")
+        .alias("sex")
     )
 
     df = df.join(person_df, on="person_id", how="left")
@@ -178,9 +183,9 @@ def _ingest_cohort_data(
 
     # Compute duration in days
     df = df.with_columns(
-        ((pl.col("cohort_end_date") - pl.col("cohort_start_date")).dt.total_days()).alias(
-            "duration_era"
-        )
+        (
+            (pl.col("cohort_end_date") - pl.col("cohort_start_date")).dt.total_days()
+        ).alias("duration_era")
     )
 
     # Build attrition: initial counts per target cohort
@@ -189,7 +194,9 @@ def _ingest_cohort_data(
     for ts in target_specs:
         target_df = df.filter(pl.col("cohort_definition_id") == ts.cohort_id)
         attrition_rows.append(
-            _attrition_row(target_df, 1, "Qualifying records", ts.cohort_id, ts.cohort_name)
+            _attrition_row(
+                target_df, 1, "Qualifying records", ts.cohort_id, ts.cohort_name
+            )
         )
 
     # Filter by min_era_duration
@@ -259,7 +266,9 @@ def _create_treatment_history(
         )
 
     # Compute observation window for each target entry
-    start_col = "cohort_start_date" if start_anchor == "start_date" else "cohort_end_date"
+    start_col = (
+        "cohort_start_date" if start_anchor == "start_date" else "cohort_end_date"
+    )
     end_col = "cohort_end_date" if end_anchor == "end_date" else "cohort_start_date"
 
     targets = targets.with_columns(
@@ -330,7 +339,7 @@ def _create_treatment_history(
     )
 
     # Build result
-    id_to_name_map = {str(k): v for k, v in id_to_name.items()}
+    {str(k): v for k, v in id_to_name.items()}
     result = joined.select(
         "person_id",
         "index_year",
@@ -379,7 +388,7 @@ def _split_event_cohorts(
         msg = "split_event_cohorts and split_time must have the same length"
         raise ValueError(msg)
 
-    for cid, cutoff in zip(split_event_cohorts, split_time):
+    for cid, cutoff in zip(split_event_cohorts, split_time, strict=False):
         cid_str = str(cid)
         name = cohort_names.get(cid, cid_str)
         mask = pl.col("event_cohort_id") == cid_str
@@ -426,7 +435,11 @@ def _era_collapse(
     for _ in range(max_iterations):
         # Sort by person, drug, target, date
         events = events.sort(
-            "person_id", "event_cohort_id", "n_target", "event_start_date", "event_end_date"
+            "person_id",
+            "event_cohort_id",
+            "n_target",
+            "event_start_date",
+            "event_end_date",
         )
 
         # Compute gap to previous row of same drug for same person/target
@@ -480,9 +493,9 @@ def _era_collapse(
 
         # Recompute duration
         events = events.with_columns(
-            ((pl.col("event_end_date") - pl.col("event_start_date")).dt.total_days()).alias(
-                "duration_era"
-            )
+            (
+                (pl.col("event_end_date") - pl.col("event_start_date")).dt.total_days()
+            ).alias("duration_era")
         )
     else:
         # Remove temp columns if we hit max iterations
@@ -519,14 +532,24 @@ def _combination_window(
 
     for _ in range(max_iterations):
         events = events.sort(
-            "person_id", "n_target", "event_start_date", "event_end_date", "event_cohort_id"
+            "person_id",
+            "n_target",
+            "event_start_date",
+            "event_end_date",
+            "event_cohort_id",
         )
 
         # Check for overlaps: within same person/target, does any row overlap
         # with the previous row?
         events = events.with_columns(
-            pl.col("event_end_date").shift(1).over("person_id", "n_target").alias("_prev_end"),
-            pl.col("event_start_date").shift(1).over("person_id", "n_target").alias("_prev_start"),
+            pl.col("event_end_date")
+            .shift(1)
+            .over("person_id", "n_target")
+            .alias("_prev_end"),
+            pl.col("event_start_date")
+            .shift(1)
+            .over("person_id", "n_target")
+            .alias("_prev_start"),
             pl.col("event_cohort_id")
             .shift(1)
             .over("person_id", "n_target")
@@ -545,7 +568,9 @@ def _combination_window(
         )
 
         if not events["_has_overlap"].any():
-            events = events.drop("_prev_end", "_prev_start", "_prev_cohort_id", "_has_overlap")
+            events = events.drop(
+                "_prev_end", "_prev_start", "_prev_cohort_id", "_has_overlap"
+            )
             break
 
         # Process overlaps one at a time per person/target
@@ -556,7 +581,6 @@ def _combination_window(
         first_overlaps = overlap_rows.group_by("person_id", "n_target").first()
 
         new_rows: list[dict[str, Any]] = []
-        rows_to_remove: list[int] = []
         rows_to_update: dict[int, dict[str, Any]] = {}
 
         # Process using the DataFrame with row indices
@@ -715,18 +739,26 @@ def _combination_window(
 
         # Recompute duration
         events = events.with_columns(
-            ((pl.col("event_end_date") - pl.col("event_start_date")).dt.total_days()).alias(
-                "duration_era"
-            )
+            (
+                (pl.col("event_end_date") - pl.col("event_start_date")).dt.total_days()
+            ).alias("duration_era")
         )
 
         # Filter by min_post_combination_duration
         if min_post_combination_duration > 0:
-            events = events.filter(pl.col("duration_era") >= min_post_combination_duration)
+            events = events.filter(
+                pl.col("duration_era") >= min_post_combination_duration
+            )
 
     else:
         # Clean up temp columns on max iterations
-        for c in ("_row_idx", "_prev_end", "_prev_start", "_prev_cohort_id", "_has_overlap"):
+        for c in (
+            "_row_idx",
+            "_prev_end",
+            "_prev_start",
+            "_prev_cohort_id",
+            "_has_overlap",
+        ):
             if c in events.columns:
                 events = events.drop(c)
 
@@ -798,10 +830,14 @@ def _filter_treatments(
     elif filter_treatments == "changes":
         # Remove consecutive duplicates of the same drug
         events = events.with_columns(
-            pl.col("event_cohort_id").shift(1).over("person_id", "n_target").alias("_prev_drug")
+            pl.col("event_cohort_id")
+            .shift(1)
+            .over("person_id", "n_target")
+            .alias("_prev_drug")
         )
         events = events.filter(
-            pl.col("_prev_drug").is_null() | (pl.col("event_cohort_id") != pl.col("_prev_drug"))
+            pl.col("_prev_drug").is_null()
+            | (pl.col("event_cohort_id") != pl.col("_prev_drug"))
         ).drop("_prev_drug")
 
     return pl.concat([events, exits], how="diagonal_relaxed")
@@ -992,7 +1028,9 @@ def compute_pathways(
         )
 
     # Step 2: Split event cohorts (optional)
-    history = _split_event_cohorts(history, split_event_cohorts, split_time, cohort_names)
+    history = _split_event_cohorts(
+        history, split_event_cohorts, split_time, cohort_names
+    )
 
     for ts in target_specs:
         target_history = history.filter(pl.col("target_cohort_id") == ts.cohort_id)

@@ -10,7 +10,6 @@ and ``getATCCodes()`` from CodelistGenerator.
 from __future__ import annotations
 
 import ibis
-import ibis.expr.types as ir
 
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.codelist import Codelist

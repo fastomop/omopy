@@ -11,17 +11,14 @@ from typing import Any, Literal
 
 import polars as pl
 
-from omopy.generics._types import NAME_LEVEL_SEP, OVERALL
-from omopy.generics.summarised_result import SUMMARISED_RESULT_COLUMNS, SummarisedResult
+from omopy.generics.summarised_result import SummarisedResult
 from omopy.vis._format import (
-    HEADER_DELIM,
     format_estimate_name,
     format_estimate_value,
-    format_header,
     format_min_cell_count,
     parse_header_keys,
 )
-from omopy.vis._style import TableStyle, customise_text, default_table_style
+from omopy.vis._style import TableStyle, default_table_style
 
 __all__ = [
     "format_table",
@@ -110,9 +107,11 @@ def vis_omop_table(
     # Add settings columns
     if settings_columns:
         settings = result.settings
-        cols_to_add = [c for c in settings_columns if c in settings.columns and c != "result_id"]
+        cols_to_add = [
+            c for c in settings_columns if c in settings.columns and c != "result_id"
+        ]
         if cols_to_add:
-            join_df = settings.select(["result_id"] + cols_to_add)
+            join_df = settings.select(["result_id", *cols_to_add])
             df = df.join(join_df, on="result_id", how="left")
 
     # Split name-level pairs into separate columns
@@ -347,7 +346,6 @@ def _to_gt_table(
 
 def _apply_spanner_headers(tbl: Any, columns: list[str]) -> Any:
     """Parse encoded column names and create spanner headers."""
-    import great_tables as gt
 
     spanners: dict[str, list[str]] = {}
 
@@ -422,7 +420,9 @@ def _pivot_for_header(df: pl.DataFrame, header_cols: list[str]) -> pl.DataFrame:
             continue
 
         index_cols = [c for c in df.columns if c != col and c != value_col]
-        unique_vals = sorted([v for v in df[col].drop_nulls().unique().to_list() if v is not None])
+        unique_vals = sorted(
+            [v for v in df[col].drop_nulls().unique().to_list() if v is not None]
+        )
 
         if not unique_vals:
             continue

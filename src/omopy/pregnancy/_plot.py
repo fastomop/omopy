@@ -6,7 +6,7 @@ pregnancy episode statistics.
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 import polars as pl
 

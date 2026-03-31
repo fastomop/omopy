@@ -9,10 +9,7 @@ This is the Python equivalent of R's ``copyCdmTo.R``.
 from __future__ import annotations
 
 import logging
-from typing import Any
 
-import ibis
-import ibis.expr.types as ir
 import polars as pl
 
 from omopy.connector._connection import IbisConnection, _get_catalog
@@ -175,7 +172,10 @@ def _upload_dataframe(
         existing = con.list_tables(database=(catalog, schema))
         if table_name in existing:
             if not overwrite:
-                msg = f"Table {fqn} already exists in target. Set overwrite=True to replace."
+                msg = (
+                    f"Table {fqn} already exists in target."
+                    " Set overwrite=True to replace."
+                )
                 raise ValueError(msg)
             con.raw_sql(f"DROP TABLE IF EXISTS {fqn}")
     except ValueError:

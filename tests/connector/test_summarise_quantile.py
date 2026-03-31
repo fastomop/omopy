@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
 import polars as pl
+import pytest
 
 from omopy.connector.summarise_quantile import summarise_quantile
 
@@ -41,7 +41,9 @@ class TestSummariseQuantilePolars:
         assert "q50_value" in result.columns
 
     def test_multiple_columns(self, sample_data):
-        result = summarise_quantile(sample_data, ["value", "weight"], probs=[0.25, 0.75])
+        result = summarise_quantile(
+            sample_data, ["value", "weight"], probs=[0.25, 0.75]
+        )
         assert "q25_value" in result.columns
         assert "q75_value" in result.columns
         assert "q25_weight" in result.columns

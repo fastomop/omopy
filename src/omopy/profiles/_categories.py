@@ -7,7 +7,6 @@ the PatientProfiles package.
 from __future__ import annotations
 
 import math
-from typing import Any
 
 import ibis
 import ibis.expr.types as ir
@@ -21,7 +20,8 @@ __all__ = ["add_categories"]
 def add_categories(
     x: CdmTable,
     variable: str,
-    categories: dict[str, list[tuple[float, float]]] | dict[str, dict[str, tuple[float, float]]],
+    categories: dict[str, list[tuple[float, float]]]
+    | dict[str, dict[str, tuple[float, float]]],
     *,
     missing_category_value: str = "None",
     overlap: bool = False,
@@ -55,7 +55,11 @@ def add_categories(
     --------
     >>> add_categories(
     ...     x, "age",
-    ...     {"age_group": {"young": (0, 17), "adult": (18, 64), "senior": (65, float("inf"))}},
+    ...     {"age_group": {
+    ...         "young": (0, 17),
+    ...         "adult": (18, 64),
+    ...         "senior": (65, float("inf")),
+    ...     }},
     ... )
     """
     tbl = _get_ibis_table(x)
@@ -74,7 +78,9 @@ def add_categories(
         if not overlap:
             _check_no_overlap(labelled)
 
-        new_cols[col_name] = _build_case_expr(tbl[variable], labelled, missing_category_value)
+        new_cols[col_name] = _build_case_expr(
+            tbl[variable], labelled, missing_category_value
+        )
 
     tbl = tbl.mutate(**new_cols)
     return x._with_data(tbl)
@@ -98,7 +104,10 @@ def _check_no_overlap(ranges: dict[str, tuple[float, float]]) -> None:
         prev_hi = sorted_ranges[i - 1][1]
         curr_lo = sorted_ranges[i][0]
         if curr_lo <= prev_hi and not math.isinf(prev_hi):
-            msg = f"Overlapping ranges: previous upper {prev_hi} >= current lower {curr_lo}"
+            msg = (
+                "Overlapping ranges: previous upper"
+                f" {prev_hi} >= current lower {curr_lo}"
+            )
             raise ValueError(msg)
 
 

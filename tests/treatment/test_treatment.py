@@ -24,7 +24,6 @@ import datetime
 import polars as pl
 import pytest
 
-import omopy
 from omopy.generics.summarised_result import (
     SUMMARISED_RESULT_COLUMNS,
     SummarisedResult,
@@ -42,7 +41,6 @@ from omopy.treatment._summarise import (
     _add_age_group,
     _build_pathway_strings,
 )
-
 
 # ===================================================================
 # Helpers — small DataFrames for unit-testing pipeline steps
@@ -126,8 +124,6 @@ class TestModuleImports:
 
     def test_individual_imports(self):
         from omopy.treatment import (
-            CohortSpec,
-            PathwayResult,
             compute_pathways,
             mock_treatment_pathways,
             plot_event_duration,
@@ -464,7 +460,10 @@ class TestCombinationWindow:
     def test_no_events(self):
         df = _make_events([])
         result = _combination_window(
-            df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate"
+            df,
+            combination_window=30,
+            min_post_combination_duration=0,
+            overlap_method="truncate",
         )
         assert result.height == 0
 
@@ -485,13 +484,19 @@ class TestCombinationWindow:
             ]
         )
         result = _combination_window(
-            df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate"
+            df,
+            combination_window=30,
+            min_post_combination_duration=0,
+            overlap_method="truncate",
         )
         events = result.filter(pl.col("type") == "event")
         assert events.height == 2
 
     def test_small_overlap_truncate(self):
-        """Overlap < combination_window with truncate method should clip previous era."""
+        """Overlap < combination_window with truncate method.
+
+        Should clip previous era.
+        """
         df = _make_events(
             [
                 {
@@ -508,7 +513,10 @@ class TestCombinationWindow:
         )
         # Overlap is 5 days (Feb 10-15), combination_window=30 → switch
         result = _combination_window(
-            df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate"
+            df,
+            combination_window=30,
+            min_post_combination_duration=0,
+            overlap_method="truncate",
         )
         events = result.filter(pl.col("type") == "event")
         # Previous era should be truncated to end at Feb 10
@@ -534,7 +542,10 @@ class TestCombinationWindow:
         )
         # Overlap: Jan 15 to Mar 1 = 45 days, combination_window=30 → combination
         result = _combination_window(
-            df, combination_window=30, min_post_combination_duration=0, overlap_method="truncate"
+            df,
+            combination_window=30,
+            min_post_combination_duration=0,
+            overlap_method="truncate",
         )
         events = result.filter(pl.col("type") == "event")
         combo_rows = events.filter(pl.col("event_cohort_id").str.contains(r"\+"))
@@ -964,7 +975,9 @@ class TestMockTreatmentPathways:
         from omopy.treatment import mock_treatment_pathways
 
         result = mock_treatment_pathways()
-        pathway_rows = result.data.filter(pl.col("variable_name") == "treatment_pathway")
+        pathway_rows = result.data.filter(
+            pl.col("variable_name") == "treatment_pathway"
+        )
         assert pathway_rows.height > 0
 
     def test_has_count_rows(self):
@@ -1018,7 +1031,13 @@ class TestSummariseTreatmentPathways:
                 "age": [50, 50, 60, 60, 70],
                 "sex": ["Male", "Male", "Female", "Female", "Male"],
                 "target_cohort_id": [100, 100, 100, 100, 100],
-                "target_cohort_name": ["Target", "Target", "Target", "Target", "Target"],
+                "target_cohort_name": [
+                    "Target",
+                    "Target",
+                    "Target",
+                    "Target",
+                    "Target",
+                ],
             }
         )
         return PathwayResult(
@@ -1059,7 +1078,8 @@ class TestSummariseTreatmentPathways:
 
         result = summarise_treatment_pathways(simple_pathway_result, min_cell_count=0)
         counts = result.data.filter(
-            (pl.col("variable_name") == "treatment_pathway") & (pl.col("estimate_name") == "count")
+            (pl.col("variable_name") == "treatment_pathway")
+            & (pl.col("estimate_name") == "count")
         )
         assert counts.height > 0
 
@@ -1077,12 +1097,20 @@ class TestSummariseTreatmentPathways:
         from omopy.treatment import summarise_treatment_pathways
 
         # With min_cell_count=0, should have pathways
-        result_all = summarise_treatment_pathways(simple_pathway_result, min_cell_count=0)
+        result_all = summarise_treatment_pathways(
+            simple_pathway_result, min_cell_count=0
+        )
         # With high min_cell_count, should have fewer/no pathways
-        result_filtered = summarise_treatment_pathways(simple_pathway_result, min_cell_count=100)
+        result_filtered = summarise_treatment_pathways(
+            simple_pathway_result, min_cell_count=100
+        )
         assert (
-            result_filtered.data.filter(pl.col("variable_name") == "treatment_pathway").height
-            <= result_all.data.filter(pl.col("variable_name") == "treatment_pathway").height
+            result_filtered.data.filter(
+                pl.col("variable_name") == "treatment_pathway"
+            ).height
+            <= result_all.data.filter(
+                pl.col("variable_name") == "treatment_pathway"
+            ).height
         )
 
     def test_settings_result_type(self, simple_pathway_result):
@@ -1163,7 +1191,13 @@ class TestSummariseEventDuration:
                 "age": [50, 50, 60, 60, 70],
                 "sex": ["Male", "Male", "Female", "Female", "Male"],
                 "target_cohort_id": [100, 100, 100, 100, 100],
-                "target_cohort_name": ["Target", "Target", "Target", "Target", "Target"],
+                "target_cohort_name": [
+                    "Target",
+                    "Target",
+                    "Target",
+                    "Target",
+                    "Target",
+                ],
                 "type": ["event"] * 5,
             }
         )

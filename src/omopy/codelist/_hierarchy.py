@@ -8,7 +8,6 @@ and ``getAncestors()`` from CodelistGenerator.
 from __future__ import annotations
 
 import ibis
-import ibis.expr.types as ir
 
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.codelist import Codelist
@@ -61,13 +60,17 @@ def get_descendants(
 
     # Find all descendants
     descendants = ca.filter(
-        ca["ancestor_concept_id"].cast("int64").isin([ibis.literal(int(i)) for i in ids])
+        ca["ancestor_concept_id"]
+        .cast("int64")
+        .isin([ibis.literal(int(i)) for i in ids])
     )
     if not include_self:
         descendants = descendants.filter(descendants["min_levels_of_separation"] > 0)
 
     # Get the descendant concept IDs
-    desc_ids = descendants.select(concept_id=descendants["descendant_concept_id"].cast("int64"))
+    desc_ids = descendants.select(
+        concept_id=descendants["descendant_concept_id"].cast("int64")
+    )
 
     # Join with concept to get only standard concepts
     result = (
@@ -130,12 +133,16 @@ def get_ancestors(
     concept = _get_ibis_table(cdm["concept"])
 
     ancestors = ca.filter(
-        ca["descendant_concept_id"].cast("int64").isin([ibis.literal(int(i)) for i in ids])
+        ca["descendant_concept_id"]
+        .cast("int64")
+        .isin([ibis.literal(int(i)) for i in ids])
     )
     if not include_self:
         ancestors = ancestors.filter(ancestors["min_levels_of_separation"] > 0)
 
-    anc_ids = ancestors.select(concept_id=ancestors["ancestor_concept_id"].cast("int64"))
+    anc_ids = ancestors.select(
+        concept_id=ancestors["ancestor_concept_id"].cast("int64")
+    )
 
     result = (
         anc_ids.inner_join(

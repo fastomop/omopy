@@ -46,6 +46,16 @@ Exports
 
 from __future__ import annotations
 
+from omopy.characteristics._mock import mock_cohort_characteristics
+from omopy.characteristics._plot import (
+    plot_characteristics,
+    plot_cohort_attrition,
+    plot_cohort_count,
+    plot_cohort_overlap,
+    plot_cohort_timing,
+    plot_compared_large_scale_characteristics,
+    plot_large_scale_characteristics,
+)
 from omopy.characteristics._summarise import (
     summarise_characteristics,
     summarise_cohort_attrition,
@@ -65,43 +75,33 @@ from omopy.characteristics._table import (
     table_large_scale_characteristics,
     table_top_large_scale_characteristics,
 )
-from omopy.characteristics._plot import (
-    plot_characteristics,
-    plot_cohort_attrition,
-    plot_cohort_count,
-    plot_cohort_overlap,
-    plot_cohort_timing,
-    plot_compared_large_scale_characteristics,
-    plot_large_scale_characteristics,
-)
-from omopy.characteristics._mock import mock_cohort_characteristics
 
 __all__ = [
-    # Summarise
-    "summarise_characteristics",
-    "summarise_cohort_count",
-    "summarise_cohort_attrition",
-    "summarise_cohort_timing",
-    "summarise_cohort_overlap",
-    "summarise_large_scale_characteristics",
-    "summarise_cohort_codelist",
-    # Tables
-    "table_characteristics",
-    "table_cohort_count",
-    "table_cohort_attrition",
-    "table_cohort_timing",
-    "table_cohort_overlap",
-    "table_top_large_scale_characteristics",
-    "table_large_scale_characteristics",
     "available_table_columns",
-    # Plots
-    "plot_characteristics",
-    "plot_cohort_count",
-    "plot_cohort_attrition",
-    "plot_cohort_timing",
-    "plot_cohort_overlap",
-    "plot_large_scale_characteristics",
-    "plot_compared_large_scale_characteristics",
     # Utilities
     "mock_cohort_characteristics",
+    # Plots
+    "plot_characteristics",
+    "plot_cohort_attrition",
+    "plot_cohort_count",
+    "plot_cohort_overlap",
+    "plot_cohort_timing",
+    "plot_compared_large_scale_characteristics",
+    "plot_large_scale_characteristics",
+    # Summarise
+    "summarise_characteristics",
+    "summarise_cohort_attrition",
+    "summarise_cohort_codelist",
+    "summarise_cohort_count",
+    "summarise_cohort_overlap",
+    "summarise_cohort_timing",
+    "summarise_large_scale_characteristics",
+    # Tables
+    "table_characteristics",
+    "table_cohort_attrition",
+    "table_cohort_count",
+    "table_cohort_overlap",
+    "table_cohort_timing",
+    "table_large_scale_characteristics",
+    "table_top_large_scale_characteristics",
 ]

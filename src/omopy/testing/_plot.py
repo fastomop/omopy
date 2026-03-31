@@ -108,7 +108,10 @@ def graph_cohort(
                 name=cname,
                 showlegend=False,
                 hovertemplate=(
-                    f"<b>{cname}</b><br>Start: {start_str}<br>End: {end_str}<br><extra></extra>"
+                    f"<b>{cname}</b><br>"
+                    f"Start: {start_str}<br>"
+                    f"End: {end_str}<br>"
+                    "<extra></extra>"
                 ),
             )
         )

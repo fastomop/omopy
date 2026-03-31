@@ -15,12 +15,12 @@ from omopy.generics.summarised_result import SummarisedResult
 
 __all__ = [
     "plot_characteristics",
-    "plot_cohort_count",
     "plot_cohort_attrition",
-    "plot_cohort_timing",
+    "plot_cohort_count",
     "plot_cohort_overlap",
-    "plot_large_scale_characteristics",
+    "plot_cohort_timing",
     "plot_compared_large_scale_characteristics",
+    "plot_large_scale_characteristics",
 ]
 
 
@@ -56,7 +56,7 @@ def plot_characteristics(
     -------
     plotly.graph_objects.Figure
     """
-    from omopy.vis import bar_plot, scatter_plot, box_plot
+    from omopy.vis import bar_plot, box_plot, scatter_plot
 
     # Filter out density estimates
     data = result.data.filter(~pl.col("estimate_name").str.starts_with("density_"))
@@ -100,7 +100,10 @@ def plot_characteristics(
             style=style,
         )
     else:
-        msg = f"Unknown plot_type: {plot_type!r}. Expected 'barplot', 'scatterplot', or 'boxplot'."
+        msg = (
+            f"Unknown plot_type: {plot_type!r}. "
+            "Expected 'barplot', 'scatterplot', or 'boxplot'."
+        )
         raise ValueError(msg)
 
 
@@ -193,7 +196,9 @@ def plot_cohort_attrition(
 
     # Group by cohort_name
     cohort_names = (
-        tidy["cohort_name"].unique().to_list() if "cohort_name" in tidy.columns else [""]
+        tidy["cohort_name"].unique().to_list()
+        if "cohort_name" in tidy.columns
+        else [""]
     )
 
     fig = go.Figure()
@@ -216,7 +221,9 @@ def plot_cohort_attrition(
         for _, reason_row in enumerate(reasons.iter_rows(named=True)):
             reason = reason_row["reason"]
             r_data = (
-                c_data.filter(pl.col("reason") == reason) if "reason" in c_data.columns else c_data
+                c_data.filter(pl.col("reason") == reason)
+                if "reason" in c_data.columns
+                else c_data
             )
 
             # Build label
@@ -267,7 +274,7 @@ def plot_cohort_attrition(
 
     # Layout
     fig.update_layout(
-        title=f"Cohort Attrition",
+        title="Cohort Attrition",
         showlegend=False,
         xaxis=dict(visible=False),
         yaxis=dict(visible=False),
@@ -319,8 +326,8 @@ def plot_cohort_timing(
     -------
     plotly.graph_objects.Figure
     """
-    from omopy.vis import box_plot, scatter_plot
     from omopy.characteristics._table import _filter_unique_pairs
+    from omopy.vis import box_plot, scatter_plot
 
     if facet is None:
         facet = ["cdm_name", "cohort_name_reference"]
@@ -407,8 +414,8 @@ def plot_cohort_overlap(
     -------
     plotly.graph_objects.Figure
     """
-    from omopy.vis import bar_plot
     from omopy.characteristics._table import _filter_unique_pairs
+    from omopy.vis import bar_plot
 
     if facet is None:
         facet = ["cdm_name", "cohort_name_reference"]
@@ -529,8 +536,9 @@ def plot_compared_large_scale_characteristics(
     -------
     plotly.graph_objects.Figure
     """
-    from omopy.vis import scatter_plot
     import plotly.graph_objects as go
+
+    from omopy.vis import scatter_plot
 
     # Tidy and filter to percentage
     tidy = result.tidy()
@@ -561,11 +569,20 @@ def plot_compared_large_scale_characteristics(
     join_cols = [
         c
         for c in pct_data.columns
-        if c not in {colour, "percentage", "estimate_value", "estimate_name", "estimate_type"}
+        if c
+        not in {
+            colour,
+            "percentage",
+            "estimate_value",
+            "estimate_name",
+            "estimate_type",
+        }
     ]
 
     # Join reference percentage
-    ref_slim = ref_data.select(join_cols + [pl.col("percentage").alias("reference_percentage")])
+    ref_slim = ref_data.select(
+        [*join_cols, pl.col("percentage").alias("reference_percentage")]
+    )
     merged = comp_data.join(ref_slim, on=join_cols, how="left")
 
     if missings is not None:

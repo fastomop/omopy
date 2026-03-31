@@ -12,7 +12,6 @@ from omopy.profiles._columns import (
     start_date_column,
 )
 
-
 # ---------------------------------------------------------------------------
 # start_date_column
 # ---------------------------------------------------------------------------
@@ -44,7 +43,9 @@ class TestStartDateColumn:
         assert start_date_column("death") == "death_date"
 
     def test_observation_period(self):
-        assert start_date_column("observation_period") == "observation_period_start_date"
+        assert (
+            start_date_column("observation_period") == "observation_period_start_date"
+        )
 
     def test_cohort_default(self):
         """Non-OMOP tables fall back to cohort defaults."""
@@ -87,7 +88,9 @@ class TestEndDateColumn:
 
 class TestStandardConceptIdColumn:
     def test_condition_occurrence(self):
-        assert standard_concept_id_column("condition_occurrence") == "condition_concept_id"
+        assert (
+            standard_concept_id_column("condition_occurrence") == "condition_concept_id"
+        )
 
     def test_drug_exposure(self):
         assert standard_concept_id_column("drug_exposure") == "drug_concept_id"
@@ -106,7 +109,10 @@ class TestStandardConceptIdColumn:
 
 class TestSourceConceptIdColumn:
     def test_condition_occurrence(self):
-        assert source_concept_id_column("condition_occurrence") == "condition_source_concept_id"
+        assert (
+            source_concept_id_column("condition_occurrence")
+            == "condition_source_concept_id"
+        )
 
     def test_drug_exposure(self):
         assert source_concept_id_column("drug_exposure") == "drug_source_concept_id"

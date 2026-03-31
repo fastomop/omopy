@@ -11,12 +11,10 @@ All builders return Ibis Table expressions with standardised columns:
 
 from __future__ import annotations
 
-from typing import Any
-
 import ibis
 import ibis.expr.types as ir
 
-from omopy.connector.circe._types import DomainCriteria, NumericRange, TextFilter
+from omopy.connector.circe._types import DomainCriteria, NumericRange
 
 __all__ = ["build_domain_query"]
 
@@ -255,7 +253,7 @@ def build_domain_query(
         event_id=tbl[pk_col].cast("int64"),
         start_date=tbl[logical_start],
         end_date=end_expr,
-        visit_occurrence_id=visit_expr if isinstance(visit_expr, ir.Column) else visit_expr,
+        visit_occurrence_id=visit_expr,
         sort_date=tbl[logical_start],
     )
 

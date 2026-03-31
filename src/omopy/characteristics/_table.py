@@ -14,14 +14,14 @@ import polars as pl
 from omopy.generics.summarised_result import SummarisedResult
 
 __all__ = [
-    "table_characteristics",
-    "table_cohort_count",
-    "table_cohort_attrition",
-    "table_cohort_timing",
-    "table_cohort_overlap",
-    "table_top_large_scale_characteristics",
-    "table_large_scale_characteristics",
     "available_table_columns",
+    "table_characteristics",
+    "table_cohort_attrition",
+    "table_cohort_count",
+    "table_cohort_overlap",
+    "table_cohort_timing",
+    "table_large_scale_characteristics",
+    "table_top_large_scale_characteristics",
 ]
 
 
@@ -166,7 +166,7 @@ def table_cohort_count(
     if group_column is None:
         group_column = []
     if hide is None:
-        hide = ["variable_level"] + _settings_columns(result)
+        hide = ["variable_level", *_settings_columns(result)]
 
     return vis_omop_table(
         result,
@@ -215,7 +215,12 @@ def table_cohort_attrition(
     if group_column is None:
         group_column = ["cdm_name", "cohort_name"]
     if hide is None:
-        hide = ["variable_level", "reason_id", "estimate_name"] + _settings_columns(result)
+        hide = [
+            "variable_level",
+            "reason_id",
+            "estimate_name",
+            *_settings_columns(result),
+        ]
 
     return vis_omop_table(
         result,
@@ -264,7 +269,6 @@ def table_cohort_timing(
     great_tables.GT or polars.DataFrame
     """
     from omopy.vis import vis_omop_table
-    from omopy.generics._types import NAME_LEVEL_SEP
 
     # Filter density estimates
     data = result.data.filter(~pl.col("estimate_name").str.starts_with("density_"))
@@ -295,7 +299,7 @@ def table_cohort_timing(
     if group_column is None:
         group_column = ["cdm_name"]
     if hide is None:
-        hide = ["variable_level"] + _settings_columns(result)
+        hide = ["variable_level", *_settings_columns(result)]
 
     return vis_omop_table(
         result,
@@ -357,7 +361,7 @@ def table_cohort_overlap(
     if group_column is None:
         group_column = ["cdm_name"]
     if hide is None:
-        hide = ["variable_level"] + _settings_columns(result)
+        hide = ["variable_level", *_settings_columns(result)]
 
     return vis_omop_table(
         result,
@@ -434,7 +438,7 @@ def table_top_large_scale_characteristics(
             "package_version",
         )
     ]
-    display = pct_data.select(display_cols + ["_pct"]).rename({"_pct": "Frequency (%)"})
+    display = pct_data.select([*display_cols, "_pct"]).rename({"_pct": "Frequency (%)"})
 
     return vis_table(
         display,

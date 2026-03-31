@@ -129,7 +129,9 @@ def mock_survival(
         }
         if include_strata:
             target_entry["sex"] = sex
-            target_entry["age_group"] = "young" if age < 50 else "middle" if age < 70 else "old"
+            target_entry["age_group"] = (
+                "young" if age < 50 else "middle" if age < 70 else "old"
+            )
         target_rows.append(target_entry)
 
         # Primary outcome (event_rate chance)

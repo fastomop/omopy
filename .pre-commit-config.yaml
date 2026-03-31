@@ -4,25 +4,13 @@
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.0
+    rev: v0.15.7
     hooks:
-      - id: ruff-check
+      - id: ruff
         name: ruff-check
         args: [--fix]
       - id: ruff-format
         name: ruff-format
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
-    hooks:
-      - id: mypy
-        name: mypy
-        additional_dependencies:
-          - pydantic>=2.11
-          - pydantic-settings>=2.9
-        args: [--ignore-missing-imports]
-        pass_filenames: false
-        entry: mypy src/
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

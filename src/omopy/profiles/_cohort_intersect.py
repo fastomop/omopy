@@ -101,7 +101,9 @@ def add_cohort_intersect_flag(
     """
     cdm = _resolve_cdm(x, cdm)
     windows = validate_windows(window)
-    cohort, ids, names = _resolve_cohort_info(target_cohort_table, cdm, target_cohort_id)
+    cohort, ids, names = _resolve_cohort_info(
+        target_cohort_table, cdm, target_cohort_id
+    )
     target = _get_ibis_table(cohort)
 
     return _add_intersect(
@@ -164,7 +166,9 @@ def add_cohort_intersect_count(
     """
     cdm = _resolve_cdm(x, cdm)
     windows = validate_windows(window)
-    cohort, ids, names = _resolve_cohort_info(target_cohort_table, cdm, target_cohort_id)
+    cohort, ids, names = _resolve_cohort_info(
+        target_cohort_table, cdm, target_cohort_id
+    )
     target = _get_ibis_table(cohort)
 
     return _add_intersect(
@@ -229,7 +233,9 @@ def add_cohort_intersect_date(
     """
     cdm = _resolve_cdm(x, cdm)
     windows = validate_windows(window)
-    cohort, ids, names = _resolve_cohort_info(target_cohort_table, cdm, target_cohort_id)
+    cohort, ids, names = _resolve_cohort_info(
+        target_cohort_table, cdm, target_cohort_id
+    )
     target = _get_ibis_table(cohort)
 
     return _add_intersect(
@@ -295,7 +301,9 @@ def add_cohort_intersect_days(
     """
     cdm = _resolve_cdm(x, cdm)
     windows = validate_windows(window)
-    cohort, ids, names = _resolve_cohort_info(target_cohort_table, cdm, target_cohort_id)
+    cohort, ids, names = _resolve_cohort_info(
+        target_cohort_table, cdm, target_cohort_id
+    )
     target = _get_ibis_table(cohort)
 
     return _add_intersect(
@@ -364,7 +372,9 @@ def add_cohort_intersect_field(
     """
     cdm = _resolve_cdm(x, cdm)
     windows = validate_windows(window)
-    cohort, ids, names = _resolve_cohort_info(target_cohort_table, cdm, target_cohort_id)
+    cohort, ids, names = _resolve_cohort_info(
+        target_cohort_table, cdm, target_cohort_id
+    )
     target = _get_ibis_table(cohort)
 
     return _add_intersect(

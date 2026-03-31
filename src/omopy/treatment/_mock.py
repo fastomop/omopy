@@ -79,6 +79,7 @@ def mock_treatment_pathways(
                 "Simvastatin",
             ],
             range(n_drugs),
+            strict=False,
         )
     ]
 
@@ -203,7 +204,7 @@ def mock_treatment_pathways(
             # Overall and per-line
             for line in ["overall", "1", "2", "3"]:
                 # Mono and combination events
-                for event_name in ["mono-event", "combination-event"] + drug_names:
+                for event_name in ["mono-event", "combination-event", *drug_names]:
                     mean_dur = rng.uniform(15.0, 180.0)
                     sd_dur = rng.uniform(5.0, 0.5 * mean_dur)
                     min_dur = max(1, mean_dur - 2 * sd_dur)
@@ -235,7 +236,9 @@ def mock_treatment_pathways(
                                 "variable_name": event_name,
                                 "variable_level": "",
                                 "estimate_name": est,
-                                "estimate_type": ("integer" if est == "count" else "numeric"),
+                                "estimate_type": (
+                                    "integer" if est == "count" else "numeric"
+                                ),
                                 "estimate_value": stats[est],
                                 "additional_name": "line",
                                 "additional_level": line,

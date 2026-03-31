@@ -10,7 +10,6 @@ This is the Python equivalent of R's ``stratifyByDomain()``,
 from __future__ import annotations
 
 import ibis
-import ibis.expr.types as ir
 
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.codelist import Codelist
@@ -38,7 +37,9 @@ def _stratify_by_attribute(
 
         # Get attribute values for these concepts
         concept_attrs = concept.filter(
-            concept["concept_id"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
+            concept["concept_id"]
+            .cast("int64")
+            .isin([ibis.literal(int(c)) for c in ids])
         ).select(
             concept_id=concept["concept_id"].cast("int64"),
             attr_val=concept[attribute],

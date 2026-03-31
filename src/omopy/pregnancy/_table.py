@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-import polars as pl
-
 from omopy.generics.summarised_result import SummarisedResult
 
 __all__ = ["table_pregnancies"]

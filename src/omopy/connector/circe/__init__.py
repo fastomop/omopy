@@ -45,12 +45,6 @@ from omopy.connector.circe._types import (
 )
 
 __all__ = [
-    # Engine
-    "generate_cohort_set",
-    # Parser
-    "parse_cohort_expression",
-    "parse_cohort_json",
-    "read_cohort_set",
     # Types
     "CensorWindow",
     "CohortExpression",
@@ -76,4 +70,10 @@ __all__ = [
     "TemporalWindow",
     "TextFilter",
     "WindowEndpoint",
+    # Engine
+    "generate_cohort_set",
+    # Parser
+    "parse_cohort_expression",
+    "parse_cohort_json",
+    "read_cohort_set",
 ]

@@ -12,7 +12,6 @@ import polars as pl
 
 from omopy.generics import SummarisedResult
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -32,10 +31,7 @@ def _filter_result_type(
 
     # Cast matching_ids to match each column's dtype
     data_dtype = result.data["result_id"].dtype
-    if data_dtype == pl.Utf8:
-        data_ids = [str(x) for x in matching_ids]
-    else:
-        data_ids = matching_ids
+    data_ids = [str(x) for x in matching_ids] if data_dtype == pl.Utf8 else matching_ids
 
     settings_dtype = result.settings["result_id"].dtype
     if settings_dtype == pl.Utf8:
@@ -58,7 +54,8 @@ def _extract_pathway_counts(
     Returns DataFrame with columns: pathway, freq.
     """
     data = result.data.filter(
-        (pl.col("variable_name") == "treatment_pathway") & (pl.col("estimate_name") == "count")
+        (pl.col("variable_name") == "treatment_pathway")
+        & (pl.col("estimate_name") == "count")
     )
 
     if data.height == 0:
@@ -71,7 +68,9 @@ def _extract_pathway_counts(
 
     if group_combinations:
         pathways = pathways.with_columns(
-            pl.col("pathway").str.replace_all(r"[^-]+([\+][^-]+)+", "Combination").alias("pathway")
+            pl.col("pathway")
+            .str.replace_all(r"[^-]+([\+][^-]+)+", "Combination")
+            .alias("pathway")
         )
         # Re-aggregate after combination grouping
         pathways = pathways.group_by("pathway").agg(pl.col("freq").sum())
@@ -169,7 +168,7 @@ def plot_sankey(
 
     # Aggregate duplicate links
     link_map: dict[tuple[int, int], int] = {}
-    for s, t, v in zip(links_source, links_target, links_value):
+    for s, t, v in zip(links_source, links_target, links_value, strict=False):
         key = (s, t)
         link_map[key] = link_map.get(key, 0) + v
 
@@ -231,7 +230,9 @@ def _assign_colors(
 
     if isinstance(colors, dict):
         return [
-            colors.get(label.split(". ", 1)[-1], default_palette[i % len(default_palette)])
+            colors.get(
+                label.split(". ", 1)[-1], default_palette[i % len(default_palette)]
+            )
             for i, label in enumerate(labels)
         ]
     elif isinstance(colors, list):
@@ -299,7 +300,7 @@ def plot_sunburst(
     parents: list[str] = []
     values: list[int] = []
 
-    total = pathways["freq"].sum()
+    pathways["freq"].sum()
 
     for row in pathways.iter_rows(named=True):
         steps = row["pathway"].split("-")
@@ -340,12 +341,16 @@ def plot_sunburst(
         ]
         if isinstance(colors, list):
             palette = colors
-        color_map = {name: palette[i % len(palette)] for i, name in enumerate(unique_labels)}
+        color_map = {
+            name: palette[i % len(palette)] for i, name in enumerate(unique_labels)
+        }
 
     marker_colors = [color_map.get(label, "#ccc") for label in labels]
 
     hover_template = (
-        "%{label}<br>%{percentRoot:.1%}" if unit == "percent" else "%{label}<br>%{value}"
+        "%{label}<br>%{percentRoot:.1%}"
+        if unit == "percent"
+        else "%{label}<br>%{value}"
     )
 
     fig = go.Figure(
@@ -423,9 +428,13 @@ def plot_event_duration(
 
     # Filter by treatment group
     if treatment_groups == "group":
-        data = data.filter(pl.col("variable_name").is_in(["mono-event", "combination-event"]))
+        data = data.filter(
+            pl.col("variable_name").is_in(["mono-event", "combination-event"])
+        )
     elif treatment_groups == "individual":
-        data = data.filter(~pl.col("variable_name").is_in(["mono-event", "combination-event"]))
+        data = data.filter(
+            ~pl.col("variable_name").is_in(["mono-event", "combination-event"])
+        )
 
     # Filter by min_cell_count
     if min_cell_count > 0:
@@ -435,7 +444,9 @@ def plot_event_duration(
             .select("variable_name", "additional_level")
             .unique()
         )
-        data = data.join(valid_events, on=["variable_name", "additional_level"], how="inner")
+        data = data.join(
+            valid_events, on=["variable_name", "additional_level"], how="inner"
+        )
 
     if data.height == 0:
         fig = go.Figure()

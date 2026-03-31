@@ -23,14 +23,24 @@ Core workflow::
 """
 
 # -- Core estimation ---------------------------------------------------------
+# -- Add survival columns ---------------------------------------------------
+from omopy.survival._add_survival import (
+    add_cohort_survival,
+)
 from omopy.survival._estimate import (
     estimate_competing_risk_survival,
     estimate_single_event_survival,
 )
 
-# -- Add survival columns ---------------------------------------------------
-from omopy.survival._add_survival import (
-    add_cohort_survival,
+# -- Mock / testing ----------------------------------------------------------
+from omopy.survival._mock import (
+    mock_survival,
+)
+
+# -- Plot rendering ----------------------------------------------------------
+from omopy.survival._plot import (
+    available_survival_grouping,
+    plot_survival,
 )
 
 # -- Result conversion -------------------------------------------------------
@@ -46,33 +56,22 @@ from omopy.survival._table import (
     table_survival_events,
 )
 
-# -- Plot rendering ----------------------------------------------------------
-from omopy.survival._plot import (
-    available_survival_grouping,
-    plot_survival,
-)
-
-# -- Mock / testing ----------------------------------------------------------
-from omopy.survival._mock import (
-    mock_survival,
-)
-
 __all__ = [
-    # Estimation (2)
-    "estimate_single_event_survival",
-    "estimate_competing_risk_survival",
     # Add columns (1)
     "add_cohort_survival",
     # Result conversion (1)
     "as_survival_result",
-    # Table (4)
-    "table_survival",
-    "table_survival_events",
-    "table_survival_attrition",
+    "available_survival_grouping",
+    "estimate_competing_risk_survival",
+    # Estimation (2)
+    "estimate_single_event_survival",
+    # Mock (1)
+    "mock_survival",
     "options_table_survival",
     # Plot (2)
     "plot_survival",
-    "available_survival_grouping",
-    # Mock (1)
-    "mock_survival",
+    # Table (4)
+    "table_survival",
+    "table_survival_attrition",
+    "table_survival_events",
 ]

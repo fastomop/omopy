@@ -13,7 +13,6 @@ from typing import Any
 import polars as pl
 
 from omopy.generics.cdm_reference import CdmReference
-
 from omopy.pregnancy._concepts import (
     ESD_CONCEPT_IDS,
     ESD_CONCEPTS,

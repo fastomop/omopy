@@ -14,10 +14,10 @@ from typing import Any
 import polars as pl
 
 from omopy.drug_diagnostics._checks import (
-    AVAILABLE_CHECKS,
-    DiagnosticsResult,
     _MISSING_COLUMNS,
     _QUANTILE_NAMES,
+    AVAILABLE_CHECKS,
+    DiagnosticsResult,
 )
 
 __all__ = [
@@ -72,17 +72,18 @@ def mock_drug_exposure(
                 "Amlodipine",
             ],
             range(n_ingredients),
+            strict=False,
         )
     ]
     ingredient_ids = [1125315 + i * 1000 for i in range(n_ingredients)]
-    ingredient_concepts = dict(zip(ingredient_ids, ingredient_names))
+    ingredient_concepts = dict(zip(ingredient_ids, ingredient_names, strict=False))
 
     results: dict[str, pl.DataFrame] = {}
 
     for check in checks:
         parts: list[pl.DataFrame] = []
 
-        for ing_id, ing_name in zip(ingredient_ids, ingredient_names):
+        for ing_id, ing_name in zip(ingredient_ids, ingredient_names, strict=False):
             n = n_records_per_ingredient
             n_persons = max(1, n // rng.randint(2, 5))
 
@@ -127,6 +128,7 @@ def mock_drug_exposure(
                         mean_dur + 1.5 * sd_dur,
                         mean_dur + 2 * sd_dur,
                     ],
+                    strict=False,
                 ):
                     row[f"duration_{qn}"] = round(qv, 1)
                 row["duration_mean"] = round(mean_dur, 2)
@@ -165,7 +167,11 @@ def mock_drug_exposure(
                 parts.append(pl.DataFrame(rows))
 
             elif check == "route":
-                routes = [(4128794, "Oral"), (4302612, "Intravenous"), (4186831, "Topical")]
+                routes = [
+                    (4128794, "Oral"),
+                    (4302612, "Intravenous"),
+                    (4186831, "Topical"),
+                ]
                 rows = []
                 remaining = n
                 for rid, rname in routes[: rng.randint(1, len(routes))]:
@@ -226,6 +232,7 @@ def mock_drug_exposure(
                         mean_ds + 1.5 * sd_ds,
                         mean_ds + 2 * sd_ds,
                     ],
+                    strict=False,
                 ):
                     row[f"days_supply_{qn}"] = round(qv, 1)
                 row["days_supply_mean"] = round(mean_ds, 2)
@@ -274,7 +281,11 @@ def mock_drug_exposure(
                 parts.append(pl.DataFrame([row]))
 
             elif check == "sig":
-                sigs = ["<missing>", "Take 1 tablet daily", "Take 2 tablets twice daily"]
+                sigs = [
+                    "<missing>",
+                    "Take 1 tablet daily",
+                    "Take 2 tablets twice daily",
+                ]
                 rows = []
                 remaining = n
                 for sig in sigs[: rng.randint(1, len(sigs))]:
@@ -315,6 +326,7 @@ def mock_drug_exposure(
                         mean_qty + 1.5 * sd_qty,
                         mean_qty + 2 * sd_qty,
                     ],
+                    strict=False,
                 ):
                     row[f"quantity_{qn}"] = round(qv, 1)
                 row["quantity_mean"] = round(mean_qty, 2)
@@ -348,6 +360,7 @@ def mock_drug_exposure(
                         mean_gap + 1.5 * sd_gap,
                         mean_gap + 2 * sd_gap,
                     ],
+                    strict=False,
                 ):
                     row[f"days_between_{qn}"] = round(qv, 1)
                 row["days_between_mean"] = round(mean_gap, 2)
@@ -371,7 +384,9 @@ def mock_drug_exposure(
                     "median_days_supply": round(rng.uniform(14.0, 90.0), 1),
                     "median_quantity": round(rng.uniform(10.0, 100.0), 1),
                     "proportion_with_dose": round(rng.uniform(0.0, 1.0), 4),
-                    "proportion_verbatim_end_date_missing": round(rng.uniform(0.0, 0.2), 4),
+                    "proportion_verbatim_end_date_missing": round(
+                        rng.uniform(0.0, 0.2), 4
+                    ),
                 }
                 parts.append(pl.DataFrame([row]))
 

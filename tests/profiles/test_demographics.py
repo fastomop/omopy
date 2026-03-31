@@ -18,7 +18,6 @@ from omopy.profiles import (
     add_sex,
 )
 
-
 # ---------------------------------------------------------------------------
 # add_sex
 # ---------------------------------------------------------------------------
@@ -41,7 +40,13 @@ class TestAddSex:
         result = add_sex(person, synthea_cdm)
         df = result.collect()
         counts = df.group_by("sex").len().sort("sex")
-        sex_map = dict(zip(counts["sex"].to_list(), counts["len"].to_list()))
+        sex_map = dict(
+            zip(
+                counts["sex"].to_list(),
+                counts["len"].to_list(),
+                strict=False,
+            )
+        )
         assert sex_map.get("Male") == 14
         assert sex_map.get("Female") == 13
 
@@ -94,7 +99,7 @@ class TestAddDateOfBirth:
         df = result.collect()
         years = df["date_of_birth"].dt.year().to_list()
         expected = df["year_of_birth"].to_list()
-        for y, e in zip(years, expected):
+        for y, e in zip(years, expected, strict=False):
             assert y == e
 
 
@@ -132,7 +137,10 @@ class TestAddAge:
     def test_age_unit_months(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_age(
-            obs, synthea_cdm, index_date="observation_period_start_date", age_unit="months"
+            obs,
+            synthea_cdm,
+            index_date="observation_period_start_date",
+            age_unit="months",
         )
         df = result.collect()
         ages = df["age"].drop_nulls()
@@ -142,7 +150,10 @@ class TestAddAge:
     def test_age_unit_days(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_age(
-            obs, synthea_cdm, index_date="observation_period_start_date", age_unit="days"
+            obs,
+            synthea_cdm,
+            index_date="observation_period_start_date",
+            age_unit="days",
         )
         df = result.collect()
         ages = df["age"].drop_nulls()
@@ -153,7 +164,10 @@ class TestAddAge:
     def test_custom_age_name(self, synthea_cdm):
         obs = synthea_cdm["observation_period"]
         result = add_age(
-            obs, synthea_cdm, index_date="observation_period_start_date", age_name="patient_age"
+            obs,
+            synthea_cdm,
+            index_date="observation_period_start_date",
+            age_name="patient_age",
         )
         df = result.collect()
         assert "patient_age" in df.columns
@@ -182,7 +196,11 @@ class TestAddAge:
             obs,
             synthea_cdm,
             index_date="observation_period_start_date",
-            age_group={"child": (0, 17), "adult": (18, 64), "senior": (65, float("inf"))},
+            age_group={
+                "child": (0, 17),
+                "adult": (18, 64),
+                "senior": (65, float("inf")),
+            },
         )
         df = result.collect()
         assert "age_group" in df.columns
@@ -332,8 +350,9 @@ class TestAddDemographics:
 
     def test_no_cdm_raises(self):
         """Should raise if no CDM reference is available."""
-        from omopy.generics.cdm_table import CdmTable
         import ibis
+
+        from omopy.generics.cdm_table import CdmTable
 
         t = ibis.table({"person_id": "int64", "start_date": "date"}, name="test")
         tbl = CdmTable(t, tbl_name="test")

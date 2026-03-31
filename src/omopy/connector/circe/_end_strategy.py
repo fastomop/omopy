@@ -13,19 +13,16 @@ all censoring sources.
 
 from __future__ import annotations
 
-from typing import Any
-
 import ibis
 import ibis.expr.types as ir
 
+from omopy.connector.circe._domain_queries import build_domain_query
 from omopy.connector.circe._types import (
     CohortExpression,
     CustomEraStrategy,
     DateOffsetStrategy,
     DomainCriteria,
-    EndStrategy,
 )
-from omopy.connector.circe._domain_queries import build_domain_query
 
 __all__ = ["compute_cohort_end_dates"]
 
@@ -131,7 +128,8 @@ def compute_cohort_end_dates(
     joined = (
         left.join(
             right,
-            (left.person_id == right.right_person_id) & (left.event_id == right.right_event_id),
+            (left.person_id == right.right_person_id)
+            & (left.event_id == right.right_event_id),
         )
         .filter(
             lambda t: t.end_date >= t.start_date,
@@ -262,7 +260,9 @@ def _custom_era_end(
     )
 
     # Pick earliest end date per event (an event may overlap multiple eras)
-    return selected.group_by(["event_id", "person_id"]).agg(end_date=selected.end_date.min())
+    return selected.group_by(["event_id", "person_id"]).agg(
+        end_date=selected.end_date.min()
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -314,7 +314,8 @@ def _censoring_end(
         )
         .filter(
             lambda t: (
-                (t.censor_start_date >= t.start_date) & (t.censor_start_date <= t.op_end_date)
+                (t.censor_start_date >= t.start_date)
+                & (t.censor_start_date <= t.op_end_date)
             ),
         )
         .select(
@@ -325,4 +326,6 @@ def _censoring_end(
     )
 
     # Pick earliest censoring date per event
-    return joined.group_by(["event_id", "person_id"]).agg(end_date=joined.end_date.min())
+    return joined.group_by(["event_id", "person_id"]).agg(
+        end_date=joined.end_date.min()
+    )

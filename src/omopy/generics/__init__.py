@@ -69,33 +69,35 @@ from omopy.generics.summarised_result import (
 )
 
 __all__ = [
-    # Core classes
-    "CdmReference",
-    "CdmSource",
-    "CdmTable",
-    "CohortTable",
-    "Codelist",
-    "ConceptEntry",
-    "ConceptSetExpression",
-    "SummarisedResult",
-    # Schema
-    "CdmSchema",
-    "FieldSpec",
-    "TableSpec",
-    "ResultFieldSpec",
-    # Enums
-    "CdmVersion",
-    "CdmDataType",
-    "TableType",
-    "TableGroup",
-    "TableSchema",
-    # Constants
-    "SUPPORTED_CDM_VERSIONS",
+    "COHORT_REQUIRED_COLUMNS",
+    "CdmVersionLiteral",
+    "GROUP_COUNT_VARIABLES",
     "NAME_LEVEL_SEP",
     "OVERALL",
-    "COHORT_REQUIRED_COLUMNS",
-    "SUMMARISED_RESULT_COLUMNS",
     "SETTINGS_REQUIRED_COLUMNS",
+    "SUMMARISED_RESULT_COLUMNS",
+    # Constants
+    "SUPPORTED_CDM_VERSIONS",
+    "CdmDataType",
+    # Core classes
+    "CdmReference",
+    # Schema
+    "CdmSchema",
+    "CdmSource",
+    "CdmTable",
+    # Enums
+    "CdmVersion",
+    "Codelist",
+    "CohortTable",
+    "ConceptEntry",
+    "ConceptSetExpression",
+    "FieldSpec",
+    "ResultFieldSpec",
+    "SummarisedResult",
+    "TableGroup",
+    "TableSchema",
+    "TableSpec",
+    "TableType",
     # Validation
     "assert_character",
     "assert_choice",
@@ -104,13 +106,13 @@ __all__ = [
     "assert_list",
     "assert_logical",
     "assert_numeric",
-    "assert_true",
     "assert_table_columns",
+    "assert_true",
     # I/O
     "export_codelist",
-    "import_codelist",
     "export_concept_set_expression",
-    "import_concept_set_expression",
     "export_summarised_result",
+    "import_codelist",
+    "import_concept_set_expression",
     "import_summarised_result",
 ]

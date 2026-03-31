@@ -76,33 +76,33 @@ from omopy.profiles._windows import (
 )
 
 __all__ = [
+    # windows
+    "Window",
+    # demographics
+    "add_age",
     # categories
     "add_categories",
+    # utilities
+    "add_cdm_name",
     # cohort intersect
     "add_cohort_intersect_count",
     "add_cohort_intersect_date",
     "add_cohort_intersect_days",
     "add_cohort_intersect_field",
     "add_cohort_intersect_flag",
+    "add_cohort_name",
     # concept intersect
     "add_concept_intersect_count",
     "add_concept_intersect_date",
     "add_concept_intersect_days",
     "add_concept_intersect_field",
     "add_concept_intersect_flag",
-    # columns
-    "end_date_column",
-    "person_id_column",
-    "source_concept_id_column",
-    "standard_concept_id_column",
-    "start_date_column",
+    "add_concept_name",
+    "add_date_of_birth",
     # death
     "add_death_date",
     "add_death_days",
     "add_death_flag",
-    # demographics
-    "add_age",
-    "add_date_of_birth",
     "add_demographics",
     "add_future_observation",
     "add_in_observation",
@@ -114,15 +114,15 @@ __all__ = [
     "add_table_intersect_days",
     "add_table_intersect_field",
     "add_table_intersect_flag",
-    # utilities
-    "add_cdm_name",
-    "add_cohort_name",
-    "add_concept_name",
+    # columns
+    "end_date_column",
     "filter_cohort_id",
     "filter_in_observation",
-    # windows
-    "Window",
     "format_name_style",
+    "person_id_column",
+    "source_concept_id_column",
+    "standard_concept_id_column",
+    "start_date_column",
     "validate_windows",
     "window_name",
 ]

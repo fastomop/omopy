@@ -27,11 +27,11 @@ from omopy.generics._types import (
 )
 
 __all__ = [
-    "FieldSpec",
-    "TableSpec",
-    "ResultFieldSpec",
-    "CdmSchema",
     "FIELD_TABLE_COLUMNS",
+    "CdmSchema",
+    "FieldSpec",
+    "ResultFieldSpec",
+    "TableSpec",
 ]
 
 
@@ -642,6 +642,8 @@ class CdmSchema:
         if check_required:
             for name, spec in specs.items():
                 if spec.is_required and name not in col_set:
-                    errors.append(f"Required column '{name}' missing from table '{table_name}'")
+                    errors.append(
+                        f"Required column '{name}' missing from table '{table_name}'"
+                    )
 
         return errors

@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-import polars as pl
-import pytest
-
 from omopy.profiles import (
     add_cdm_name,
     add_concept_name,
-    add_sex,
     filter_in_observation,
 )
 

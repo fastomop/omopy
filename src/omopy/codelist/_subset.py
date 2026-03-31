@@ -12,7 +12,6 @@ CodelistGenerator.
 from __future__ import annotations
 
 import ibis
-import ibis.expr.types as ir
 
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.codelist import Codelist
@@ -71,7 +70,9 @@ def subset_by_domain(
 
         matching = (
             concept.filter(
-                concept["concept_id"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
+                concept["concept_id"]
+                .cast("int64")
+                .isin([ibis.literal(int(c)) for c in ids])
                 & concept["domain_id"].isin(domains)
             )
             .select(concept_id=concept["concept_id"].cast("int64"))
@@ -116,7 +117,9 @@ def subset_by_vocabulary(
 
         matching = (
             concept.filter(
-                concept["concept_id"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
+                concept["concept_id"]
+                .cast("int64")
+                .isin([ibis.literal(int(c)) for c in ids])
                 & concept["vocabulary_id"].isin(vocabs)
             )
             .select(concept_id=concept["concept_id"].cast("int64"))
@@ -160,7 +163,9 @@ def subset_to_codes_in_use(
 
         # Look up domain for each concept
         concept_domains = concept.filter(
-            concept["concept_id"].cast("int64").isin([ibis.literal(int(c)) for c in ids])
+            concept["concept_id"]
+            .cast("int64")
+            .isin([ibis.literal(int(c)) for c in ids])
         ).select(
             concept_id=concept["concept_id"].cast("int64"),
             domain_id=concept["domain_id"].lower(),

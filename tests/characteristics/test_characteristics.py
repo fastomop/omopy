@@ -20,7 +20,6 @@ from omopy.generics.summarised_result import (
     SummarisedResult,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers — build minimal CohortTable objects for unit tests
 # ---------------------------------------------------------------------------
@@ -325,7 +324,8 @@ class TestSummariseCohortCount:
 
         # Find Number subjects row
         subjects = data.filter(
-            (pl.col("variable_name") == "Number subjects") & (pl.col("estimate_name") == "count")
+            (pl.col("variable_name") == "Number subjects")
+            & (pl.col("estimate_name") == "count")
         )
         assert len(subjects) == 1
         assert subjects["estimate_value"].to_list()[0] == "15"
@@ -338,7 +338,8 @@ class TestSummariseCohortCount:
         data = result.data
 
         records = data.filter(
-            (pl.col("variable_name") == "Number records") & (pl.col("estimate_name") == "count")
+            (pl.col("variable_name") == "Number records")
+            & (pl.col("estimate_name") == "count")
         )
         assert len(records) == 1
         assert records["estimate_value"].to_list()[0] == "15"
@@ -399,7 +400,9 @@ class TestSummariseCohortAttrition:
 
         result = summarise_cohort_attrition(cohort)
         assert isinstance(result, SummarisedResult)
-        assert result.settings["result_type"].to_list()[0] == "summarise_cohort_attrition"
+        assert (
+            result.settings["result_type"].to_list()[0] == "summarise_cohort_attrition"
+        )
 
     def test_attrition_structure(self):
         from omopy.characteristics import summarise_cohort_attrition
@@ -676,7 +679,9 @@ class TestSummariseCohortCodelist:
 
         result = summarise_cohort_codelist(cohort)
         assert isinstance(result, SummarisedResult)
-        assert result.settings["result_type"].to_list()[0] == "summarise_cohort_codelist"
+        assert (
+            result.settings["result_type"].to_list()[0] == "summarise_cohort_codelist"
+        )
 
     def test_codelist_structure(self):
         from omopy.characteristics import summarise_cohort_codelist
@@ -736,7 +741,9 @@ class TestMockCohortCharacteristics:
         from omopy.characteristics import mock_cohort_characteristics
 
         result = mock_cohort_characteristics()
-        assert result.settings["result_type"].to_list()[0] == "summarise_characteristics"
+        assert (
+            result.settings["result_type"].to_list()[0] == "summarise_characteristics"
+        )
 
     def test_n_cohorts(self):
         from omopy.characteristics import mock_cohort_characteristics
@@ -794,7 +801,10 @@ class TestTableFunctions:
     """Test table wrapper functions with mock data."""
 
     def test_table_characteristics_polars(self):
-        from omopy.characteristics import mock_cohort_characteristics, table_characteristics
+        from omopy.characteristics import (
+            mock_cohort_characteristics,
+            table_characteristics,
+        )
 
         result = mock_cohort_characteristics()
         table = table_characteristics(result, type="polars")
@@ -803,7 +813,6 @@ class TestTableFunctions:
 
     def test_table_cohort_count_polars(self):
         from omopy.characteristics import table_cohort_count
-        from omopy.characteristics._mock import mock_cohort_characteristics
 
         # Create a count result
         cohort = _make_cohort(n_cohorts=2, n_subjects=10)
@@ -814,7 +823,10 @@ class TestTableFunctions:
         assert isinstance(table, pl.DataFrame)
 
     def test_table_cohort_attrition_polars(self):
-        from omopy.characteristics import summarise_cohort_attrition, table_cohort_attrition
+        from omopy.characteristics import (
+            summarise_cohort_attrition,
+            table_cohort_attrition,
+        )
 
         cohort = _make_cohort(n_cohorts=1, n_subjects=10)
         cohort._attrition = pl.DataFrame(
@@ -849,7 +861,10 @@ class TestTableFunctions:
         assert isinstance(table, pl.DataFrame)
 
     def test_available_table_columns(self):
-        from omopy.characteristics import available_table_columns, mock_cohort_characteristics
+        from omopy.characteristics import (
+            available_table_columns,
+            mock_cohort_characteristics,
+        )
 
         result = mock_cohort_characteristics()
         cols = available_table_columns(result)
@@ -866,7 +881,10 @@ class TestPlotFunctions:
     """Test plot wrapper functions with mock data."""
 
     def test_plot_characteristics_bar(self):
-        from omopy.characteristics import mock_cohort_characteristics, plot_characteristics
+        from omopy.characteristics import (
+            mock_cohort_characteristics,
+            plot_characteristics,
+        )
 
         result = mock_cohort_characteristics()
         # Filter to count estimates only (one estimate_name)
@@ -877,7 +895,7 @@ class TestPlotFunctions:
         assert fig is not None
 
     def test_plot_cohort_count(self):
-        from omopy.characteristics import summarise_cohort_count, plot_cohort_count
+        from omopy.characteristics import plot_cohort_count, summarise_cohort_count
 
         cohort = _make_cohort(n_cohorts=2, n_subjects=10)
         sr = summarise_cohort_count(cohort)
@@ -885,7 +903,10 @@ class TestPlotFunctions:
         assert fig is not None
 
     def test_plot_cohort_attrition(self):
-        from omopy.characteristics import summarise_cohort_attrition, plot_cohort_attrition
+        from omopy.characteristics import (
+            plot_cohort_attrition,
+            summarise_cohort_attrition,
+        )
 
         cohort = _make_cohort(n_cohorts=1, n_subjects=10)
         cohort._attrition = pl.DataFrame(
@@ -904,7 +925,7 @@ class TestPlotFunctions:
         assert fig is not None
 
     def test_plot_cohort_overlap(self):
-        from omopy.characteristics import summarise_cohort_overlap, plot_cohort_overlap
+        from omopy.characteristics import plot_cohort_overlap, summarise_cohort_overlap
 
         cohort = _make_cohort_with_overlap(3, 3, 4)
         sr = summarise_cohort_overlap(cohort)
@@ -912,7 +933,7 @@ class TestPlotFunctions:
         assert fig is not None
 
     def test_plot_cohort_timing_box(self):
-        from omopy.characteristics import summarise_cohort_timing, plot_cohort_timing
+        from omopy.characteristics import plot_cohort_timing, summarise_cohort_timing
 
         cohort = _make_cohort_with_timing()
         sr = summarise_cohort_timing(cohort)
@@ -1013,8 +1034,9 @@ class TestEdgeCases:
         assert len(result) == 0
 
     def test_window_name_formatting(self):
-        from omopy.characteristics._summarise import _window_name
         import math
+
+        from omopy.characteristics._summarise import _window_name
 
         assert _window_name((0, 0)) == "0 to 0"
         assert _window_name((-365, -1)) == "-365 to -1"
@@ -1113,7 +1135,9 @@ def synthea_cohorts(synthea_cdm):
     ht_ct = ht_result["essential_hypertension"]
 
     vs_df = vs_ct.collect()
-    ht_df = ht_ct.collect().with_columns(pl.lit(2).cast(pl.Int64).alias("cohort_definition_id"))
+    ht_df = ht_ct.collect().with_columns(
+        pl.lit(2).cast(pl.Int64).alias("cohort_definition_id")
+    )
     vs_df = vs_df.with_columns(pl.lit(1).cast(pl.Int64).alias("cohort_definition_id"))
 
     combined = pl.concat([vs_df, ht_df])
@@ -1261,14 +1285,17 @@ class TestIntegrationCharacteristics:
 
         result = summarise_cohort_overlap(synthea_cohorts)
         pct_rows = result.data.filter(
-            (pl.col("estimate_name") == "percentage") & (pl.col("strata_name") == OVERALL)
+            (pl.col("estimate_name") == "percentage")
+            & (pl.col("strata_name") == OVERALL)
         )
 
         # Group by group_level (pair), sum percentages
         for group_level in pct_rows["group_level"].unique().to_list():
             pair_pcts = pct_rows.filter(pl.col("group_level") == group_level)
             total_pct = sum(float(v) for v in pair_pcts["estimate_value"].to_list())
-            assert abs(total_pct - 100.0) < 0.1, f"Pair {group_level} sums to {total_pct}"
+            assert abs(total_pct - 100.0) < 0.1, (
+                f"Pair {group_level} sums to {total_pct}"
+            )
 
     def test_summarise_large_scale_characteristics_integration(self, synthea_cohorts):
         """LSC runs and produces concept-level results on real data."""

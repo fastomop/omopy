@@ -10,25 +10,23 @@ dose calculation helpers (``drugStrengthPattern``, ``standardUnits``,
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any
 
 import ibis
 import ibis.expr.types as ir
 import polars as pl
 
-from omopy.generics.cdm_reference import CdmReference
-from omopy.generics.cdm_table import CdmTable
 from omopy.connector.db_source import DbSource
 from omopy.drug._data.patterns import (
-    PATTERNS,
-    FIXED_AMOUNT,
     CONCENTRATION,
+    FIXED_AMOUNT,
+    PATTERNS,
     TIME_BASED_DENOM,
     TIME_BASED_NO_DENOM,
-    AMOUNT_UNIT_CONVERSIONS,
-    NUMERATOR_UNIT_CONVERSIONS,
-    DENOMINATOR_UNIT_CONVERSIONS,
 )
+from omopy.generics.cdm_reference import CdmReference
+from omopy.generics.cdm_table import CdmTable
 
 __all__ = ["add_daily_dose", "pattern_table"]
 
@@ -110,7 +108,7 @@ def add_daily_dose(
 
     # Upload patterns as a temp table
     patterns_arrow = _patterns_to_arrow()
-    tmp_patterns = f"__omopy_dose_patterns"
+    tmp_patterns = "__omopy_dose_patterns"
     con.con.register(tmp_patterns, patterns_arrow)
 
     try:
@@ -128,7 +126,10 @@ def add_daily_dose(
         # Compute days exposed
         result = result.mutate(
             _days_exposed=(
-                (result.drug_exposure_end_date - result.drug_exposure_start_date).cast("int64") + 1
+                (result.drug_exposure_end_date - result.drug_exposure_start_date).cast(
+                    "int64"
+                )
+                + 1
             ),
         )
 
@@ -141,10 +142,8 @@ def add_daily_dose(
 
         return x._with_data(out)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             con.con.unregister(tmp_patterns)
-        except Exception:
-            pass
 
 
 def pattern_table(cdm: CdmReference) -> pl.DataFrame:
@@ -212,10 +211,8 @@ def pattern_table(cdm: CdmReference) -> pl.DataFrame:
         arrow = summary.to_pyarrow()
         return pl.from_arrow(arrow)
     finally:
-        try:
+        with contextlib.suppress(Exception):
             con.con.unregister(tmp_patterns)
-        except Exception:
-            pass
 
 
 # ---------------------------------------------------------------------------
@@ -225,10 +222,7 @@ def pattern_table(cdm: CdmReference) -> pl.DataFrame:
 
 def _get_ibis_or_memtable(x: CdmTable | Any) -> ir.Table:
     """Get an Ibis table from a CdmTable (Ibis, Polars, or LazyFrame)."""
-    if isinstance(x, CdmTable):
-        data = x.data
-    else:
-        data = x
+    data = x.data if isinstance(x, CdmTable) else x
 
     if isinstance(data, ir.Table):
         return data
@@ -274,11 +268,15 @@ def _patterns_to_arrow() -> Any:
             "p_amount_unit_concept_id": pa.array(
                 rows["p_amount_unit_concept_id"], type=pa.int64()
             ),
-            "p_numerator_numeric": pa.array(rows["p_numerator_numeric"], type=pa.int32()),
+            "p_numerator_numeric": pa.array(
+                rows["p_numerator_numeric"], type=pa.int32()
+            ),
             "p_numerator_unit_concept_id": pa.array(
                 rows["p_numerator_unit_concept_id"], type=pa.int64()
             ),
-            "p_denominator_numeric": pa.array(rows["p_denominator_numeric"], type=pa.int32()),
+            "p_denominator_numeric": pa.array(
+                rows["p_denominator_numeric"], type=pa.int32()
+            ),
             "p_denominator_unit_concept_id": pa.array(
                 rows["p_denominator_unit_concept_id"], type=pa.int64()
             ),
@@ -305,12 +303,24 @@ def _join_with_patterns(ds: ir.Table, patterns_tbl: ir.Table) -> ir.Table:
     # For unit concept IDs, we need NULL-safe comparison
     # (NULL pattern matches NULL drug_strength)
     predicates.append(
-        (ds.amount_unit_concept_id.isnull() & patterns_tbl.p_amount_unit_concept_id.isnull())
-        | (ds.amount_unit_concept_id.cast("int64") == patterns_tbl.p_amount_unit_concept_id)
+        (
+            ds.amount_unit_concept_id.isnull()
+            & patterns_tbl.p_amount_unit_concept_id.isnull()
+        )
+        | (
+            ds.amount_unit_concept_id.cast("int64")
+            == patterns_tbl.p_amount_unit_concept_id
+        )
     )
     predicates.append(
-        (ds.numerator_unit_concept_id.isnull() & patterns_tbl.p_numerator_unit_concept_id.isnull())
-        | (ds.numerator_unit_concept_id.cast("int64") == patterns_tbl.p_numerator_unit_concept_id)
+        (
+            ds.numerator_unit_concept_id.isnull()
+            & patterns_tbl.p_numerator_unit_concept_id.isnull()
+        )
+        | (
+            ds.numerator_unit_concept_id.cast("int64")
+            == patterns_tbl.p_numerator_unit_concept_id
+        )
     )
     predicates.append(
         (
@@ -366,7 +376,7 @@ def _standardise_units(tbl: ir.Table) -> ir.Table:
     - Mega-IU → IU (÷ 1,000,000)
     - Liters → milliliters (× 1000)
     """
-    from omopy.drug._data.patterns import MICROGRAM, MEGA_INTERNATIONAL_UNIT, LITER
+    from omopy.drug._data.patterns import LITER, MEGA_INTERNATIONAL_UNIT, MICROGRAM
 
     # Standardise amount_value
     tbl = tbl.mutate(
@@ -423,7 +433,10 @@ def _apply_formula(tbl: ir.Table) -> ir.Table:
 
     fixed_amount_dose = ibis.cases(
         (
-            valid_qty & valid_days & tbl.amount_value.notnull() & (tbl.amount_value > 0),
+            valid_qty
+            & valid_days
+            & tbl.amount_value.notnull()
+            & (tbl.amount_value > 0),
             tbl.amount_value * tbl.quantity / tbl._days_exposed.cast("float64"),
         ),
         else_=ibis.null(),
@@ -431,7 +444,10 @@ def _apply_formula(tbl: ir.Table) -> ir.Table:
 
     concentration_dose = ibis.cases(
         (
-            valid_qty & valid_days & tbl.numerator_value.notnull() & (tbl.numerator_value > 0),
+            valid_qty
+            & valid_days
+            & tbl.numerator_value.notnull()
+            & (tbl.numerator_value > 0),
             tbl.numerator_value * tbl.quantity / tbl._days_exposed.cast("float64"),
         ),
         else_=ibis.null(),

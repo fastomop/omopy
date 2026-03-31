@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-
 from omopy.codelist import compare_codelists, intersect_codelists, union_codelists
 from omopy.generics.codelist import Codelist
-
 
 # ---------------------------------------------------------------------------
 # union_codelists

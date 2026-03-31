@@ -10,9 +10,9 @@ from typing import Any
 
 import polars as pl
 
-from omopy.generics import CdmReference, CdmSchema, CdmTable, CdmVersion, CohortTable
+from omopy.generics import CdmReference, CdmTable, CdmVersion, CohortTable
 
-__all__ = ["patients_cdm", "mock_test_cdm"]
+__all__ = ["mock_test_cdm", "patients_cdm"]
 
 
 # ---------------------------------------------------------------------------
@@ -29,7 +29,10 @@ def _resolve_version(cdm_version: str) -> CdmVersion:
     try:
         return _CDM_VERSION_MAP[cdm_version]
     except KeyError:
-        msg = f"Unsupported CDM version {cdm_version!r}. Supported: {list(_CDM_VERSION_MAP)}"
+        msg = (
+            f"Unsupported CDM version {cdm_version!r}."
+            f" Supported: {list(_CDM_VERSION_MAP)}"
+        )
         raise ValueError(msg) from None
 
 
@@ -38,7 +41,12 @@ def _resolve_version(cdm_version: str) -> CdmVersion:
 # ---------------------------------------------------------------------------
 
 _COHORT_TABLES = frozenset({"cohort"})
-_COHORT_COLUMNS = {"cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date"}
+_COHORT_COLUMNS = {
+    "cohort_definition_id",
+    "subject_id",
+    "cohort_start_date",
+    "cohort_end_date",
+}
 
 
 def _is_cohort_like(table_name: str, df: pl.DataFrame) -> bool:
@@ -106,11 +114,7 @@ def patients_cdm(
     for table_name, records in raw.items():
         if not isinstance(records, list):
             continue
-        if not records:
-            # Empty table — create DataFrame with no rows
-            df = pl.DataFrame()
-        else:
-            df = pl.DataFrame(records)
+        df = pl.DataFrame() if not records else pl.DataFrame(records)
 
         if _is_cohort_like(table_name, df) and len(df) > 0:
             tables[table_name] = CohortTable(df, tbl_name=table_name)
@@ -172,7 +176,9 @@ def mock_test_cdm(
             "month_of_birth": months,
             "day_of_birth": days,
             "race_concept_id": [rng.choice([8515, 8516, 8527]) for _ in person_ids],
-            "ethnicity_concept_id": [rng.choice([38003563, 38003564]) for _ in person_ids],
+            "ethnicity_concept_id": [
+                rng.choice([38003563, 38003564]) for _ in person_ids
+            ],
         }
     )
 

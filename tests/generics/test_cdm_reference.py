@@ -8,7 +8,6 @@ from omopy.generics.cdm_reference import CdmReference, CdmSource
 from omopy.generics.cdm_table import CdmTable
 from omopy.generics.cohort_table import CohortTable
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -69,7 +68,10 @@ class TestCdmReferenceBasics:
 
     def test_creation_with_tables(self):
         cdm = CdmReference(
-            tables={"person": _person_table(), "observation_period": _obs_period_table()},
+            tables={
+                "person": _person_table(),
+                "observation_period": _obs_period_table(),
+            },
             cdm_version=CdmVersion.V5_4,
             cdm_name="test_cdm",
         )
@@ -266,7 +268,9 @@ class TestCdmSourceProtocol:
             def read_table(self, table_name: str) -> CdmTable:
                 return _person_table()
 
-            def write_table(self, table: CdmTable, table_name: str | None = None) -> None:
+            def write_table(
+                self, table: CdmTable, table_name: str | None = None
+            ) -> None:
                 pass
 
             def drop_table(self, table_name: str) -> None:

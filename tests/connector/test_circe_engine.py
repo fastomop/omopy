@@ -12,23 +12,19 @@ hypertension), 260139 (Acute bronchitis), etc.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
-import ibis
 import polars as pl
 import pytest
 
 from omopy.connector.cdm_from_con import cdm_from_con
 from omopy.connector.circe._concept_resolver import resolve_concept_sets
-from omopy.connector.circe._domain_queries import build_domain_query
 from omopy.connector.circe._criteria import (
     apply_limit,
     apply_observation_window,
 )
-from omopy.connector.circe._end_strategy import compute_cohort_end_dates
-from omopy.connector.circe._era import collapse_eras
-from omopy.connector.circe._parser import parse_cohort_expression
+from omopy.connector.circe._domain_queries import build_domain_query
 from omopy.connector.circe._engine import generate_cohort_set
+from omopy.connector.circe._era import collapse_eras
 from omopy.connector.circe._types import (
     Concept,
     ConceptItem,
@@ -155,7 +151,9 @@ class TestConceptResolver:
 
     def test_resolve_with_descendants(self, synthea_con):
         """Resolve with descendants should return at least the concept itself."""
-        cs_no_desc = _make_concept_set(VIRAL_SINUSITIS_ID, "VS", include_descendants=False)
+        cs_no_desc = _make_concept_set(
+            VIRAL_SINUSITIS_ID, "VS", include_descendants=False
+        )
         cs_desc = ConceptSet(
             id=1,
             name="VS_desc",
@@ -177,7 +175,9 @@ class TestConceptResolver:
                 ),
             ),
         )
-        result = resolve_concept_sets((cs_no_desc, cs_desc), synthea_con, "synthea", "base")
+        result = resolve_concept_sets(
+            (cs_no_desc, cs_desc), synthea_con, "synthea", "base"
+        )
         no_desc_count = result[0].count().execute()
         desc_count = result[1].count().execute()
         assert desc_count >= no_desc_count
@@ -241,7 +241,9 @@ class TestObservationWindowAndLimit:
         dc = DomainCriteria(domain_type="ConditionOccurrence", codeset_id=0)
         events = build_domain_query(dc, synthea_con, "synthea", "base", codeset_tables)
 
-        obs_period = synthea_con.table("observation_period", database=("synthea", "base"))
+        obs_period = synthea_con.table(
+            "observation_period", database=("synthea", "base")
+        )
 
         filtered = apply_observation_window(events, obs_period)
         result = filtered.execute()
@@ -257,7 +259,9 @@ class TestObservationWindowAndLimit:
         dc = DomainCriteria(domain_type="ConditionOccurrence", codeset_id=0)
         events = build_domain_query(dc, synthea_con, "synthea", "base", codeset_tables)
 
-        obs_period = synthea_con.table("observation_period", database=("synthea", "base"))
+        obs_period = synthea_con.table(
+            "observation_period", database=("synthea", "base")
+        )
         events = apply_observation_window(events, obs_period)
 
         limit = CriteriaLimit(type="First")

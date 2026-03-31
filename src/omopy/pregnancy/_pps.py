@@ -13,7 +13,6 @@ than 365 days are discarded.
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
 
 import polars as pl
 
@@ -170,15 +169,17 @@ def _run_pps(
 
     # Remove episodes longer than 365 days
     result = result.with_columns(
-        ((pl.col("episode_end_date") - pl.col("episode_start_date")).dt.total_days()).alias(
-            "_duration"
-        )
+        (
+            (pl.col("episode_end_date") - pl.col("episode_start_date")).dt.total_days()
+        ).alias("_duration")
     )
     n_before = result.height
     result = result.filter(pl.col("_duration") <= _MAX_EPISODE_DAYS).drop("_duration")
     n_removed = n_before - result.height
     if n_removed > 0:
-        log.info("PPS removed %d episodes exceeding %d days.", n_removed, _MAX_EPISODE_DAYS)
+        log.info(
+            "PPS removed %d episodes exceeding %d days.", n_removed, _MAX_EPISODE_DAYS
+        )
 
     log.info("PPS produced %d episodes.", result.height)
     return result

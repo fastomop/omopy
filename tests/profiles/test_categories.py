@@ -21,7 +21,13 @@ class TestAddCategories:
         result = add_categories(
             with_age,
             "age",
-            {"age_group": {"young": (0, 17), "adult": (18, 64), "senior": (65, float("inf"))}},
+            {
+                "age_group": {
+                    "young": (0, 17),
+                    "adult": (18, 64),
+                    "senior": (65, float("inf")),
+                }
+            },
         )
         df = result.collect()
         assert "age_group" in df.columns

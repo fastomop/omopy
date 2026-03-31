@@ -128,7 +128,10 @@ class DiagnosticsResult(BaseModel):
             raise TypeError(msg)
         for key, val in v.items():
             if not isinstance(val, pl.DataFrame):
-                msg = f"results['{key}'] must be a Polars DataFrame, got {type(val).__name__}"
+                msg = (
+                    f"results['{key}'] must be a Polars"
+                    f" DataFrame, got {type(val).__name__}"
+                )
                 raise TypeError(msg)
         return v
 
@@ -148,18 +151,22 @@ class DiagnosticsResult(BaseModel):
         """Allow dict-like access: ``result['missing']``."""
         return self.results[key]
 
+    def __iter__(self):  # type: ignore[override]
+        """Iterate over check names (not Pydantic fields)."""
+        return iter(self.results)
+
     def __contains__(self, key: object) -> bool:
         return key in self.results
 
-    def keys(self):  # noqa: ANN201
+    def keys(self):
         """Return check names."""
         return self.results.keys()
 
-    def values(self):  # noqa: ANN201
+    def values(self):
         """Return result DataFrames."""
         return self.results.values()
 
-    def items(self):  # noqa: ANN201
+    def items(self):
         """Return (check_name, DataFrame) pairs."""
         return self.results.items()
 
@@ -221,7 +228,9 @@ def _resolve_descendants(
         ids_tbl.concept_id == concept_ancestor.ancestor_concept_id,
     ).select(concept_id=concept_ancestor.descendant_concept_id.cast("int64"))
     all_resolved = (
-        ids_tbl.select(concept_id=ids_tbl.concept_id.cast("int64")).union(descendants).distinct()
+        ids_tbl.select(concept_id=ids_tbl.concept_id.cast("int64"))
+        .union(descendants)
+        .distinct()
     )
 
     # Filter to standard Drug concepts only
@@ -318,7 +327,7 @@ def _quantile_stats(
     # Cast to Float64 for quantile computation
     f64 = non_null.cast(pl.Float64)
     result = {}
-    for pos, qn in zip(_QUANTILE_POSITIONS, _QUANTILE_NAMES):
+    for pos, qn in zip(_QUANTILE_POSITIONS, _QUANTILE_NAMES, strict=False):
         result[f"{prefix}{qn}"] = float(f64.quantile(pos))
 
     result[f"{prefix}mean"] = float(f64.mean())  # type: ignore[arg-type]
@@ -330,7 +339,9 @@ def _quantile_stats(
     return result
 
 
-def _obscure_count(value: int | float | None, min_cell_count: int) -> int | float | None:
+def _obscure_count(
+    value: int | float | None, min_cell_count: int
+) -> int | float | None:
     """Replace values below min_cell_count with None."""
     if value is None:
         return None
@@ -367,13 +378,11 @@ def _obscure_df(
             pl.UInt16,
             pl.UInt32,
             pl.UInt64,
-        ):
+        ) or dtype in (pl.Float32, pl.Float64):
             mask = ((pl.col(col) > 0) & (pl.col(col) < min_cell_count)).fill_null(False)
-            exprs.append(pl.when(mask).then(pl.lit(None)).otherwise(pl.col(col)).alias(col))
-            obscured = obscured | mask
-        elif dtype in (pl.Float32, pl.Float64):
-            mask = ((pl.col(col) > 0) & (pl.col(col) < min_cell_count)).fill_null(False)
-            exprs.append(pl.when(mask).then(pl.lit(None)).otherwise(pl.col(col)).alias(col))
+            exprs.append(
+                pl.when(mask).then(pl.lit(None)).otherwise(pl.col(col)).alias(col)
+            )
             obscured = obscured | mask
 
     if exprs:
@@ -417,10 +426,7 @@ def _check_missing(
 
     rows: list[dict[str, Any]] = []
     for col in _MISSING_COLUMNS:
-        if col in df.columns:
-            n_missing = df[col].null_count()
-        else:
-            n_missing = n_records  # column doesn't exist = all missing
+        n_missing = df[col].null_count() if col in df.columns else n_records
 
         rows.append(
             {
@@ -493,7 +499,9 @@ def _check_exposure_duration(
         "n_records": n_records,
         "n_sample": n_records,
         "n_negative_duration": n_negative,
-        "proportion_negative_duration": n_negative / n_records if n_records > 0 else None,
+        "proportion_negative_duration": n_negative / n_records
+        if n_records > 0
+        else None,
         **stats,
     }
 
@@ -767,7 +775,10 @@ def _check_days_supply(
     stats = _quantile_stats(ds_col, name_prefix="days_supply")
 
     # Compare days_supply with date diff
-    has_dates = "drug_exposure_start_date" in df.columns and "drug_exposure_end_date" in df.columns
+    has_dates = (
+        "drug_exposure_start_date" in df.columns
+        and "drug_exposure_end_date" in df.columns
+    )
     has_ds = "days_supply" in df.columns
 
     if has_dates and has_ds:
@@ -855,9 +866,15 @@ def _check_verbatim_end_date(
         "n_verbatim_end_date_missing": n_missing,
         "n_verbatim_end_date_equal": n_equal,
         "n_verbatim_end_date_differ": n_differ,
-        "proportion_verbatim_end_date_missing": n_missing / n_records if n_records > 0 else None,
-        "proportion_verbatim_end_date_equal": n_equal / n_records if n_records > 0 else None,
-        "proportion_verbatim_end_date_differ": n_differ / n_records if n_records > 0 else None,
+        "proportion_verbatim_end_date_missing": n_missing / n_records
+        if n_records > 0
+        else None,
+        "proportion_verbatim_end_date_equal": n_equal / n_records
+        if n_records > 0
+        else None,
+        "proportion_verbatim_end_date_differ": n_differ / n_records
+        if n_records > 0
+        else None,
     }
 
     return pl.DataFrame([row])
@@ -885,8 +902,6 @@ def _check_dose(
     }
 
     try:
-        from omopy.drug import summarise_dose_coverage
-
         # summarise_dose_coverage requires a CohortTable, which we don't have here.
         # Instead we return a simplified dose coverage analysis.
         # Check if drug_strength table is available and has data
@@ -911,7 +926,7 @@ def _check_dose(
 
         # Count drug_exposure records that have matching drug_strength entries
         de = cdm["drug_exposure"].collect()
-        de_ingredient = de.filter(True)  # already filtered upstream — not available here
+        de.filter(True)  # already filtered upstream — not available here
         # Since we don't have pre-filtered records here, return empty
         return pl.DataFrame(schema=empty_schema)
 
@@ -931,15 +946,6 @@ def _check_dose_from_records(
     Checks how many drug_exposure records have matching drug_strength entries.
     """
     n_records = df.height
-    empty_schema = {
-        "ingredient_concept_id": pl.Int64,
-        "ingredient": pl.Utf8,
-        "n_records": pl.Int64,
-        "n_sample": pl.Int64,
-        "n_with_dose": pl.Int64,
-        "n_without_dose": pl.Int64,
-        "proportion_with_dose": pl.Float64,
-    }
 
     if n_records == 0 or drug_strength_df is None:
         return pl.DataFrame(
@@ -972,7 +978,9 @@ def _check_dose_from_records(
         )
 
     # Join drug_exposure with drug_strength on drug_concept_id
-    ds_concepts = drug_strength_df.select(pl.col("drug_concept_id").cast(pl.Int64)).unique()
+    ds_concepts = drug_strength_df.select(
+        pl.col("drug_concept_id").cast(pl.Int64)
+    ).unique()
 
     de_concepts = df.select(pl.col("drug_concept_id").cast(pl.Int64))
 
@@ -994,7 +1002,9 @@ def _check_dose_from_records(
                 "n_sample": n_records,
                 "n_with_dose": n_with_dose,
                 "n_without_dose": n_without_dose,
-                "proportion_with_dose": n_with_dose / n_records if n_records > 0 else 0.0,
+                "proportion_with_dose": n_with_dose / n_records
+                if n_records > 0
+                else 0.0,
             }
         ]
     )
@@ -1146,7 +1156,8 @@ def _check_days_between(
         .alias("days_between")
     )
 
-    # Only keep rows where days_between is not null (i.e., not the first record per person)
+    # Only keep rows where days_between is not null
+    # (i.e., not the first record per person)
     gap_values = gaps["days_between"].drop_nulls()
 
     n_persons = df["person_id"].n_unique()
@@ -1206,7 +1217,9 @@ def _check_diagnostics_summary(
         dur_df = check_results["exposure_duration"]
         if dur_df.height > 0:
             row["median_duration_days"] = (
-                dur_df["duration_median"][0] if "duration_median" in dur_df.columns else None
+                dur_df["duration_median"][0]
+                if "duration_median" in dur_df.columns
+                else None
             )
             row["n_negative_duration"] = (
                 dur_df["n_negative_duration"][0]
@@ -1221,7 +1234,9 @@ def _check_diagnostics_summary(
         ds_df = check_results["days_supply"]
         if ds_df.height > 0:
             row["median_days_supply"] = (
-                ds_df["days_supply_median"][0] if "days_supply_median" in ds_df.columns else None
+                ds_df["days_supply_median"][0]
+                if "days_supply_median" in ds_df.columns
+                else None
             )
         else:
             row["median_days_supply"] = None
@@ -1230,7 +1245,9 @@ def _check_diagnostics_summary(
         qty_df = check_results["quantity"]
         if qty_df.height > 0:
             row["median_quantity"] = (
-                qty_df["quantity_median"][0] if "quantity_median" in qty_df.columns else None
+                qty_df["quantity_median"][0]
+                if "quantity_median" in qty_df.columns
+                else None
             )
         else:
             row["median_quantity"] = None
@@ -1331,10 +1348,7 @@ def execute_checks(
         msg = "ingredient_concept_ids must contain at least one concept ID"
         raise ValueError(msg)
 
-    if checks is None:
-        checks = list(AVAILABLE_CHECKS)
-    else:
-        checks = list(checks)
+    checks = list(AVAILABLE_CHECKS) if checks is None else list(checks)
 
     invalid = [c for c in checks if c not in AVAILABLE_CHECKS]
     if invalid:
@@ -1353,7 +1367,9 @@ def execute_checks(
 
     # Pre-fetch concept table for name lookups (once)
     concept_tbl = con.table("concept", database=(catalog, schema))
-    concept_df = pl.from_arrow(concept_tbl.select("concept_id", "concept_name").to_pyarrow())
+    concept_df = pl.from_arrow(
+        concept_tbl.select("concept_id", "concept_name").to_pyarrow()
+    )
 
     # Pre-fetch drug_strength if dose check is enabled
     drug_strength_df: pl.DataFrame | None = None
@@ -1387,7 +1403,9 @@ def execute_checks(
 
         n_records = df.height
         n_persons = (
-            int(df["person_id"].n_unique()) if n_records > 0 and "person_id" in df.columns else 0
+            int(df["person_id"].n_unique())
+            if n_records > 0 and "person_id" in df.columns
+            else 0
         )
 
         # Per-ingredient check results (for diagnostics_summary)
@@ -1395,7 +1413,9 @@ def execute_checks(
 
         # Run each check
         if "missing" in checks:
-            r = _check_missing(df, ingredient_concept_id=ing_id, ingredient_name=ing_name)
+            r = _check_missing(
+                df, ingredient_concept_id=ing_id, ingredient_name=ing_name
+            )
             all_results["missing"].append(r)
             ingredient_check_results["missing"] = r
 
@@ -1407,7 +1427,9 @@ def execute_checks(
             ingredient_check_results["exposure_duration"] = r
 
         if "type" in checks:
-            r = _check_type(df, concept_df, ingredient_concept_id=ing_id, ingredient_name=ing_name)
+            r = _check_type(
+                df, concept_df, ingredient_concept_id=ing_id, ingredient_name=ing_name
+            )
             all_results["type"].append(r)
             ingredient_check_results["type"] = r
 
@@ -1419,12 +1441,16 @@ def execute_checks(
             ingredient_check_results["route"] = r
 
         if "source_concept" in checks:
-            r = _check_source_concept(df, ingredient_concept_id=ing_id, ingredient_name=ing_name)
+            r = _check_source_concept(
+                df, ingredient_concept_id=ing_id, ingredient_name=ing_name
+            )
             all_results["source_concept"].append(r)
             ingredient_check_results["source_concept"] = r
 
         if "days_supply" in checks:
-            r = _check_days_supply(df, ingredient_concept_id=ing_id, ingredient_name=ing_name)
+            r = _check_days_supply(
+                df, ingredient_concept_id=ing_id, ingredient_name=ing_name
+            )
             all_results["days_supply"].append(r)
             ingredient_check_results["days_supply"] = r
 
@@ -1451,12 +1477,16 @@ def execute_checks(
             ingredient_check_results["sig"] = r
 
         if "quantity" in checks:
-            r = _check_quantity(df, ingredient_concept_id=ing_id, ingredient_name=ing_name)
+            r = _check_quantity(
+                df, ingredient_concept_id=ing_id, ingredient_name=ing_name
+            )
             all_results["quantity"].append(r)
             ingredient_check_results["quantity"] = r
 
         if "days_between" in checks:
-            r = _check_days_between(df, ingredient_concept_id=ing_id, ingredient_name=ing_name)
+            r = _check_days_between(
+                df, ingredient_concept_id=ing_id, ingredient_name=ing_name
+            )
             all_results["days_between"].append(r)
             ingredient_check_results["days_between"] = r
 
@@ -1522,7 +1552,9 @@ def execute_checks(
                 cols = count_cols_by_check[check_name]
                 existing_cols = [c for c in cols if c in df.columns]
                 if existing_cols:
-                    combined[check_name] = _obscure_df(df, min_cell_count, existing_cols)
+                    combined[check_name] = _obscure_df(
+                        df, min_cell_count, existing_cols
+                    )
 
     t_end = time.monotonic()
 

@@ -10,17 +10,16 @@ and ``requireDrugInDateRange()``.
 from __future__ import annotations
 
 import datetime
-from typing import Literal
 
 import polars as pl
 
 from omopy.generics.cohort_table import CohortTable
 
 __all__ = [
-    "require_is_first_drug_entry",
-    "require_prior_drug_washout",
-    "require_observation_before_drug",
     "require_drug_in_date_range",
+    "require_is_first_drug_entry",
+    "require_observation_before_drug",
+    "require_prior_drug_washout",
 ]
 
 
@@ -55,7 +54,9 @@ def require_is_first_drug_entry(
     for cid in ids:
         subset = df.filter(pl.col("cohort_definition_id") == cid)
         first_only = (
-            subset.sort("cohort_start_date").group_by("cohort_definition_id", "subject_id").first()
+            subset.sort("cohort_start_date")
+            .group_by("cohort_definition_id", "subject_id")
+            .first()
         )
         parts.append(first_only)
 
@@ -116,7 +117,9 @@ def require_prior_drug_washout(
 
     parts = []
     for cid in ids:
-        subset = df.filter(pl.col("cohort_definition_id") == cid).sort("cohort_start_date")
+        subset = df.filter(pl.col("cohort_definition_id") == cid).sort(
+            "cohort_start_date"
+        )
 
         # Compute lag of cohort_end_date within each subject
         subset = subset.with_columns(
@@ -126,7 +129,10 @@ def require_prior_drug_washout(
         # Keep rows where there is no prior entry or gap >= days
         subset = subset.filter(
             pl.col("_prev_end").is_null()
-            | ((pl.col("cohort_start_date") - pl.col("_prev_end")).dt.total_days() >= days)
+            | (
+                (pl.col("cohort_start_date") - pl.col("_prev_end")).dt.total_days()
+                >= days
+            )
         ).drop("_prev_end")
 
         parts.append(subset)
@@ -191,8 +197,8 @@ def require_observation_before_drug(
         msg = "CdmReference is required for require_observation_before_drug"
         raise ValueError(msg)
 
-    from omopy.profiles import add_prior_observation
     from omopy.generics.cdm_table import CdmTable
+    from omopy.profiles import add_prior_observation
 
     # Add prior observation column
     temp_table = CdmTable(data=df, tbl_name="_temp")
@@ -206,7 +212,9 @@ def require_observation_before_drug(
 
     # Filter
     to_filter = enriched.filter(pl.col("cohort_definition_id").is_in(ids))
-    filtered = to_filter.filter(pl.col("prior_observation") >= days).drop("prior_observation")
+    filtered = to_filter.filter(pl.col("prior_observation") >= days).drop(
+        "prior_observation"
+    )
 
     rest = enriched.filter(~pl.col("cohort_definition_id").is_in(ids))
     if "prior_observation" in rest.columns:
@@ -329,7 +337,9 @@ def _build_result(
 
     # Build attrition rows for the applied filter
     existing_attrition = original.attrition.clone()
-    max_reason_id = existing_attrition["reason_id"].max() if len(existing_attrition) > 0 else 0
+    max_reason_id = (
+        existing_attrition["reason_id"].max() if len(existing_attrition) > 0 else 0
+    )
 
     new_attrition_rows = []
     for cid in affected_ids:
@@ -373,7 +383,9 @@ def _build_result(
     return CohortTable(
         data=result_df,
         tbl_name=tbl_name,
-        tbl_source=original._tbl_source if hasattr(original, "_tbl_source") else "local",
+        tbl_source=original._tbl_source
+        if hasattr(original, "_tbl_source")
+        else "local",
         settings=original.settings.clone(),
         attrition=attrition,
         cohort_codelist=original.cohort_codelist.clone()

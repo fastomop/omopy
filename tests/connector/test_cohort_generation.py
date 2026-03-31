@@ -15,13 +15,12 @@ Key test data from the database:
 
 from __future__ import annotations
 
-import pytest
 import polars as pl
+import pytest
 
 from omopy.connector import cdm_from_con, generate_concept_cohort_set
 from omopy.generics.codelist import Codelist, ConceptEntry, ConceptSetExpression
 from omopy.generics.cohort_table import CohortTable
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -199,7 +198,10 @@ class TestConceptSetExpression:
         assert len(df) > 0, "Descendants should match drug_exposure records"
 
     def test_no_descendants_no_match(self, cdm):
-        """1539403 doesn't appear directly in drug_exposure — 0 results without descendants."""
+        """1539403 doesn't appear directly in drug_exposure.
+
+        Expect 0 results without descendants.
+        """
         cse = ConceptSetExpression(
             {
                 "statins_exact": [
@@ -217,8 +219,12 @@ class TestConceptSetExpression:
         cse = ConceptSetExpression(
             {
                 "nothing": [
-                    ConceptEntry(concept_id=320128, include_descendants=False, is_excluded=False),
-                    ConceptEntry(concept_id=320128, include_descendants=False, is_excluded=True),
+                    ConceptEntry(
+                        concept_id=320128, include_descendants=False, is_excluded=False
+                    ),
+                    ConceptEntry(
+                        concept_id=320128, include_descendants=False, is_excluded=True
+                    ),
                 ]
             }
         )
@@ -258,7 +264,9 @@ class TestEndDateStrategy:
     def test_event_end_date(self, cdm):
         """end='event_end_date': cohort_end_date = clinical event end date."""
         cs = Codelist({"hypertension": [320128]})
-        result = generate_concept_cohort_set(cdm, cs, "ht_event_end", end="event_end_date")
+        result = generate_concept_cohort_set(
+            cdm, cs, "ht_event_end", end="event_end_date"
+        )
         df = result["ht_event_end"].collect()
         # Hypertension has no end dates in Synthea, so end = start
         for row in df.iter_rows(named=True):
@@ -298,7 +306,9 @@ class TestLimitStrategy:
         df = result["sinus_all"].collect()
         assert len(df) >= 1
         # All rows should have valid dates
-        assert df.filter(pl.col("cohort_start_date") > pl.col("cohort_end_date")).is_empty()
+        assert df.filter(
+            pl.col("cohort_start_date") > pl.col("cohort_end_date")
+        ).is_empty()
 
     def test_invalid_limit(self, cdm):
         cs = Codelist({"hypertension": [320128]})
@@ -316,7 +326,9 @@ class TestRequiredObservation:
         """Requiring 365 days prior observation should reduce the cohort."""
         cs = Codelist({"hypertension": [320128]})
         full = generate_concept_cohort_set(cdm, cs, "ht_full")
-        restricted = generate_concept_cohort_set(cdm, cs, "ht_365", required_observation=(365, 0))
+        restricted = generate_concept_cohort_set(
+            cdm, cs, "ht_365", required_observation=(365, 0)
+        )
         full_df = full["ht_full"].collect()
         restricted_df = restricted["ht_365"].collect()
         assert len(restricted_df) <= len(full_df)
@@ -324,7 +336,9 @@ class TestRequiredObservation:
     def test_zero_observation_no_filter(self, cdm):
         """required_observation=(0, 0) should not filter anything."""
         cs = Codelist({"hypertension": [320128]})
-        result = generate_concept_cohort_set(cdm, cs, "ht_zero_obs", required_observation=(0, 0))
+        result = generate_concept_cohort_set(
+            cdm, cs, "ht_zero_obs", required_observation=(0, 0)
+        )
         df = result["ht_zero_obs"].collect()
         assert len(df) == 6
 

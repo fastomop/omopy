@@ -90,7 +90,9 @@ def _run_hip(
         # Get global row indices for tracking assignment
         global_mask = hip_records["person_id"] == pid
         global_sorted = (
-            hip_records.with_row_index("_global_idx").filter(global_mask).sort("record_date")
+            hip_records.with_row_index("_global_idx")
+            .filter(global_mask)
+            .sort("record_date")
         )
         global_indices = global_sorted["_global_idx"].to_list()
 
@@ -108,7 +110,9 @@ def _run_hip(
             # Check Matcho spacing
             if last_outcome_date is not None and last_outcome_cat is not None:
                 days_gap = (last_outcome_date - dt).days
-                min_days = MATCHO_OUTCOME_LIMITS.get((cat, last_outcome_cat), _DEFAULT_MIN_SPACING)
+                min_days = MATCHO_OUTCOME_LIMITS.get(
+                    (cat, last_outcome_cat), _DEFAULT_MIN_SPACING
+                )
                 if days_gap < min_days:
                     # Too close to previous outcome — skip this record
                     assigned_indices.add(global_indices[i])
@@ -116,7 +120,7 @@ def _run_hip(
 
             # Create a new episode
             episode_counter += 1
-            term_min, term_max = MATCHO_TERM_DURATIONS.get(cat, (28, 308))
+            _term_min, term_max = MATCHO_TERM_DURATIONS.get(cat, (28, 308))
             from datetime import timedelta
 
             ep_start = dt - timedelta(days=term_max)
@@ -160,11 +164,15 @@ def _run_hip(
             range(hip_records.height),
         ).is_in(list(assigned_indices))
 
-        unassigned = hip_records.with_row_index("_idx").filter(unassigned_mask).drop("_idx")
+        unassigned = (
+            hip_records.with_row_index("_idx").filter(unassigned_mask).drop("_idx")
+        )
 
         if unassigned.height > 0:
             for pid in unassigned["person_id"].unique().sort().to_list():
-                precs = unassigned.filter(pl.col("person_id") == pid).sort("record_date")
+                precs = unassigned.filter(pl.col("person_id") == pid).sort(
+                    "record_date"
+                )
                 if precs.height == 0:
                     continue
 

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-import omopy  # noqa: F401 — triggers CPython 3.14 typing compat shim before Pydantic loads
 from pathlib import Path
 
 import ibis
 import pytest
+
+import omopy  # noqa: F401 — triggers CPython 3.14 typing compat shim before Pydantic loads
 
 # Path to the synthea DuckDB test database
 SYNTHEA_DB = Path(__file__).resolve().parent.parent / "data" / "synthea.duckdb"

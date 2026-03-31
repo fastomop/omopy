@@ -8,14 +8,12 @@ strata.
 
 from __future__ import annotations
 
-import math
 from typing import Any
 
 import polars as pl
 
 from omopy.generics._types import OVERALL
 from omopy.generics.summarised_result import SummarisedResult
-
 from omopy.pregnancy._identify import PregnancyResult
 
 __all__ = ["summarise_pregnancies"]
@@ -87,10 +85,7 @@ def summarise_pregnancies(
         )
 
         # Distinct persons
-        if n_episodes > 0:
-            n_persons = df["person_id"].n_unique()
-        else:
-            n_persons = 0
+        n_persons = df["person_id"].n_unique() if n_episodes > 0 else 0
         rows.append(
             {
                 **base,
@@ -104,7 +99,9 @@ def summarise_pregnancies(
 
         # Episodes by category
         if n_episodes > 0 and "category" in df.columns:
-            cat_counts = df.group_by("category").agg(pl.len().alias("n")).sort("category")
+            cat_counts = (
+                df.group_by("category").agg(pl.len().alias("n")).sort("category")
+            )
             for cat_row in cat_counts.iter_rows(named=True):
                 cat_name = cat_row["category"]
                 count = cat_row["n"]
@@ -114,7 +111,9 @@ def summarise_pregnancies(
                     {
                         **base,
                         "variable_name": "Outcome category",
-                        "variable_level": str(cat_name) if cat_name is not None else "Unknown",
+                        "variable_level": str(cat_name)
+                        if cat_name is not None
+                        else "Unknown",
                         "estimate_name": "count",
                         "estimate_type": "integer",
                         "estimate_value": str(count),
@@ -124,7 +123,9 @@ def summarise_pregnancies(
                     {
                         **base,
                         "variable_name": "Outcome category",
-                        "variable_level": str(cat_name) if cat_name is not None else "Unknown",
+                        "variable_level": str(cat_name)
+                        if cat_name is not None
+                        else "Unknown",
                         "estimate_name": "percentage",
                         "estimate_type": "percentage",
                         "estimate_value": f"{pct:.2f}",
@@ -199,7 +200,9 @@ def summarise_pregnancies(
 
         # Precision distribution
         if n_episodes > 0 and "precision" in df.columns:
-            prec_counts = df.group_by("precision").agg(pl.len().alias("n")).sort("precision")
+            prec_counts = (
+                df.group_by("precision").agg(pl.len().alias("n")).sort("precision")
+            )
             for prec_row in prec_counts.iter_rows(named=True):
                 prec_name = prec_row["precision"]
                 count = prec_row["n"]

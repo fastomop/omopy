@@ -70,7 +70,9 @@ def available_survival_grouping(
                         available.append(name)
                     else:
                         # Check if there are multiple levels
-                        levels = data.filter(pl.col("group_name") == gn)["group_level"].unique()
+                        levels = data.filter(pl.col("group_name") == gn)[
+                            "group_level"
+                        ].unique()
                         if len(levels) > 1:
                             available.append(name)
 
@@ -84,7 +86,9 @@ def available_survival_grouping(
                     if not varying:
                         available.append(name)
                     else:
-                        levels = data.filter(pl.col("strata_name") == sn)["strata_level"].unique()
+                        levels = data.filter(pl.col("strata_name") == sn)[
+                            "strata_level"
+                        ].unique()
                         if len(levels) > 1:
                             available.append(name)
 
@@ -321,20 +325,17 @@ def _get_plot_groups(
     """Split estimates DataFrame by group column."""
     if group_col in estimates.columns:
         unique_vals = estimates[group_col].unique().sort().to_list()
-        return [(str(val), estimates.filter(pl.col(group_col) == val)) for val in unique_vals]
+        return [
+            (str(val), estimates.filter(pl.col(group_col) == val))
+            for val in unique_vals
+        ]
     else:
         return [("overall", estimates)]
 
 
 def _time_divisor(time_scale: str) -> float:
     """Get divisor for converting days to time_scale."""
-    if time_scale == "days":
-        return 1.0
-    elif time_scale == "months":
-        return 30.4375
-    elif time_scale == "years":
-        return 365.25
-    return 1.0
+    return {"days": 1.0, "months": 30.4375, "years": 365.25}.get(time_scale, 1.0)
 
 
 def _default_colours() -> list[str]:

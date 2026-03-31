@@ -13,7 +13,6 @@ This is the Python equivalent of R's ``getCandidateCodes()`` and
 from __future__ import annotations
 
 import ibis
-import ibis.expr.types as ir
 
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.codelist import Codelist
@@ -103,7 +102,9 @@ def get_candidate_codes(
             syn_combined = syn_combined | f
 
         syn_matches = (
-            syn_tbl.filter(syn_combined).select(concept_id=syn_tbl["concept_id"]).distinct()
+            syn_tbl.filter(syn_combined)
+            .select(concept_id=syn_tbl["concept_id"])
+            .distinct()
         )
 
         # Get full concept rows for synonym matches
@@ -114,7 +115,11 @@ def get_candidate_codes(
 
         # Union with direct keyword matches
         shared_cols = [c for c in result.columns if c in syn_concepts.columns]
-        result = result.select(*shared_cols).union(syn_concepts.select(*shared_cols)).distinct()
+        result = (
+            result.select(*shared_cols)
+            .union(syn_concepts.select(*shared_cols))
+            .distinct()
+        )
 
     # Apply optional filters
     if domains is not None:
@@ -123,17 +128,23 @@ def get_candidate_codes(
 
     if standard_concept is not None:
         sc_list = (
-            [standard_concept] if isinstance(standard_concept, str) else list(standard_concept)
+            [standard_concept]
+            if isinstance(standard_concept, str)
+            else list(standard_concept)
         )
         result = result.filter(result["standard_concept"].isin(sc_list))
 
     if vocabulary_id is not None:
-        v_list = [vocabulary_id] if isinstance(vocabulary_id, str) else list(vocabulary_id)
+        v_list = (
+            [vocabulary_id] if isinstance(vocabulary_id, str) else list(vocabulary_id)
+        )
         result = result.filter(result["vocabulary_id"].isin(v_list))
 
     if concept_class_id is not None:
         cc_list = (
-            [concept_class_id] if isinstance(concept_class_id, str) else list(concept_class_id)
+            [concept_class_id]
+            if isinstance(concept_class_id, str)
+            else list(concept_class_id)
         )
         result = result.filter(result["concept_class_id"].isin(cc_list))
 
@@ -145,7 +156,9 @@ def get_candidate_codes(
             result = result.filter(~result["concept_name"].lower().like(pattern))
 
     # Get concept IDs
-    matched_ids = result.select(concept_id=result["concept_id"].cast("int64")).distinct()
+    matched_ids = result.select(
+        concept_id=result["concept_id"].cast("int64")
+    ).distinct()
 
     # Include descendants if requested
     if include_descendants and "concept_ancestor" in cdm:
@@ -201,7 +214,9 @@ def get_mappings(
         New codelist with mapped concept IDs.
     """
     cr = _get_ibis_table(cdm["concept_relationship"])
-    rel_list = [relationship_id] if isinstance(relationship_id, str) else list(relationship_id)
+    rel_list = (
+        [relationship_id] if isinstance(relationship_id, str) else list(relationship_id)
+    )
 
     result = Codelist()
     for set_name, concept_ids in codelist.items():
@@ -212,7 +227,9 @@ def get_mappings(
         # Filter concept_relationship to these concept IDs and relationship
         matches = (
             cr.filter(
-                cr["concept_id_1"].cast("int64").isin([ibis.literal(int(c)) for c in concept_ids])
+                cr["concept_id_1"]
+                .cast("int64")
+                .isin([ibis.literal(int(c)) for c in concept_ids])
                 & cr["relationship_id"].isin(rel_list)
             )
             .select(concept_id=cr["concept_id_2"].cast("int64"))

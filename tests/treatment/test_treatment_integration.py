@@ -26,7 +26,6 @@ from omopy.treatment import (
     table_treatment_pathways,
 )
 
-
 # ===================================================================
 # Fixtures
 # ===================================================================
@@ -82,7 +81,9 @@ def treatment_cohort(drug_cdm, condition_cdm):
     # Reassign target to cohort_id 100
     if "subject_id" in target_df.columns and "person_id" not in target_df.columns:
         target_df = target_df.rename({"subject_id": "person_id"})
-    target_df = target_df.with_columns(pl.lit(100).cast(pl.Int64).alias("cohort_definition_id"))
+    target_df = target_df.with_columns(
+        pl.lit(100).cast(pl.Int64).alias("cohort_definition_id")
+    )
     # Ensure standard column names
     target_df = target_df.select(
         "cohort_definition_id",
@@ -171,7 +172,9 @@ class TestComputePathwaysIntegration:
         )
         assert isinstance(result, PathwayResult)
 
-    def test_treatment_history_has_rows(self, treatment_cohort, synthea_cdm, cohort_specs):
+    def test_treatment_history_has_rows(
+        self, treatment_cohort, synthea_cdm, cohort_specs
+    ):
         result = compute_pathways(
             treatment_cohort,
             synthea_cdm,
@@ -222,7 +225,9 @@ class TestComputePathwaysIntegration:
         )
         assert result.arguments["era_collapse_size"] == 45
 
-    def test_filter_treatments_changes(self, treatment_cohort, synthea_cdm, cohort_specs):
+    def test_filter_treatments_changes(
+        self, treatment_cohort, synthea_cdm, cohort_specs
+    ):
         result = compute_pathways(
             treatment_cohort,
             synthea_cdm,

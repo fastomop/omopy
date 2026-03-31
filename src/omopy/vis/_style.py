@@ -6,9 +6,8 @@ style dataclasses for configuring table/plot appearance.
 
 from __future__ import annotations
 
-import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
 __all__ = [
     "PlotStyle",
@@ -96,7 +95,8 @@ class TableStyle:
     """Configuration for table appearance.
 
     Attributes:
-        title_align: Alignment for the table title (``"left"``, ``"center"``, ``"right"``).
+        title_align: Alignment for the table title
+            (``"left"``, ``"center"``, ``"right"``).
         title_color: Colour for the title text (CSS colour string).
         header_background: Background colour for column headers.
         header_color: Text colour for column headers.

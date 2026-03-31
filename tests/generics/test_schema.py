@@ -1,4 +1,7 @@
-"""Tests for omopy.generics._schema — FieldSpec, TableSpec, ResultFieldSpec, CdmSchema."""
+"""Tests for omopy.generics._schema.
+
+Covers FieldSpec, TableSpec, ResultFieldSpec, CdmSchema.
+"""
 
 import pytest
 from pydantic import ValidationError
@@ -9,7 +12,6 @@ from omopy.generics._schema import (
     FieldSpec,
     ResultFieldSpec,
     TableSpec,
-    _FieldTableColumn,
 )
 from omopy.generics._types import (
     CdmDataType,
@@ -18,7 +20,6 @@ from omopy.generics._types import (
     TableSchema,
     TableType,
 )
-
 
 # ---------------------------------------------------------------------------
 # FieldSpec
@@ -150,19 +151,27 @@ class TestTableSpec:
         assert ts.concept_prefix is None
 
     def test_frozen(self):
-        ts = TableSpec(cdm_table_name="person", schema=TableSchema.CDM, is_required=True)
+        ts = TableSpec(
+            cdm_table_name="person", schema=TableSchema.CDM, is_required=True
+        )
         with pytest.raises(ValidationError, match="frozen_instance"):
             ts.cdm_table_name = "other"  # type: ignore[misc]
 
     def test_na_to_none(self):
         ts = TableSpec(
-            cdm_table_name="t", schema=TableSchema.CDM, is_required=True, concept_prefix="NA"
+            cdm_table_name="t",
+            schema=TableSchema.CDM,
+            is_required=True,
+            concept_prefix="NA",
         )
         assert ts.concept_prefix is None
 
     def test_na_case_insensitive(self):
         ts = TableSpec(
-            cdm_table_name="t", schema=TableSchema.CDM, is_required=True, concept_prefix="na"
+            cdm_table_name="t",
+            schema=TableSchema.CDM,
+            is_required=True,
+            concept_prefix="na",
         )
         assert ts.concept_prefix is None
 
@@ -256,7 +265,9 @@ class TestFieldTableColumn:
         assert person.standard_concept is None
 
     def test_condition_occurrence_entry(self):
-        cond = next(fc for fc in FIELD_TABLE_COLUMNS if fc.table_name == "condition_occurrence")
+        cond = next(
+            fc for fc in FIELD_TABLE_COLUMNS if fc.table_name == "condition_occurrence"
+        )
         assert cond.start_date == "condition_start_date"
         assert cond.end_date == "condition_end_date"
         assert cond.standard_concept == "condition_concept_id"

@@ -15,11 +15,10 @@ import polars as pl
 
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.cdm_table import CdmTable
-
 from omopy.pregnancy._concepts import (
+    ESD_CONCEPTS,
     HIP_CONCEPTS,
     PPS_CONCEPTS,
-    ESD_CONCEPTS,
 )
 
 __all__ = ["mock_pregnancy_cdm", "validate_episodes"]
@@ -182,7 +181,9 @@ def mock_pregnancy_cdm(
 
             # Add outcome condition
             outcome_concepts_for_cat = [
-                cid for cid, info in HIP_CONCEPTS.items() if info["category"] == outcome_type
+                cid
+                for cid, info in HIP_CONCEPTS.items()
+                if info["category"] == outcome_type
             ]
             if outcome_concepts_for_cat:
                 chosen_concept = rng.choice(outcome_concepts_for_cat)
@@ -201,7 +202,9 @@ def mock_pregnancy_cdm(
             # Add delivery procedure for LB
             if outcome_type == "LB" and procedure_concepts:
                 deliv_concepts = [
-                    cid for cid, info in HIP_CONCEPTS.items() if info["category"] == "DELIV"
+                    cid
+                    for cid, info in HIP_CONCEPTS.items()
+                    if info["category"] == "DELIV"
                 ]
                 if deliv_concepts:
                     proc_rows.append(
@@ -217,7 +220,7 @@ def mock_pregnancy_cdm(
 
             # Add prenatal observations (PPS concepts)
             n_prenatal = rng.randint(2, 5)
-            for visit_idx in range(n_prenatal):
+            for _visit_idx in range(n_prenatal):
                 visit_month = rng.randint(1, max(1, gest_weeks // 4))
                 visit_date = conception_date + datetime.timedelta(
                     days=visit_month * 30 + rng.randint(-5, 5)
@@ -250,7 +253,9 @@ def mock_pregnancy_cdm(
                 ga_date = outcome_date - datetime.timedelta(days=rng.randint(0, 14))
                 if ga_date >= obs_start:
                     ga_concepts = [
-                        cid for cid, info in ESD_CONCEPTS.items() if info["category"] == "GW"
+                        cid
+                        for cid, info in ESD_CONCEPTS.items()
+                        if info["category"] == "GW"
                     ]
                     if ga_concepts:
                         meas_rows.append(
@@ -269,7 +274,9 @@ def mock_pregnancy_cdm(
             # Add trimester conditions (ESD GR3m)
             if rng.random() < 0.5:
                 trimester_concepts = [
-                    cid for cid, info in ESD_CONCEPTS.items() if info["category"] == "GR3m"
+                    cid
+                    for cid, info in ESD_CONCEPTS.items()
+                    if info["category"] == "GR3m"
                 ]
                 if trimester_concepts:
                     tri_month = rng.randint(1, min(9, gest_weeks // 4))
@@ -360,14 +367,18 @@ def mock_pregnancy_cdm(
         else pl.DataFrame(schema=meas_schema)
     )
     obs_df = (
-        pl.DataFrame(obs_rows, schema=obs_schema) if obs_rows else pl.DataFrame(schema=obs_schema)
+        pl.DataFrame(obs_rows, schema=obs_schema)
+        if obs_rows
+        else pl.DataFrame(schema=obs_schema)
     )
 
     # Build CDM
     cdm = CdmReference(
         tables={
             "person": CdmTable(person_df, tbl_name="person"),
-            "observation_period": CdmTable(obs_period_df, tbl_name="observation_period"),
+            "observation_period": CdmTable(
+                obs_period_df, tbl_name="observation_period"
+            ),
             "condition_occurrence": CdmTable(cond_df, tbl_name="condition_occurrence"),
             "procedure_occurrence": CdmTable(proc_df, tbl_name="procedure_occurrence"),
             "measurement": CdmTable(meas_df, tbl_name="measurement"),
@@ -417,8 +428,13 @@ def validate_episodes(
         )
 
     # Check 1: start <= end
-    if "episode_start_date" in episodes.columns and "episode_end_date" in episodes.columns:
-        bad_dates = episodes.filter(pl.col("episode_start_date") > pl.col("episode_end_date"))
+    if (
+        "episode_start_date" in episodes.columns
+        and "episode_end_date" in episodes.columns
+    ):
+        bad_dates = episodes.filter(
+            pl.col("episode_start_date") > pl.col("episode_end_date")
+        )
         checks.append(
             {
                 "check": "start_before_end",
@@ -428,7 +444,9 @@ def validate_episodes(
         )
 
         # Check 2: duration <= max_days
-        durations = (episodes["episode_end_date"] - episodes["episode_start_date"]).dt.total_days()
+        durations = (
+            episodes["episode_end_date"] - episodes["episode_start_date"]
+        ).dt.total_days()
         too_long = (durations > max_days).sum()
         checks.append(
             {
@@ -442,7 +460,9 @@ def validate_episodes(
     if "person_id" in episodes.columns:
         n_overlaps = 0
         for pid in episodes["person_id"].unique().to_list():
-            person_eps = episodes.filter(pl.col("person_id") == pid).sort("episode_start_date")
+            person_eps = episodes.filter(pl.col("person_id") == pid).sort(
+                "episode_start_date"
+            )
             if person_eps.height < 2:
                 continue
             starts = person_eps["episode_start_date"].to_list()

@@ -42,7 +42,11 @@ def options_table_incidence() -> dict[str, Any]:
             "N": "<n_persons>",
             "Person-years": "<person_years>",
             "Events": "<n_events>",
-            "IR [95% CI]": "<incidence_100000_pys> [<incidence_100000_pys_95ci_lower> - <incidence_100000_pys_95ci_upper>]",
+            "IR [95% CI]": (
+                "<incidence_100000_pys>"
+                " [<incidence_100000_pys_95ci_lower>"
+                " - <incidence_100000_pys_95ci_upper>]"
+            ),
         },
         "hide": ["result_id", "estimate_type"],
         "rename": {
@@ -67,7 +71,9 @@ def options_table_prevalence() -> dict[str, Any]:
         "estimate_name": {
             "N": "<n_persons>",
             "Cases": "<n_cases>",
-            "Prevalence [95% CI]": "<prevalence> [<prevalence_95ci_lower> - <prevalence_95ci_upper>]",
+            "Prevalence [95% CI]": (
+                "<prevalence> [<prevalence_95ci_lower> - <prevalence_95ci_upper>]"
+            ),
         },
         "hide": ["result_id", "estimate_type"],
         "rename": {

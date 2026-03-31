@@ -19,8 +19,6 @@ Orchestrates the full CIRCE pipeline:
 
 from __future__ import annotations
 
-import datetime
-import json
 from pathlib import Path
 from typing import Any
 
@@ -28,26 +26,25 @@ import ibis
 import ibis.expr.types as ir
 import polars as pl
 
-from omopy.generics.cdm_reference import CdmReference
-from omopy.generics.cohort_table import CohortTable
-from omopy.connector.db_source import DbSource
-
-from omopy.connector.circe._types import CohortExpression, CriteriaLimit
-from omopy.connector.circe._parser import (
-    parse_cohort_expression,
-    parse_cohort_json,
-    read_cohort_set,
-)
 from omopy.connector.circe._concept_resolver import resolve_concept_sets
-from omopy.connector.circe._domain_queries import build_domain_query
 from omopy.connector.circe._criteria import (
     apply_inclusion_rules,
     apply_limit,
     apply_observation_window,
     evaluate_criteria_group,
 )
+from omopy.connector.circe._domain_queries import build_domain_query
 from omopy.connector.circe._end_strategy import compute_cohort_end_dates
 from omopy.connector.circe._era import collapse_eras
+from omopy.connector.circe._parser import (
+    parse_cohort_expression,
+    parse_cohort_json,
+    read_cohort_set,
+)
+from omopy.connector.circe._types import CohortExpression
+from omopy.connector.db_source import DbSource
+from omopy.generics.cdm_reference import CdmReference
+from omopy.generics.cohort_table import CohortTable
 
 __all__ = ["generate_cohort_set"]
 
@@ -92,7 +89,8 @@ def generate_cohort_set(
     catalog = source.catalog
     cdm_schema = source.cdm_schema
 
-    # Normalise cohort_set into a list of {cohort_definition_id, cohort_name, expression}
+    # Normalise cohort_set into a list of
+    # {cohort_definition_id, cohort_name, expression}
     definitions = _normalise_cohort_set(cohort_set)
 
     if not definitions:
@@ -118,7 +116,9 @@ def generate_cohort_set(
         )
 
         all_rows.append(rows)
-        all_settings.append({"cohort_definition_id": cohort_id, "cohort_name": cohort_name})
+        all_settings.append(
+            {"cohort_definition_id": cohort_id, "cohort_name": cohort_name}
+        )
         all_attrition.append(attrition)
 
     # Combine results
@@ -202,7 +202,9 @@ def _generate_single_cohort(
     # -----------------------------------------------------------------------
     # Step 1: Resolve concept sets
     # -----------------------------------------------------------------------
-    codeset_tables = resolve_concept_sets(expression.concept_sets, con, catalog, cdm_schema)
+    codeset_tables = resolve_concept_sets(
+        expression.concept_sets, con, catalog, cdm_schema
+    )
 
     # -----------------------------------------------------------------------
     # Step 2: Build primary events (UNION of all domain criteria)
@@ -224,7 +226,9 @@ def _generate_single_cohort(
         events = events.union(p)
 
     # Assign sequential event_id via row_number (needed after union)
-    events = events.mutate(event_id=ibis.row_number().over(ibis.window(order_by="sort_date")))
+    events = events.mutate(
+        event_id=ibis.row_number().over(ibis.window(order_by="sort_date"))
+    )
 
     count = _record_attrition("Initial events", events, 0)
     if count == 0:
@@ -569,7 +573,9 @@ def _build_codelist(
             }
         )
 
-    return pl.DataFrame(rows).cast({"cohort_definition_id": pl.Int64, "concept_id": pl.Int64})
+    return pl.DataFrame(rows).cast(
+        {"cohort_definition_id": pl.Int64, "concept_id": pl.Int64}
+    )
 
 
 # ---------------------------------------------------------------------------

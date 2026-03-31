@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import Any
 
 from omopy.connector.circe._types import (
+    CensorWindow,
     CohortExpression,
     CollapseSettings,
-    CensorWindow,
     Concept,
     ConceptFilter,
     ConceptItem,
@@ -29,8 +29,8 @@ from omopy.connector.circe._types import (
     EndStrategy,
     InclusionRule,
     NumericRange,
-    Occurrence,
     ObservationWindow,
+    Occurrence,
     PrimaryCriteria,
     TemporalWindow,
     TextFilter,
@@ -66,7 +66,8 @@ _DOMAIN_KEYS: set[str] = {
 
 
 # camelCase → PascalCase normalisation map for all known keys.
-# We only normalise keys we actually look up; domain type keys (ConditionOccurrence etc.)
+# We only normalise keys we actually look up; domain type keys
+# (ConditionOccurrence etc.)
 # are already PascalCase in the JSON spec and are never camelCase.
 _CAMEL_TO_PASCAL: dict[str, str] = {
     # Top-level expression keys
@@ -118,7 +119,10 @@ def _normalise_keys(obj: Any, depth: int = 0) -> Any:
     if depth > 50:
         return obj
     if isinstance(obj, dict):
-        return {_CAMEL_TO_PASCAL.get(k, k): _normalise_keys(v, depth + 1) for k, v in obj.items()}
+        return {
+            _CAMEL_TO_PASCAL.get(k, k): _normalise_keys(v, depth + 1)
+            for k, v in obj.items()
+        }
     if isinstance(obj, list):
         return [_normalise_keys(item, depth + 1) for item in obj]
     return obj
@@ -355,7 +359,9 @@ def _parse_criteria_group(d: dict | None) -> CriteriaGroup | None:
     return CriteriaGroup(
         type=d.get("Type", "ALL"),
         count=d.get("Count", 0),
-        criteria_list=tuple(_parse_correlated_criteria(c) for c in d.get("CriteriaList", [])),
+        criteria_list=tuple(
+            _parse_correlated_criteria(c) for c in d.get("CriteriaList", [])
+        ),
         demographic_criteria_list=tuple(
             _parse_demographic_criteria(c) for c in d.get("DemographicCriteriaList", [])
         ),
@@ -373,7 +379,9 @@ def _parse_criteria_group(d: dict | None) -> CriteriaGroup | None:
 
 
 def _parse_primary_criteria(d: dict) -> PrimaryCriteria:
-    criteria_list = tuple(_extract_domain_criteria(c) for c in d.get("CriteriaList", []))
+    criteria_list = tuple(
+        _extract_domain_criteria(c) for c in d.get("CriteriaList", [])
+    )
     obs_window = d.get("ObservationWindow", {})
     # Handle both PrimaryCriteriaLimit and PrimaryLimit
     limit_dict = _get(d, "PrimaryCriteriaLimit", "PrimaryLimit", default={})
@@ -475,16 +483,21 @@ def parse_cohort_expression(d: dict) -> CohortExpression:
     inclusion_rules = tuple(
         InclusionRule(
             name=r.get("name", ""),
-            expression=_parse_criteria_group(r.get("expression", {})) or CriteriaGroup(),
+            expression=_parse_criteria_group(r.get("expression", {}))
+            or CriteriaGroup(),
         )
         for r in d.get("InclusionRules", [])
     )
 
-    expression_limit = CriteriaLimit(type=d.get("ExpressionLimit", {}).get("Type", "All"))
+    expression_limit = CriteriaLimit(
+        type=d.get("ExpressionLimit", {}).get("Type", "All")
+    )
 
     end_strategy = _parse_end_strategy(d.get("EndStrategy"))
 
-    censoring = tuple(_extract_domain_criteria(c) for c in d.get("CensoringCriteria", []))
+    censoring = tuple(
+        _extract_domain_criteria(c) for c in d.get("CensoringCriteria", [])
+    )
 
     collapse = _parse_collapse_settings(d.get("CollapseSettings"))
     censor_window = _parse_censor_window(d.get("CensorWindow"))

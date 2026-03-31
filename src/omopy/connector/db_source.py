@@ -9,13 +9,11 @@ from __future__ import annotations
 
 from typing import Any
 
-import ibis
 import polars as pl
 
-from omopy.generics._schema import CdmSchema
+from omopy.connector._connection import IbisConnection, _get_catalog
 from omopy.generics._types import CdmVersion
 from omopy.generics.cdm_table import CdmTable
-from omopy.connector._connection import IbisConnection, _get_catalog
 
 __all__ = ["DbSource"]
 
@@ -51,13 +49,13 @@ class DbSource:
     """
 
     __slots__ = (
-        "_con",
-        "_cdm_schema",
-        "_write_schema",
-        "_catalog",
-        "_cdm_version",
-        "_cdm_name",
         "_available_tables",
+        "_catalog",
+        "_cdm_name",
+        "_cdm_schema",
+        "_cdm_version",
+        "_con",
+        "_write_schema",
     )
 
     def __init__(
@@ -75,7 +73,9 @@ class DbSource:
         self._catalog = _get_catalog(con)
 
         # Discover available tables
-        self._available_tables = sorted(con.list_tables(database=(self._catalog, cdm_schema)))
+        self._available_tables = sorted(
+            con.list_tables(database=(self._catalog, cdm_schema))
+        )
 
         # Auto-detect CDM version if not provided
         if cdm_version is not None:
@@ -112,7 +112,9 @@ class DbSource:
                 f"Available: {self._available_tables}"
             )
             raise KeyError(msg)
-        ibis_table = self._con.table(table_name, database=(self._catalog, self._cdm_schema))
+        ibis_table = self._con.table(
+            table_name, database=(self._catalog, self._cdm_schema)
+        )
         return CdmTable(
             data=ibis_table,
             tbl_name=table_name,
@@ -194,7 +196,9 @@ class DbSource:
             return CdmVersion.V5_4
 
         try:
-            tbl = self._con.table("cdm_source", database=(self._catalog, self._cdm_schema))
+            tbl = self._con.table(
+                "cdm_source", database=(self._catalog, self._cdm_schema)
+            )
             result = tbl.select("cdm_version").limit(1).to_pyarrow()
             version_str = str(result.column("cdm_version")[0])
             return CdmVersion(version_str)
@@ -207,7 +211,9 @@ class DbSource:
             return ""
 
         try:
-            tbl = self._con.table("cdm_source", database=(self._catalog, self._cdm_schema))
+            tbl = self._con.table(
+                "cdm_source", database=(self._catalog, self._cdm_schema)
+            )
             result = tbl.select("cdm_source_name").limit(1).to_pyarrow()
             return str(result.column("cdm_source_name")[0])
         except Exception:

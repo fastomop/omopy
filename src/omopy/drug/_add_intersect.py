@@ -14,10 +14,6 @@ This is the Python equivalent of R's ``addIndication()`` and
 
 from __future__ import annotations
 
-from typing import Any
-
-import ibis
-import ibis.expr.types as ir
 import polars as pl
 
 from omopy.generics.cdm_reference import CdmReference
@@ -239,7 +235,9 @@ def _add_intersect(
 
     if not ids:
         # No matching IDs — just return the cohort with empty columns
-        return _add_empty_columns(cohort, windows, names, mutually_exclusive, name_style, kind)
+        return _add_empty_columns(
+            cohort, windows, names, mutually_exclusive, name_style, kind
+        )
 
     # Default name style
     if name_style is None:
@@ -268,13 +266,17 @@ def _add_intersect(
 
     # Collect the enriched data
     enriched_df = (
-        enriched.collect() if not isinstance(enriched.data, pl.DataFrame) else enriched.data
+        enriched.collect()
+        if not isinstance(enriched.data, pl.DataFrame)
+        else enriched.data
     )
 
     # Step 2: Handle unknown indication table
     unknown_flag_cols: dict[str, str] = {}  # window_name -> column_name
     if unknown_table is not None and kind == "indication":
-        unknown_tables = [unknown_table] if isinstance(unknown_table, str) else list(unknown_table)
+        unknown_tables = (
+            [unknown_table] if isinstance(unknown_table, str) else list(unknown_table)
+        )
         enriched_df = _add_unknown_flags(
             enriched_df,
             cdm,
@@ -304,7 +306,9 @@ def _add_intersect(
         )
 
     # Clean up temporary flag columns
-    temp_cols = [c for c in result_df.columns if c.startswith("_") and c not in cohort.columns]
+    temp_cols = [
+        c for c in result_df.columns if c.startswith("_") and c not in cohort.columns
+    ]
     if temp_cols:
         result_df = result_df.drop(temp_cols)
 
@@ -382,7 +386,7 @@ def _collapse_to_labels(
         df = df.with_columns(label_expr.alias(col_name))
 
     # Drop the temporary flag columns
-    flag_cols = [c for c in df.columns if c.startswith("_")]
+    [c for c in df.columns if c.startswith("_")]
     original_flag_cols = [
         f"_{cname}_{window_name(w)}"
         for cname in names
@@ -436,8 +440,8 @@ def _add_unknown_flags(
     Checks for any records in the specified OMOP tables within each
     window and combines with OR logic.
     """
-    from omopy.profiles import add_table_intersect_flag
     from omopy.connector.db_source import DbSource
+    from omopy.profiles import add_table_intersect_flag
 
     source = cdm.cdm_source
     if not isinstance(source, DbSource):

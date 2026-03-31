@@ -104,7 +104,9 @@ def _quantile_ibis_single(
         total=grouped["n__"]
         .sum()
         .over(
-            ibis.window(group_by=[grouped[g] for g in group_cols]) if group_cols else ibis.window()
+            ibis.window(group_by=[grouped[g] for g in group_cols])
+            if group_cols
+            else ibis.window()
         ),
     )
 

@@ -1,7 +1,6 @@
 """Tests for omopy.vis._mock — mock data generators."""
 
 import polars as pl
-import pytest
 
 from omopy.generics.summarised_result import SUMMARISED_RESULT_COLUMNS, SummarisedResult
 from omopy.vis import mock_summarised_result

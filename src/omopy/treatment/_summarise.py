@@ -12,7 +12,6 @@ import polars as pl
 
 from omopy.generics import SummarisedResult
 from omopy.generics._types import NAME_LEVEL_SEP, OVERALL
-
 from omopy.treatment._pathway import PathwayResult
 
 _PACKAGE_NAME = "omopy.treatment"
@@ -266,7 +265,9 @@ def summarise_treatment_pathways(
 
             # Count pathways
             pathway_counts = (
-                sdf.group_by("pathway").agg(pl.len().alias("freq")).sort("freq", descending=True)
+                sdf.group_by("pathway")
+                .agg(pl.len().alias("freq"))
+                .sort("freq", descending=True)
             )
 
             # Apply min cell count
@@ -356,7 +357,9 @@ def _add_age_group(df: pl.DataFrame, age_window: int | list[int]) -> pl.DataFram
         labels.append(f"{lo}-{hi}")
 
     # Use cut for binning
-    df = df.with_columns(pl.col("age").cut(breaks[1:-1], labels=labels).alias("age_group"))
+    df = df.with_columns(
+        pl.col("age").cut(breaks[1:-1], labels=labels).alias("age_group")
+    )
 
     return df
 
@@ -508,7 +511,9 @@ def _emit_duration_rows(
                     "variable_name": event_name,
                     "variable_level": "",
                     "estimate_name": est_name,
-                    "estimate_type": "numeric" if est_name not in ("count",) else "integer",
+                    "estimate_type": "numeric"
+                    if est_name not in ("count",)
+                    else "integer",
                     "estimate_value": stats[est_name],
                     "additional_name": "line",
                     "additional_level": line,

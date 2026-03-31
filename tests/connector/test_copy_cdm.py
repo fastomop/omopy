@@ -8,13 +8,11 @@ import ibis
 import polars as pl
 import pytest
 
-from omopy.connector._connection import _get_catalog
 from omopy.connector.copy_cdm import copy_cdm_to
+from omopy.generics._types import CdmVersion
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.cdm_table import CdmTable
 from omopy.generics.cohort_table import CohortTable
-from omopy.generics._types import CdmVersion
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -71,8 +69,12 @@ def source_cdm():
 
     tables = {
         "person": CdmTable(data=person_df, tbl_name="person"),
-        "observation_period": CdmTable(data=obs_period_df, tbl_name="observation_period"),
-        "condition_occurrence": CdmTable(data=condition_df, tbl_name="condition_occurrence"),
+        "observation_period": CdmTable(
+            data=obs_period_df, tbl_name="observation_period"
+        ),
+        "condition_occurrence": CdmTable(
+            data=condition_df, tbl_name="condition_occurrence"
+        ),
     }
     return CdmReference(
         tables=tables,
@@ -150,7 +152,11 @@ class TestCopyCdmTo:
         new_cdm = copy_cdm_to(source_cdm, target_con, schema="cdm")
 
         assert isinstance(new_cdm, CdmReference)
-        assert set(new_cdm.table_names) == {"person", "observation_period", "condition_occurrence"}
+        assert set(new_cdm.table_names) == {
+            "person",
+            "observation_period",
+            "condition_occurrence",
+        }
 
     def test_preserves_cdm_metadata(self, source_cdm, target_con):
         """CDM name and version are preserved."""
@@ -220,7 +226,10 @@ class TestCopyCohortMetadata:
 
         assert isinstance(cohort, CohortTable)
         assert len(cohort.settings) == 2
-        assert set(cohort.settings["cohort_name"].to_list()) == {"hypertension", "sinusitis"}
+        assert set(cohort.settings["cohort_name"].to_list()) == {
+            "hypertension",
+            "sinusitis",
+        }
 
     def test_cohort_attrition_preserved(self, source_cdm_with_cohort, target_con):
         """Cohort attrition is preserved."""

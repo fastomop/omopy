@@ -17,7 +17,6 @@ from omopy.drug_diagnostics import (
 )
 from omopy.generics import CdmReference, SummarisedResult
 
-
 # =====================================================================
 # Fixtures
 # =====================================================================
@@ -53,7 +52,8 @@ def first_ingredient_id(diag_cdm: CdmReference) -> int:
     # Find their ancestor ingredients
     ingredients = (
         de_concepts.join(
-            concept_ancestor, de_concepts.concept_id == concept_ancestor.descendant_concept_id
+            concept_ancestor,
+            de_concepts.concept_id == concept_ancestor.descendant_concept_id,
         )
         .join(concept, concept_ancestor.ancestor_concept_id == concept.concept_id)
         .filter(concept.concept_class_id == "Ingredient")
@@ -96,7 +96,9 @@ class TestExecuteChecksIntegration:
         for check in AVAILABLE_CHECKS:
             assert check in diag_result, f"Missing check: {check}"
 
-    def test_ingredient_resolved(self, diag_result: DiagnosticsResult, first_ingredient_id: int):
+    def test_ingredient_resolved(
+        self, diag_result: DiagnosticsResult, first_ingredient_id: int
+    ):
         assert first_ingredient_id in diag_result.ingredient_concepts
 
     def test_execution_time_positive(self, diag_result: DiagnosticsResult):
@@ -175,7 +177,9 @@ class TestExecuteChecksValidation:
         with pytest.raises(ValueError, match="Invalid check names"):
             execute_checks(diag_cdm, [1], checks=["nonexistent_check"])
 
-    def test_single_int_ingredient(self, diag_cdm: CdmReference, first_ingredient_id: int):
+    def test_single_int_ingredient(
+        self, diag_cdm: CdmReference, first_ingredient_id: int
+    ):
         """Test that a single int (not list) works."""
         result = execute_checks(
             diag_cdm,
@@ -205,7 +209,9 @@ class TestExecuteChecksSampling:
 class TestExecuteChecksMinCellCount:
     """Test min_cell_count obscuration."""
 
-    def test_obscuration_applied(self, diag_cdm: CdmReference, first_ingredient_id: int):
+    def test_obscuration_applied(
+        self, diag_cdm: CdmReference, first_ingredient_id: int
+    ):
         result = execute_checks(
             diag_cdm,
             first_ingredient_id,
@@ -216,7 +222,9 @@ class TestExecuteChecksMinCellCount:
         df = result["type"]
         if df.height > 0 and "result_obscured" in df.columns:
             # With a very high threshold, counts should be obscured (null)
-            assert df["count"].null_count() > 0 or df["result_obscured"].drop_nulls().any()
+            assert (
+                df["count"].null_count() > 0 or df["result_obscured"].drop_nulls().any()
+            )
 
 
 # =====================================================================

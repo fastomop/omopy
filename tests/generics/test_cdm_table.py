@@ -1,10 +1,8 @@
 """Tests for omopy.generics.cdm_table — CdmTable wrapper."""
 
 import polars as pl
-import pytest
 
 from omopy.generics.cdm_table import CdmTable
-
 
 # ---------------------------------------------------------------------------
 # Helpers

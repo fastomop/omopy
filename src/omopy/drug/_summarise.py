@@ -19,7 +19,7 @@ This is the Python equivalent of R's DrugUtilisation summarise family.
 from __future__ import annotations
 
 import math
-from typing import Any, Literal
+from typing import Any
 
 import polars as pl
 
@@ -31,12 +31,12 @@ from omopy.generics.cohort_table import CohortTable
 from omopy.generics.summarised_result import SummarisedResult
 
 __all__ = [
+    "summarise_dose_coverage",
+    "summarise_drug_restart",
     "summarise_drug_utilisation",
     "summarise_indication",
-    "summarise_treatment",
-    "summarise_drug_restart",
-    "summarise_dose_coverage",
     "summarise_proportion_of_patients_covered",
+    "summarise_treatment",
 ]
 
 # ---------------------------------------------------------------------------
@@ -145,12 +145,24 @@ def summarise_drug_utilisation(
     )
 
     # Collect data
-    df = enriched.collect() if not isinstance(enriched.data, pl.DataFrame) else enriched.data
+    df = (
+        enriched.collect()
+        if not isinstance(enriched.data, pl.DataFrame)
+        else enriched.data
+    )
 
     # Identify metric columns (all new columns not in original cohort)
-    base_cols = {"cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date"}
-    metric_cols = [c for c in df.columns if c not in base_cols and not c.startswith("_")]
-    # Filter to actual metric columns (number_*, days_*, time_*, initial_*, cumulative_*)
+    base_cols = {
+        "cohort_definition_id",
+        "subject_id",
+        "cohort_start_date",
+        "cohort_end_date",
+    }
+    metric_cols = [
+        c for c in df.columns if c not in base_cols and not c.startswith("_")
+    ]
+    # Filter to actual metric columns
+    # (number_*, days_*, time_*, initial_*, cumulative_*)
     metric_prefixes = (
         "number_exposures_",
         "number_eras_",
@@ -163,7 +175,9 @@ def summarise_drug_utilisation(
         "initial_daily_dose_",
         "cumulative_dose_",
     )
-    metric_cols = [c for c in metric_cols if any(c.startswith(p) for p in metric_prefixes)]
+    metric_cols = [
+        c for c in metric_cols if any(c.startswith(p) for p in metric_prefixes)
+    ]
 
     if not metric_cols:
         return _empty_result("summarise_drug_utilisation")
@@ -174,6 +188,7 @@ def summarise_drug_utilisation(
         zip(
             settings["cohort_definition_id"].to_list(),
             settings["cohort_name"].to_list(),
+            strict=False,
         )
     )
     cdm = enriched.cdm
@@ -297,7 +312,7 @@ def summarise_indication(
         With ``result_type="summarise_indication"``.
     """
     from omopy.drug._add_intersect import add_indication
-    from omopy.profiles._windows import Window, validate_windows, window_name
+    from omopy.profiles._windows import validate_windows, window_name
 
     if strata is None:
         strata = []
@@ -315,7 +330,11 @@ def summarise_indication(
         mutually_exclusive=True,
     )
 
-    df = enriched.collect() if not isinstance(enriched.data, pl.DataFrame) else enriched.data
+    df = (
+        enriched.collect()
+        if not isinstance(enriched.data, pl.DataFrame)
+        else enriched.data
+    )
 
     # Identify indication columns
     windows = validate_windows(indication_window)
@@ -382,7 +401,7 @@ def summarise_treatment(
         With ``result_type="summarise_treatment"``.
     """
     from omopy.drug._add_intersect import add_treatment
-    from omopy.profiles._windows import Window, validate_windows, window_name
+    from omopy.profiles._windows import validate_windows, window_name
 
     if strata is None:
         strata = []
@@ -398,7 +417,11 @@ def summarise_treatment(
         mutually_exclusive=True,
     )
 
-    df = enriched.collect() if not isinstance(enriched.data, pl.DataFrame) else enriched.data
+    df = (
+        enriched.collect()
+        if not isinstance(enriched.data, pl.DataFrame)
+        else enriched.data
+    )
 
     windows = validate_windows(window)
     treatment_cols = [c for c in df.columns if c.startswith("treatment_")]
@@ -462,7 +485,7 @@ def summarise_drug_restart(
     SummarisedResult
         With ``result_type="summarise_drug_restart"``.
     """
-    from omopy.drug._add_drug_use import add_drug_restart, _format_fud
+    from omopy.drug._add_drug_use import _format_fud, add_drug_restart
 
     if strata is None:
         strata = []
@@ -483,7 +506,11 @@ def summarise_drug_restart(
         incident=incident,
     )
 
-    df = enriched.collect() if not isinstance(enriched.data, pl.DataFrame) else enriched.data
+    df = (
+        enriched.collect()
+        if not isinstance(enriched.data, pl.DataFrame)
+        else enriched.data
+    )
 
     # Identify restart columns
     restart_cols = [f"drug_restart_{_format_fud(fud)}" for fud in fud_list]
@@ -494,6 +521,7 @@ def summarise_drug_restart(
         zip(
             settings["cohort_definition_id"].to_list(),
             settings["cohort_name"].to_list(),
+            strict=False,
         )
     )
     cdm_ref = enriched.cdm
@@ -520,7 +548,7 @@ def summarise_drug_restart(
                 )
             )
 
-            for fud, col in zip(fud_list, restart_cols):
+            for fud, col in zip(fud_list, restart_cols, strict=False):
                 if col not in sdf.columns:
                     continue
 
@@ -635,7 +663,11 @@ def summarise_dose_coverage(
     # Apply add_daily_dose to the drug exposure records
     # First, we need the actual drug_exposure data with the dose columns
     enriched = add_daily_dose(cohort, cdm, ingredient_concept_id=ingredient_concept_id)
-    df = enriched.collect() if not isinstance(enriched.data, pl.DataFrame) else enriched.data
+    df = (
+        enriched.collect()
+        if not isinstance(enriched.data, pl.DataFrame)
+        else enriched.data
+    )
 
     # Look up ingredient name from concept table
     try:
@@ -799,6 +831,7 @@ def summarise_proportion_of_patients_covered(
         zip(
             settings["cohort_definition_id"].to_list(),
             settings["cohort_name"].to_list(),
+            strict=False,
         )
     )
 
@@ -847,7 +880,7 @@ def summarise_proportion_of_patients_covered(
             # Simplified: use first entry (consistent with R)
             subject_df = edf.sort(index_date).group_by("subject_id").first()
 
-            n_total = len(subject_df)
+            len(subject_df)
 
             for day in range(follow_up_days + 1):
                 # n_at_risk: subjects with _max_followup >= day
@@ -1022,7 +1055,9 @@ def _add_count_rows(
 ) -> list[dict[str, Any]]:
     """Add 'Number subjects' and 'Number records' rows."""
     n_records = len(df)
-    n_subjects = df["subject_id"].n_unique() if "subject_id" in df.columns else n_records
+    n_subjects = (
+        df["subject_id"].n_unique() if "subject_id" in df.columns else n_records
+    )
 
     base = {
         "result_id": result_id,
@@ -1229,6 +1264,7 @@ def _summarise_categorical_intersect(
         zip(
             settings["cohort_definition_id"].to_list(),
             settings["cohort_name"].to_list(),
+            strict=False,
         )
     )
     cdm = enriched.cdm

@@ -122,10 +122,16 @@ def estimate_incidence(
 
             # Get strata columns if available
             strata_cols = strata or []
-            strata_groups = _get_strata_groups(denom_df, strata_cols, include_overall_strata)
+            strata_groups = _get_strata_groups(
+                denom_df, strata_cols, include_overall_strata
+            )
 
             for strata_name, strata_level, strata_mask in strata_groups:
-                sub_denom = denom_df.filter(strata_mask) if strata_mask is not None else denom_df
+                sub_denom = (
+                    denom_df.filter(strata_mask)
+                    if strata_mask is not None
+                    else denom_df
+                )
 
                 rows = _compute_incidence(
                     denom_df=sub_denom,
@@ -160,7 +166,11 @@ def estimate_incidence(
             )
 
     data = pl.concat(all_rows) if all_rows else _empty_summarised_result()
-    settings = pl.DataFrame(all_settings).cast({"result_id": pl.Int64}) if all_settings else None
+    settings = (
+        pl.DataFrame(all_settings).cast({"result_id": pl.Int64})
+        if all_settings
+        else None
+    )
     return SummarisedResult(data, settings=settings)
 
 
@@ -227,10 +237,16 @@ def estimate_point_prevalence(
             outcome_df = _filter_cohort(outcome_ct, o_id)
 
             strata_cols = strata or []
-            strata_groups = _get_strata_groups(denom_df, strata_cols, include_overall_strata)
+            strata_groups = _get_strata_groups(
+                denom_df, strata_cols, include_overall_strata
+            )
 
             for strata_name, strata_level, strata_mask in strata_groups:
-                sub_denom = denom_df.filter(strata_mask) if strata_mask is not None else denom_df
+                sub_denom = (
+                    denom_df.filter(strata_mask)
+                    if strata_mask is not None
+                    else denom_df
+                )
 
                 rows = _compute_point_prevalence(
                     denom_df=sub_denom,
@@ -260,7 +276,11 @@ def estimate_point_prevalence(
             )
 
     data = pl.concat(all_rows) if all_rows else _empty_summarised_result()
-    settings = pl.DataFrame(all_settings).cast({"result_id": pl.Int64}) if all_settings else None
+    settings = (
+        pl.DataFrame(all_settings).cast({"result_id": pl.Int64})
+        if all_settings
+        else None
+    )
     return SummarisedResult(data, settings=settings)
 
 
@@ -330,10 +350,16 @@ def estimate_period_prevalence(
             outcome_df = _filter_cohort(outcome_ct, o_id)
 
             strata_cols = strata or []
-            strata_groups = _get_strata_groups(denom_df, strata_cols, include_overall_strata)
+            strata_groups = _get_strata_groups(
+                denom_df, strata_cols, include_overall_strata
+            )
 
             for strata_name, strata_level, strata_mask in strata_groups:
-                sub_denom = denom_df.filter(strata_mask) if strata_mask is not None else denom_df
+                sub_denom = (
+                    denom_df.filter(strata_mask)
+                    if strata_mask is not None
+                    else denom_df
+                )
 
                 rows = _compute_period_prevalence(
                     denom_df=sub_denom,
@@ -365,7 +391,11 @@ def estimate_period_prevalence(
             )
 
     data = pl.concat(all_rows) if all_rows else _empty_summarised_result()
-    settings = pl.DataFrame(all_settings).cast({"result_id": pl.Int64}) if all_settings else None
+    settings = (
+        pl.DataFrame(all_settings).cast({"result_id": pl.Int64})
+        if all_settings
+        else None
+    )
     return SummarisedResult(data, settings=settings)
 
 
@@ -420,7 +450,9 @@ def _compute_incidence(
 
     # Apply washout logic
     if not repeated_events or outcome_washout != float("inf"):
-        outcome_events = _apply_washout(outcome_events, outcome_washout, repeated_events)
+        outcome_events = _apply_washout(
+            outcome_events, outcome_washout, repeated_events
+        )
 
     # For each interval, compute person-time and events
     rows: list[dict[str, Any]] = []
@@ -434,14 +466,19 @@ def _compute_incidence(
         # Person-time: overlap of denominator periods with interval
         pt_df = (
             denom_persons.filter(
-                (pl.col("cohort_start_date") <= int_end) & (pl.col("cohort_end_date") >= int_start)
+                (pl.col("cohort_start_date") <= int_end)
+                & (pl.col("cohort_end_date") >= int_start)
             )
             .with_columns(
-                pl.col("cohort_start_date").clip(lower_bound=int_start).alias("_pt_start"),
+                pl.col("cohort_start_date")
+                .clip(lower_bound=int_start)
+                .alias("_pt_start"),
                 pl.col("cohort_end_date").clip(upper_bound=int_end).alias("_pt_end"),
             )
             .with_columns(
-                ((pl.col("_pt_end") - pl.col("_pt_start")).dt.total_days() + 1).alias("_days")
+                ((pl.col("_pt_end") - pl.col("_pt_start")).dt.total_days() + 1).alias(
+                    "_days"
+                )
             )
         )
 
@@ -450,14 +487,16 @@ def _compute_incidence(
         person_years = person_days / 365.25
 
         # Events in this interval
-        at_risk_persons = set(pt_df["person_id"].to_list()) if not pt_df.is_empty() else set()
+        at_risk_persons = (
+            set(pt_df["person_id"].to_list()) if not pt_df.is_empty() else set()
+        )
         events_in_interval = outcome_events.filter(
             (pl.col("outcome_date") >= int_start)
             & (pl.col("outcome_date") <= int_end)
             & pl.col("person_id").is_in(list(at_risk_persons))
         )
         n_events = len(events_in_interval)
-        n_persons_with_event = events_in_interval["person_id"].n_unique() if n_events > 0 else 0
+        (events_in_interval["person_id"].n_unique() if n_events > 0 else 0)
 
         # Incidence rate per 100,000 person-years
         if person_years > 0:
@@ -487,7 +526,9 @@ def _compute_incidence(
                     "group_name": "denominator_cohort_name"
                     + NAME_LEVEL_SEP
                     + "outcome_cohort_name",
-                    "group_level": denom_cohort_name + NAME_LEVEL_SEP + outcome_cohort_name,
+                    "group_level": denom_cohort_name
+                    + NAME_LEVEL_SEP
+                    + outcome_cohort_name,
                     "strata_name": strata_name,
                     "strata_level": strata_level,
                     "variable_name": "incidence",
@@ -547,9 +588,14 @@ def _compute_point_prevalence(
 
         # Denominator: persons observed on the point date
         denom_at_point = denom_persons.filter(
-            (pl.col("cohort_start_date") <= point_date) & (pl.col("cohort_end_date") >= point_date)
+            (pl.col("cohort_start_date") <= point_date)
+            & (pl.col("cohort_end_date") >= point_date)
         )
-        n_denom = denom_at_point["person_id"].n_unique() if not denom_at_point.is_empty() else 0
+        n_denom = (
+            denom_at_point["person_id"].n_unique()
+            if not denom_at_point.is_empty()
+            else 0
+        )
 
         if n_denom == 0:
             continue
@@ -562,7 +608,9 @@ def _compute_point_prevalence(
             & pl.col("person_id").is_in(list(denom_person_ids))
         )
         n_outcome = (
-            outcome_at_point["person_id"].n_unique() if not outcome_at_point.is_empty() else 0
+            outcome_at_point["person_id"].n_unique()
+            if not outcome_at_point.is_empty()
+            else 0
         )
 
         # Prevalence
@@ -585,7 +633,9 @@ def _compute_point_prevalence(
                     "group_name": "denominator_cohort_name"
                     + NAME_LEVEL_SEP
                     + "outcome_cohort_name",
-                    "group_level": denom_cohort_name + NAME_LEVEL_SEP + outcome_cohort_name,
+                    "group_level": denom_cohort_name
+                    + NAME_LEVEL_SEP
+                    + outcome_cohort_name,
                     "strata_name": strata_name,
                     "strata_level": strata_level,
                     "variable_name": "point_prevalence",
@@ -648,17 +698,21 @@ def _compute_period_prevalence(
 
         # Denominator: persons contributing to this interval
         denom_in_interval = denom_persons.filter(
-            (pl.col("cohort_start_date") <= int_end) & (pl.col("cohort_end_date") >= int_start)
+            (pl.col("cohort_start_date") <= int_end)
+            & (pl.col("cohort_end_date") >= int_start)
         )
 
         if full_contribution:
             # Require observation for the full interval
             denom_in_interval = denom_in_interval.filter(
-                (pl.col("cohort_start_date") <= int_start) & (pl.col("cohort_end_date") >= int_end)
+                (pl.col("cohort_start_date") <= int_start)
+                & (pl.col("cohort_end_date") >= int_end)
             )
 
         n_denom = (
-            denom_in_interval["person_id"].n_unique() if not denom_in_interval.is_empty() else 0
+            denom_in_interval["person_id"].n_unique()
+            if not denom_in_interval.is_empty()
+            else 0
         )
 
         if n_denom == 0:
@@ -696,7 +750,9 @@ def _compute_period_prevalence(
                     "group_name": "denominator_cohort_name"
                     + NAME_LEVEL_SEP
                     + "outcome_cohort_name",
-                    "group_level": denom_cohort_name + NAME_LEVEL_SEP + outcome_cohort_name,
+                    "group_level": denom_cohort_name
+                    + NAME_LEVEL_SEP
+                    + outcome_cohort_name,
                     "strata_name": strata_name,
                     "strata_level": strata_level,
                     "variable_name": "period_prevalence",
@@ -806,7 +862,9 @@ def _interval_end(start: datetime.date, interval: str) -> datetime.date:
     if interval == "months":
         if start.month == 12:
             return datetime.date(start.year, 12, 31)
-        return datetime.date(start.year, start.month + 1, 1) - datetime.timedelta(days=1)
+        return datetime.date(start.year, start.month + 1, 1) - datetime.timedelta(
+            days=1
+        )
     if interval == "weeks":
         return start + datetime.timedelta(days=6)
     return start
@@ -850,7 +908,9 @@ def _interval_label(start: datetime.date, interval: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _filter_complete_intervals(intervals: pl.DataFrame, denom_df: pl.DataFrame) -> pl.DataFrame:
+def _filter_complete_intervals(
+    intervals: pl.DataFrame, denom_df: pl.DataFrame
+) -> pl.DataFrame:
     """Keep only intervals fully captured by the database observation."""
     db_min = denom_df.select(pl.col("cohort_start_date").min()).item()
     db_max = denom_df.select(pl.col("cohort_end_date").max()).item()
@@ -982,7 +1042,9 @@ def _get_time_point(
 # ---------------------------------------------------------------------------
 
 
-def _poisson_ci(events: int, person_years: float, alpha: float = 0.05) -> tuple[float, float]:
+def _poisson_ci(
+    events: int, person_years: float, alpha: float = 0.05
+) -> tuple[float, float]:
     """Exact Poisson confidence interval for incidence rate per 100,000 PY.
 
     Uses the chi-squared method:
@@ -998,7 +1060,9 @@ def _poisson_ci(events: int, person_years: float, alpha: float = 0.05) -> tuple[
         return lower, upper
 
     lower = float(chi2.ppf(alpha / 2, 2 * events)) / (2 * person_years) * 100_000
-    upper = float(chi2.ppf(1 - alpha / 2, 2 * (events + 1))) / (2 * person_years) * 100_000
+    upper = (
+        float(chi2.ppf(1 - alpha / 2, 2 * (events + 1))) / (2 * person_years) * 100_000
+    )
     return lower, upper
 
 
@@ -1144,5 +1208,8 @@ def _empty_summarised_result() -> pl.DataFrame:
     from omopy.generics.summarised_result import SUMMARISED_RESULT_COLUMNS
 
     return pl.DataFrame(
-        schema={c: pl.Utf8 if c != "result_id" else pl.Int64 for c in SUMMARISED_RESULT_COLUMNS}
+        schema={
+            c: pl.Utf8 if c != "result_id" else pl.Int64
+            for c in SUMMARISED_RESULT_COLUMNS
+        }
     )

@@ -15,12 +15,9 @@ Tests cover:
 
 from __future__ import annotations
 
-import datetime
-
 import polars as pl
 import pytest
 
-import omopy
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.cdm_table import CdmTable
 from omopy.generics.cohort_table import CohortTable
@@ -28,7 +25,6 @@ from omopy.generics.summarised_result import (
     SUMMARISED_RESULT_COLUMNS,
     SummarisedResult,
 )
-
 
 # ===================================================================
 # Fixtures
@@ -421,7 +417,8 @@ class TestSingleEventSurvival:
     def test_survival_monotonically_decreasing(self, single_event_result):
         data = single_event_result.data
         surv_rows = data.filter(
-            (pl.col("estimate_name") == "estimate") & (pl.col("strata_name") == "overall")
+            (pl.col("estimate_name") == "estimate")
+            & (pl.col("strata_name") == "overall")
         )
         if len(surv_rows) > 1:
             vals = surv_rows["estimate_value"].cast(pl.Float64).to_list()
@@ -550,7 +547,8 @@ class TestCompetingRiskSurvival:
     def test_cif_monotonically_increasing(self, competing_risk_result):
         data = competing_risk_result.data
         cif_rows = data.filter(
-            (pl.col("estimate_name") == "estimate") & (pl.col("strata_name") == "overall")
+            (pl.col("estimate_name") == "estimate")
+            & (pl.col("strata_name") == "overall")
         )
         if len(cif_rows) > 1:
             vals = cif_rows["estimate_value"].cast(pl.Float64).to_list()
@@ -876,7 +874,6 @@ class TestFullPipeline:
         from omopy.survival import (
             as_survival_result,
             estimate_single_event_survival,
-            table_survival,
         )
 
         result = estimate_single_event_survival(

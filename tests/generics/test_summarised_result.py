@@ -3,13 +3,11 @@
 import polars as pl
 import pytest
 
-from omopy.generics._types import NAME_LEVEL_SEP, OVERALL
+from omopy.generics._types import OVERALL
 from omopy.generics.summarised_result import (
-    SETTINGS_REQUIRED_COLUMNS,
     SUMMARISED_RESULT_COLUMNS,
     SummarisedResult,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -170,7 +168,8 @@ class TestSuppression:
         data = _sample_result_data(6)
         sr = SummarisedResult(data, settings=_sample_settings())
         # Data has "number subjects" rows with values "0", "10", "20"
-        # With min_cell_count=15: "10" matches 0 < 10 < 15, so row idx=1 triggers suppression.
+        # With min_cell_count=15: "10" matches 0 < 10 < 15,
+        # so row idx=1 triggers suppression.
         # All "number subjects" rows with that combo get suppressed.
         suppressed = sr.suppress(min_cell_count=15)
         vals = suppressed.data["estimate_value"].to_list()

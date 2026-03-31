@@ -18,10 +18,7 @@ from typing import Any, Literal
 import polars as pl
 
 from omopy.generics._types import NAME_LEVEL_SEP, OVERALL
-from omopy.generics.cdm_reference import CdmReference
-from omopy.generics.cdm_table import CdmTable
 from omopy.generics.cohort_table import CohortTable
-from omopy.generics.codelist import Codelist
 from omopy.generics.summarised_result import SummarisedResult
 
 # Local type alias for window tuples
@@ -71,12 +68,12 @@ _DATE_DEMOGRAPHICS = frozenset(
 
 __all__ = [
     "summarise_characteristics",
-    "summarise_cohort_count",
     "summarise_cohort_attrition",
-    "summarise_cohort_timing",
-    "summarise_cohort_overlap",
-    "summarise_large_scale_characteristics",
     "summarise_cohort_codelist",
+    "summarise_cohort_count",
+    "summarise_cohort_overlap",
+    "summarise_cohort_timing",
+    "summarise_large_scale_characteristics",
 ]
 
 
@@ -166,7 +163,9 @@ def _compute_estimates(
                     val = non_null.median()
                     results.append(("median", "numeric", f"{val:.2f}"))
             else:
-                results.append(("median", "numeric" if var_type != "date" else "date", "NA"))
+                results.append(
+                    ("median", "numeric" if var_type != "date" else "date", "NA")
+                )
         elif est == "q25":
             if n > 0:
                 if var_type == "date":
@@ -176,7 +175,9 @@ def _compute_estimates(
                     val = non_null.quantile(0.25, interpolation="nearest")
                     results.append(("q25", "numeric", f"{val:.2f}"))
             else:
-                results.append(("q25", "numeric" if var_type != "date" else "date", "NA"))
+                results.append(
+                    ("q25", "numeric" if var_type != "date" else "date", "NA")
+                )
         elif est == "q75":
             if n > 0:
                 if var_type == "date":
@@ -186,7 +187,9 @@ def _compute_estimates(
                     val = non_null.quantile(0.75, interpolation="nearest")
                     results.append(("q75", "numeric", f"{val:.2f}"))
             else:
-                results.append(("q75", "numeric" if var_type != "date" else "date", "NA"))
+                results.append(
+                    ("q75", "numeric" if var_type != "date" else "date", "NA")
+                )
         elif est == "min":
             if n > 0:
                 val = non_null.min()
@@ -273,7 +276,9 @@ def _summarise_variables(
         var_type = _classify_variable(df, var)
 
         # Human-readable variable name
-        var_display = var.replace("_", " ").capitalize() if var not in _DATE_DEMOGRAPHICS else var
+        var_display = (
+            var.replace("_", " ").capitalize() if var not in _DATE_DEMOGRAPHICS else var
+        )
 
         # Override estimates if provided
         custom_ests = estimates_override.get(var) if estimates_override else None
@@ -499,13 +504,16 @@ def summarise_characteristics(
         days in cohort).
     age_group
         Age grouping specification, forwarded to ``add_demographics()``.
-    table_intersect_flag, table_intersect_count, table_intersect_date, table_intersect_days
+    table_intersect_flag, table_intersect_count,
+    table_intersect_date, table_intersect_days
         Lists of keyword-argument dicts forwarded to the corresponding
         ``omopy.profiles.add_table_intersect_*()`` function.
-    cohort_intersect_flag, cohort_intersect_count, cohort_intersect_date, cohort_intersect_days
+    cohort_intersect_flag, cohort_intersect_count,
+    cohort_intersect_date, cohort_intersect_days
         Lists of keyword-argument dicts forwarded to the corresponding
         ``omopy.profiles.add_cohort_intersect_*()`` function.
-    concept_intersect_flag, concept_intersect_count, concept_intersect_date, concept_intersect_days
+    concept_intersect_flag, concept_intersect_count,
+    concept_intersect_date, concept_intersect_days
         Lists of keyword-argument dicts forwarded to the corresponding
         ``omopy.profiles.add_concept_intersect_*()`` function.
     other_variables
@@ -520,19 +528,19 @@ def summarise_characteristics(
         With ``result_type="summarise_characteristics"``.
     """
     from omopy.profiles import (
-        add_demographics,
-        add_table_intersect_flag,
-        add_table_intersect_count,
-        add_table_intersect_date,
-        add_table_intersect_days,
-        add_cohort_intersect_flag,
         add_cohort_intersect_count,
         add_cohort_intersect_date,
         add_cohort_intersect_days,
-        add_concept_intersect_flag,
+        add_cohort_intersect_flag,
         add_concept_intersect_count,
         add_concept_intersect_date,
         add_concept_intersect_days,
+        add_concept_intersect_flag,
+        add_demographics,
+        add_table_intersect_count,
+        add_table_intersect_date,
+        add_table_intersect_days,
+        add_table_intersect_flag,
     )
     from omopy.profiles._utilities import filter_cohort_id
 
@@ -559,8 +567,10 @@ def summarise_characteristics(
         demo_kwargs: dict[str, Any] = {
             "age": demographics and "age" not in existing_cols,
             "sex": demographics and "sex" not in existing_cols,
-            "prior_observation": demographics and "prior_observation" not in existing_cols,
-            "future_observation": demographics and "future_observation" not in existing_cols,
+            "prior_observation": demographics
+            and "prior_observation" not in existing_cols,
+            "future_observation": demographics
+            and "future_observation" not in existing_cols,
         }
         if age_group is not None:
             demo_kwargs["age"] = True
@@ -596,15 +606,27 @@ def summarise_characteristics(
     cdm_name = cdm.cdm_name if cdm else "unknown"
 
     # Step 4: Compute days_in_cohort and days_to_next_record
-    if demographics and "cohort_start_date" in df.columns and "cohort_end_date" in df.columns:
+    if (
+        demographics
+        and "cohort_start_date" in df.columns
+        and "cohort_end_date" in df.columns
+    ):
         df = df.with_columns(
-            ((pl.col("cohort_end_date") - pl.col("cohort_start_date")).dt.total_days() + 1).alias(
-                "days_in_cohort"
-            )
+            (
+                (
+                    pl.col("cohort_end_date") - pl.col("cohort_start_date")
+                ).dt.total_days()
+                + 1
+            ).alias("days_in_cohort")
         )
 
     # Identify variables to summarise
-    skip_cols = {"cohort_definition_id", "subject_id", "cohort_start_date", "cohort_end_date"}
+    skip_cols = {
+        "cohort_definition_id",
+        "subject_id",
+        "cohort_start_date",
+        "cohort_end_date",
+    }
     variables = [c for c in df.columns if c not in skip_cols]
 
     # Add other_variables
@@ -617,7 +639,7 @@ def summarise_characteristics(
     all_rows: list[dict[str, Any]] = []
     result_id = 1
 
-    for cid, cname in zip(cohort_ids, cohort_names):
+    for cid, cname in zip(cohort_ids, cohort_names, strict=False):
         cohort_df = df.filter(pl.col("cohort_definition_id") == cid)
 
         strata_groups = _resolve_strata(cohort_df, strata)
@@ -748,6 +770,7 @@ def summarise_cohort_attrition(
         zip(
             settings_meta["cohort_definition_id"].to_list(),
             settings_meta["cohort_name"].to_list(),
+            strict=False,
         )
     )
 
@@ -774,7 +797,12 @@ def summarise_cohort_attrition(
             "additional_level": reason_id,
         }
 
-        for var in ("number_records", "number_subjects", "excluded_records", "excluded_subjects"):
+        for var in (
+            "number_records",
+            "number_subjects",
+            "excluded_records",
+            "excluded_subjects",
+        ):
             val = row.get(var, 0)
             if val is None:
                 val = 0
@@ -849,12 +877,17 @@ def summarise_cohort_timing(
         zip(
             settings_meta["cohort_definition_id"].to_list(),
             settings_meta["cohort_name"].to_list(),
+            strict=False,
         )
     )
 
     # Optionally restrict to first entry
     if restrict_to_first_entry:
-        df = df.sort("cohort_start_date").group_by(["cohort_definition_id", "subject_id"]).first()
+        df = (
+            df.sort("cohort_start_date")
+            .group_by(["cohort_definition_id", "subject_id"])
+            .first()
+        )
 
     # Self-join on subject_id
     left = df.select(
@@ -925,7 +958,9 @@ def summarise_cohort_timing(
         )
 
         strata_groups = (
-            _resolve_strata(pair_df, strata) if strata_flat else [(OVERALL, OVERALL, pair_df)]
+            _resolve_strata(pair_df, strata)
+            if strata_flat
+            else [(OVERALL, OVERALL, pair_df)]
         )
 
         for sname, slevel, sdf in strata_groups:
@@ -1041,6 +1076,7 @@ def summarise_cohort_overlap(
         zip(
             settings_meta["cohort_definition_id"].to_list(),
             settings_meta["cohort_name"].to_list(),
+            strict=False,
         )
     )
 
@@ -1078,7 +1114,12 @@ def summarise_cohort_overlap(
                     s = [s]
                 sname = NAME_LEVEL_SEP.join(s)
                 # Get unique strata levels
-                all_keys = ref_df.select(s).unique().vstack(comp_df.select(s).unique()).unique()
+                all_keys = (
+                    ref_df.select(s)
+                    .unique()
+                    .vstack(comp_df.select(s).unique())
+                    .unique()
+                )
                 for key_row in all_keys.iter_rows():
                     if not isinstance(key_row, tuple):
                         key_row = (key_row,)
@@ -1086,7 +1127,7 @@ def summarise_cohort_overlap(
                     # Filter both sides
                     f_ref = ref_df
                     f_comp = comp_df
-                    for col, val in zip(s, key_row):
+                    for col, val in zip(s, key_row, strict=False):
                         f_ref = f_ref.filter(pl.col(col) == val)
                         f_comp = f_comp.filter(pl.col(col) == val)
                     strata_groups_list.append((sname, slevel, f_ref, f_comp))
@@ -1206,8 +1247,8 @@ def summarise_large_scale_characteristics(
     SummarisedResult
         With ``result_type="summarise_large_scale_characteristics"``.
     """
+    from omopy.profiles._demographics import _resolve_cdm
     from omopy.profiles._utilities import filter_cohort_id
-    from omopy.profiles._demographics import _get_ibis_table, _resolve_cdm
 
     if strata is None:
         strata = []
@@ -1235,6 +1276,7 @@ def summarise_large_scale_characteristics(
         zip(
             settings_meta["cohort_definition_id"].to_list(),
             settings_meta["cohort_name"].to_list(),
+            strict=False,
         )
     )
 
@@ -1256,16 +1298,32 @@ def summarise_large_scale_characteristics(
     next_result_id = 1
 
     # Standard domain-table mapping
-    _DOMAIN_DATE_COLS: dict[str, tuple[str, str, str]] = {
+    domain_date_cols: dict[str, tuple[str, str, str]] = {
         "condition_occurrence": (
             "condition_concept_id",
             "condition_start_date",
             "condition_end_date",
         ),
-        "drug_exposure": ("drug_concept_id", "drug_exposure_start_date", "drug_exposure_end_date"),
-        "procedure_occurrence": ("procedure_concept_id", "procedure_date", "procedure_date"),
-        "measurement": ("measurement_concept_id", "measurement_date", "measurement_date"),
-        "observation": ("observation_concept_id", "observation_date", "observation_date"),
+        "drug_exposure": (
+            "drug_concept_id",
+            "drug_exposure_start_date",
+            "drug_exposure_end_date",
+        ),
+        "procedure_occurrence": (
+            "procedure_concept_id",
+            "procedure_date",
+            "procedure_date",
+        ),
+        "measurement": (
+            "measurement_concept_id",
+            "measurement_date",
+            "measurement_date",
+        ),
+        "observation": (
+            "observation_concept_id",
+            "observation_date",
+            "observation_date",
+        ),
         "visit_occurrence": ("visit_concept_id", "visit_start_date", "visit_end_date"),
         "device_exposure": (
             "device_concept_id",
@@ -1294,10 +1352,10 @@ def summarise_large_scale_characteristics(
         """Process a single domain table for LSC."""
         rows: list[dict[str, Any]] = []
 
-        if table_name not in _DOMAIN_DATE_COLS:
+        if table_name not in domain_date_cols:
             return rows
 
-        concept_col, start_col, end_col = _DOMAIN_DATE_COLS[table_name]
+        concept_col, start_col, end_col = domain_date_cols[table_name]
 
         try:
             domain_df = cdm[table_name].collect()
@@ -1331,6 +1389,7 @@ def summarise_large_scale_characteristics(
             zip(
                 concept_df["concept_id"].to_list(),
                 concept_df["concept_name"].to_list(),
+                strict=False,
             )
         )
 
@@ -1397,7 +1456,9 @@ def summarise_large_scale_characteristics(
                     pct = freq * 100.0
 
                     strata_groups = (
-                        _resolve_strata(c_df, strata) if strata else [(OVERALL, OVERALL, c_df)]
+                        _resolve_strata(c_df, strata)
+                        if strata
+                        else [(OVERALL, OVERALL, c_df)]
                     )
 
                     for sname, slevel, _ in strata_groups:
@@ -1528,6 +1589,7 @@ def summarise_cohort_codelist(
         zip(
             settings_meta["cohort_definition_id"].to_list(),
             settings_meta["cohort_name"].to_list(),
+            strict=False,
         )
     )
 
@@ -1540,6 +1602,7 @@ def summarise_cohort_codelist(
                 zip(
                     concept_df["concept_id"].to_list(),
                     concept_df["concept_name"].to_list(),
+                    strict=False,
                 )
             )
         except Exception:
@@ -1592,7 +1655,9 @@ def _empty_result(result_type: str) -> SummarisedResult:
     """Create an empty SummarisedResult with the correct schema."""
     from omopy.generics.summarised_result import SUMMARISED_RESULT_COLUMNS
 
-    data = pl.DataFrame({col: pl.Series([], dtype=pl.Utf8) for col in SUMMARISED_RESULT_COLUMNS})
+    data = pl.DataFrame(
+        {col: pl.Series([], dtype=pl.Utf8) for col in SUMMARISED_RESULT_COLUMNS}
+    )
     # result_id needs to be numeric
     data = data.with_columns(pl.col("result_id").cast(pl.Int64))
     settings = _make_settings(1, result_type)
@@ -1626,14 +1691,8 @@ def _flatten_strata(strata: list[str | list[str]]) -> list[str]:
 def _window_name(window: Window) -> str:
     """Convert a window tuple to a human-readable string."""
     lower, upper = window
-    if lower == -math.inf:
-        lower_str = "-Inf"
-    else:
-        lower_str = str(int(lower))
-    if upper == math.inf:
-        upper_str = "Inf"
-    else:
-        upper_str = str(int(upper))
+    lower_str = "-Inf" if lower == -math.inf else str(int(lower))
+    upper_str = "Inf" if upper == math.inf else str(int(upper))
     return f"{lower_str} to {upper_str}"
 
 
@@ -1667,7 +1726,8 @@ def _filter_episode_window(
     upper: float,
 ) -> pl.DataFrame:
     """Filter episodes that overlap with [lower, upper] window."""
-    # An episode [start, end] overlaps [lower, upper] iff start <= upper AND end >= lower
+    # An episode [start, end] overlaps [lower, upper]
+    # iff start <= upper AND end >= lower
     exprs = []
     if upper != math.inf:
         exprs.append(pl.col(start_col) <= upper)

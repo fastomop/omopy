@@ -19,7 +19,6 @@ from omopy.testing import (
     validate_patient_data,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -71,7 +70,11 @@ def _cohort_df() -> pl.DataFrame:
             "cohort_definition_id": [1, 1, 2],
             "subject_id": [1, 2, 1],
             "cohort_start_date": [date(2021, 1, 1), date(2021, 6, 1), date(2022, 1, 1)],
-            "cohort_end_date": [date(2021, 12, 31), date(2021, 12, 31), date(2022, 6, 30)],
+            "cohort_end_date": [
+                date(2021, 12, 31),
+                date(2021, 12, 31),
+                date(2022, 6, 30),
+            ],
         }
     )
 
@@ -164,7 +167,9 @@ class TestValidatePatientData:
 
     def test_extra_columns_accepted(self):
         """Extra columns beyond the spec should not cause errors."""
-        df = _minimal_person_df().with_columns(pl.lit("extra_val").alias("my_custom_col"))
+        df = _minimal_person_df().with_columns(
+            pl.lit("extra_val").alias("my_custom_col")
+        )
         data = {"person": df}
         errors = validate_patient_data(data, cdm_version="5.4")
         assert errors == []
@@ -276,7 +281,7 @@ class TestReadPatients:
     def test_read_empty_csv_dir(self, tmp_path: Path):
         empty_dir = tmp_path / "empty"
         empty_dir.mkdir()
-        with pytest.raises(FileNotFoundError, match="No .csv files"):
+        with pytest.raises(FileNotFoundError, match=r"No \.csv files"):
             read_patients(empty_dir)
 
     def test_read_invalid_data_raises(self, tmp_path: Path):
@@ -535,7 +540,12 @@ class TestGenerateTestTables:
     def test_multiple_tables(self, tmp_path: Path):
         import openpyxl
 
-        tables = ["person", "observation_period", "condition_occurrence", "drug_exposure"]
+        tables = [
+            "person",
+            "observation_period",
+            "condition_occurrence",
+            "drug_exposure",
+        ]
         path = generate_test_tables(tables, output_path=tmp_path)
         wb = openpyxl.load_workbook(path, read_only=True)
         assert set(wb.sheetnames) == set(tables)
@@ -628,7 +638,10 @@ class TestJsonRoundTrip:
         cdm = patients_cdm(json_path)
         loaded = cdm["person"].collect()
         assert loaded["person_id"].to_list() == original["person_id"].to_list()
-        assert loaded["gender_concept_id"].to_list() == original["gender_concept_id"].to_list()
+        assert (
+            loaded["gender_concept_id"].to_list()
+            == original["gender_concept_id"].to_list()
+        )
 
     def test_create_then_read_json(self, tmp_path: Path):
         """Write a JSON, read it back as raw Python, verify structure."""

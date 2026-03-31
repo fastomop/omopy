@@ -15,12 +15,12 @@ from omopy.generics._types import NAME_LEVEL_SEP, OVERALL
 from omopy.generics.summarised_result import SummarisedResult
 
 __all__ = [
+    "table_dose_coverage",
+    "table_drug_restart",
     "table_drug_utilisation",
     "table_indication",
-    "table_treatment",
-    "table_drug_restart",
-    "table_dose_coverage",
     "table_proportion_of_patients_covered",
+    "table_treatment",
 ]
 
 
@@ -55,7 +55,9 @@ def _filter_result_type(
 ) -> SummarisedResult:
     """Filter a SummarisedResult to rows matching the given result_type."""
     settings = result.settings
-    matching_ids = settings.filter(pl.col("result_type") == result_type)["result_id"].to_list()
+    matching_ids = settings.filter(pl.col("result_type") == result_type)[
+        "result_id"
+    ].to_list()
 
     if not matching_ids:
         return result

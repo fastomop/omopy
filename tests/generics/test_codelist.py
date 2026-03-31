@@ -5,7 +5,6 @@ from pydantic import ValidationError
 
 from omopy.generics.codelist import Codelist, ConceptEntry, ConceptSetExpression
 
-
 # ---------------------------------------------------------------------------
 # ConceptEntry
 # ---------------------------------------------------------------------------

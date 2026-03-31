@@ -15,35 +15,32 @@ Tests are organized into sections:
 from __future__ import annotations
 
 import datetime
-from typing import Any
 
 import polars as pl
 import pytest
 
+from omopy.generics.summarised_result import SummarisedResult
 from omopy.pregnancy._concepts import (
     ESD_CONCEPTS,
-    ESD_CONCEPT_IDS,
     GR3M_MONTH_RANGES,
-    HIP_CONCEPTS,
     HIP_CONCEPT_CATEGORIES,
     HIP_CONCEPT_IDS,
+    HIP_CONCEPTS,
     MATCHO_OUTCOME_LIMITS,
     MATCHO_TERM_DURATIONS,
     OUTCOME_CATEGORIES,
-    PPS_CONCEPTS,
     PPS_CONCEPT_IDS,
+    PPS_CONCEPTS,
 )
-from omopy.pregnancy._hip import _run_hip
-from omopy.pregnancy._pps import _run_pps
-from omopy.pregnancy._merge import _merge_hipps
 from omopy.pregnancy._esd import _run_esd
-from omopy.pregnancy._identify import PregnancyResult, identify_pregnancies
+from omopy.pregnancy._hip import _run_hip
+from omopy.pregnancy._identify import PregnancyResult
+from omopy.pregnancy._merge import _merge_hipps
 from omopy.pregnancy._mock import mock_pregnancy_cdm, validate_episodes
+from omopy.pregnancy._plot import plot_pregnancies
+from omopy.pregnancy._pps import _run_pps
 from omopy.pregnancy._summarise import summarise_pregnancies
 from omopy.pregnancy._table import table_pregnancies
-from omopy.pregnancy._plot import plot_pregnancies
-from omopy.generics.summarised_result import SummarisedResult
-
 
 # ---------------------------------------------------------------------------
 # Helpers for building test DataFrames
@@ -212,7 +209,7 @@ class TestPpsConcepts:
         assert len(PPS_CONCEPTS) >= 10
 
     def test_each_has_min_max_month(self):
-        for cid, info in PPS_CONCEPTS.items():
+        for _cid, info in PPS_CONCEPTS.items():
             assert "min_month" in info
             assert "max_month" in info
             assert info["min_month"] <= info["max_month"]
@@ -235,7 +232,7 @@ class TestEsdConcepts:
 
     def test_gr3m_month_ranges(self):
         assert len(GR3M_MONTH_RANGES) >= 2
-        for cid, (mn, mx) in GR3M_MONTH_RANGES.items():
+        for _cid, (mn, mx) in GR3M_MONTH_RANGES.items():
             assert mn < mx
 
 
@@ -508,7 +505,9 @@ class TestRunHip:
         )
         lb_result = _run_hip(lb_records)
         ect_result = _run_hip(ect_records)
-        lb_duration = (lb_result["episode_end_date"][0] - lb_result["episode_start_date"][0]).days
+        lb_duration = (
+            lb_result["episode_end_date"][0] - lb_result["episode_start_date"][0]
+        ).days
         ect_duration = (
             ect_result["episode_end_date"][0] - ect_result["episode_start_date"][0]
         ).days
@@ -894,8 +893,14 @@ class TestMergeHipps:
                 "person_id": [1, 2],
                 "episode_id": [1, 2],
                 "category": ["LB", "SA"],
-                "episode_start_date": [datetime.date(2019, 12, 1), datetime.date(2020, 1, 1)],
-                "episode_end_date": [datetime.date(2020, 9, 1), datetime.date(2020, 5, 1)],
+                "episode_start_date": [
+                    datetime.date(2019, 12, 1),
+                    datetime.date(2020, 1, 1),
+                ],
+                "episode_end_date": [
+                    datetime.date(2020, 9, 1),
+                    datetime.date(2020, 5, 1),
+                ],
                 "outcome_date": [datetime.date(2020, 9, 1), datetime.date(2020, 5, 1)],
                 "outcome_concept_id": [4014295, 4199459],
             }
@@ -1230,8 +1235,14 @@ class TestValidateEpisodes:
         df = pl.DataFrame(
             {
                 "person_id": [1, 2],
-                "episode_start_date": [datetime.date(2020, 1, 1), datetime.date(2020, 6, 1)],
-                "episode_end_date": [datetime.date(2020, 5, 1), datetime.date(2020, 9, 1)],
+                "episode_start_date": [
+                    datetime.date(2020, 1, 1),
+                    datetime.date(2020, 6, 1),
+                ],
+                "episode_end_date": [
+                    datetime.date(2020, 5, 1),
+                    datetime.date(2020, 9, 1),
+                ],
             }
         )
         result = validate_episodes(df)
@@ -1247,7 +1258,9 @@ class TestValidateEpisodes:
             }
         )
         result = validate_episodes(df)
-        bad = result.filter((pl.col("check") == "start_before_end") & (pl.col("n_violations") > 0))
+        bad = result.filter(
+            (pl.col("check") == "start_before_end") & (pl.col("n_violations") > 0)
+        )
         assert bad.height == 1
 
     def test_max_duration_exceeded(self):
@@ -1259,7 +1272,9 @@ class TestValidateEpisodes:
             }
         )
         result = validate_episodes(df, max_days=365)
-        bad = result.filter((pl.col("check") == "max_duration") & (pl.col("n_violations") > 0))
+        bad = result.filter(
+            (pl.col("check") == "max_duration") & (pl.col("n_violations") > 0)
+        )
         assert bad.height == 1
 
     def test_overlap_detected(self):
@@ -1277,7 +1292,9 @@ class TestValidateEpisodes:
             }
         )
         result = validate_episodes(df)
-        bad = result.filter((pl.col("check") == "no_overlaps") & (pl.col("n_violations") > 0))
+        bad = result.filter(
+            (pl.col("check") == "no_overlaps") & (pl.col("n_violations") > 0)
+        )
         assert bad.height == 1
 
 
@@ -1350,7 +1367,8 @@ class TestSummarisePregnancies:
         result = _make_pregnancy_result()
         sr = summarise_pregnancies(result)
         count_rows = sr.data.filter(
-            (pl.col("variable_name") == "Number episodes") & (pl.col("estimate_name") == "count")
+            (pl.col("variable_name") == "Number episodes")
+            & (pl.col("estimate_name") == "count")
         )
         assert count_rows.height >= 1
         assert count_rows["estimate_value"][0] == "3"
@@ -1359,7 +1377,8 @@ class TestSummarisePregnancies:
         result = _make_pregnancy_result()
         sr = summarise_pregnancies(result)
         count_rows = sr.data.filter(
-            (pl.col("variable_name") == "Number persons") & (pl.col("estimate_name") == "count")
+            (pl.col("variable_name") == "Number persons")
+            & (pl.col("estimate_name") == "count")
         )
         assert count_rows.height >= 1
         assert count_rows["estimate_value"][0] == "2"
@@ -1665,10 +1684,14 @@ class TestEdgeCases:
         )
         # With max_days=100, this 182-day episode should be flagged
         result = validate_episodes(df, max_days=100)
-        bad = result.filter((pl.col("check") == "max_duration") & (pl.col("n_violations") > 0))
+        bad = result.filter(
+            (pl.col("check") == "max_duration") & (pl.col("n_violations") > 0)
+        )
         assert bad.height == 1
 
         # With max_days=200, it should be fine
         result2 = validate_episodes(df, max_days=200)
-        bad2 = result2.filter((pl.col("check") == "max_duration") & (pl.col("n_violations") > 0))
+        bad2 = result2.filter(
+            (pl.col("check") == "max_duration") & (pl.col("n_violations") > 0)
+        )
         assert bad2.height == 0

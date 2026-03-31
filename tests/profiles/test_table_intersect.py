@@ -8,7 +8,6 @@ visit_occurrence=599, observation_period=27.
 from __future__ import annotations
 
 import polars as pl
-import pytest
 
 from omopy.profiles import (
     add_table_intersect_count,
@@ -128,7 +127,10 @@ class TestAddTableIntersectDate:
         # Non-null entries should be dates >= obs start
         dates = df.filter(pl.col("condition_occurrence_0_to_inf").is_not_null())
         if len(dates) > 0:
-            assert dates["condition_occurrence_0_to_inf"].dtype in (pl.Date, pl.Datetime)
+            assert dates["condition_occurrence_0_to_inf"].dtype in (
+                pl.Date,
+                pl.Datetime,
+            )
 
 
 class TestAddTableIntersectDays:

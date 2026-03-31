@@ -8,7 +8,6 @@ from PatientProfiles.
 from __future__ import annotations
 
 import ibis
-import ibis.expr.types as ir
 
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.cdm_table import CdmTable
@@ -53,7 +52,7 @@ def add_cohort_name(
 
     cases = [
         (tbl["cohort_definition_id"].cast("int64") == ibis.literal(int(cid)), name)
-        for cid, name in zip(ids, names)
+        for cid, name in zip(ids, names, strict=False)
     ]
 
     tbl = tbl.mutate(cohort_name=ibis.cases(*cases, else_=ibis.null().cast("string")))
@@ -105,7 +104,9 @@ def add_concept_name(
         )
 
         # Left join
-        tbl = tbl.left_join(concept_lookup, tbl[col].cast("int64") == concept_lookup["_cid"])
+        tbl = tbl.left_join(
+            concept_lookup, tbl[col].cast("int64") == concept_lookup["_cid"]
+        )
         tbl = tbl.mutate(**{out_name: tbl["_cname"]})
         # Drop helper columns
         keep = [c for c in tbl.columns if c not in ("_cid", "_cname")]
@@ -177,7 +178,11 @@ def filter_in_observation(
 
     result = (
         tbl.join(obs_sub, tbl[pid] == obs_sub["_fio_pid"])
-        .filter(lambda t: (t["_fio_start"] <= t[index_date]) & (t[index_date] <= t["_fio_end"]))
+        .filter(
+            lambda t: (
+                (t["_fio_start"] <= t[index_date]) & (t[index_date] <= t["_fio_end"])
+            )
+        )
         .select(*orig_cols)
     )
 

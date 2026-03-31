@@ -10,17 +10,17 @@ This is the Python equivalent of R's ``generateConceptCohortSet()``.
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any, Literal
 
 import ibis
 import ibis.expr.types as ir
 import polars as pl
 
+from omopy.connector.db_source import DbSource
 from omopy.generics.cdm_reference import CdmReference
-from omopy.generics.cdm_table import CdmTable
 from omopy.generics.codelist import Codelist, ConceptSetExpression
 from omopy.generics.cohort_table import CohortTable
-from omopy.connector.db_source import DbSource
 
 __all__ = ["generate_concept_cohort_set"]
 
@@ -139,7 +139,8 @@ def generate_concept_cohort_set(
         raise TypeError(msg)
     con = source.connection
 
-    # Build concept lookup table (cohort_definition_id, concept_id, include_descendants, is_excluded)
+    # Build concept lookup table
+    # (cohort_definition_id, concept_id, include_descendants, is_excluded)
     concept_rows = _build_concept_rows(concept_defs)
 
     # Upload as temp table to the database
@@ -156,13 +157,17 @@ def generate_concept_cohort_set(
 
         if not domains:
             # No matching concepts — return empty cohort
-            return _empty_cohort(cdm, name, concept_defs, limit, required_observation, end)
+            return _empty_cohort(
+                cdm, name, concept_defs, limit, required_observation, end
+            )
 
         # Look up events from each domain table
         events = _gather_domain_events(cdm, concepts_tbl, domains, con, source)
 
         if events is None:
-            return _empty_cohort(cdm, name, concept_defs, limit, required_observation, end)
+            return _empty_cohort(
+                cdm, name, concept_defs, limit, required_observation, end
+            )
 
         # Apply observation period constraints
         cohort_tbl = _apply_observation_constraints(
@@ -205,7 +210,9 @@ def _normalize_concept_set(
 
     if isinstance(concept_set, ConceptSetExpression):
         for idx, (cname, entries) in enumerate(concept_set.items(), start=1):
-            concepts = [(e.concept_id, e.include_descendants, e.is_excluded) for e in entries]
+            concepts = [
+                (e.concept_id, e.include_descendants, e.is_excluded) for e in entries
+            ]
             result.append(
                 {
                     "cohort_definition_id": idx,
@@ -234,7 +241,10 @@ def _normalize_concept_set(
                 }
             )
     else:
-        msg = f"concept_set must be Codelist, ConceptSetExpression, or dict, got {type(concept_set).__name__}"
+        msg = (
+            "concept_set must be Codelist, ConceptSetExpression,"
+            f" or dict, got {type(concept_set).__name__}"
+        )
         raise TypeError(msg)
 
     return result
@@ -291,7 +301,9 @@ def _concept_rows_to_arrow(rows: list[dict[str, Any]]) -> Any:
     )
 
 
-def _register_arrow_temp(con: Any, name: str, arrow_table: Any, cdm_schema: str) -> None:
+def _register_arrow_temp(
+    con: Any, name: str, arrow_table: Any, cdm_schema: str
+) -> None:
     """Register an Arrow table as a temporary table in the database."""
     native = con.con  # DuckDB native connection
     native.register(name, arrow_table)
@@ -299,10 +311,8 @@ def _register_arrow_temp(con: Any, name: str, arrow_table: Any, cdm_schema: str)
 
 def _drop_temp(con: Any, name: str, cdm_schema: str) -> None:
     """Clean up temporary table."""
-    try:
+    with contextlib.suppress(Exception):
         con.con.unregister(name)
-    except Exception:
-        pass
 
 
 def _resolve_concepts(
@@ -322,7 +332,9 @@ def _resolve_concepts(
     # Base concepts from the temp table
     base = con.table(temp_name)
 
-    has_descendants = any(inc_desc for cdef in concept_defs for _, inc_desc, _ in cdef["concepts"])
+    has_descendants = any(
+        inc_desc for cdef in concept_defs for _, inc_desc, _ in cdef["concepts"]
+    )
 
     if has_descendants:
         # Expand descendants
@@ -372,7 +384,9 @@ def _get_domains(concepts_tbl: ir.Table, con: Any) -> list[str]:
     """Get the list of domains present in the resolved concepts."""
     domain_result = concepts_tbl.select("domain_id").distinct().to_pyarrow()
     domains = [
-        str(d).lower() for d in domain_result.column("domain_id").to_pylist() if d is not None
+        str(d).lower()
+        for d in domain_result.column("domain_id").to_pylist()
+        if d is not None
     ]
     return [d for d in domains if d in DOMAIN_TABLE_MAP]
 
@@ -467,13 +481,17 @@ def _apply_observation_constraints(
     prior_days, future_days = required_observation
     if prior_days > 0:
         cohort = cohort.filter(
-            (cohort.cohort_start_date - cohort.observation_period_start_date).cast("int64")
+            (cohort.cohort_start_date - cohort.observation_period_start_date).cast(
+                "int64"
+            )
             >= prior_days
         )
 
     if future_days > 0:
         cohort = cohort.filter(
-            (cohort.observation_period_end_date - cohort.cohort_start_date).cast("int64")
+            (cohort.observation_period_end_date - cohort.cohort_start_date).cast(
+                "int64"
+            )
             >= future_days
         )
 
@@ -693,11 +711,9 @@ def _build_cohort_result(
     )
 
     # Also write the cohort table to the database write schema (best-effort;
-    # silently skipped if the connection is read-only)
-    try:
+    # silently skipped if the connection is read-only or no write schema)
+    with contextlib.suppress(Exception):
         _write_cohort_to_db(cohort_df, name, con, source)
-    except Exception:
-        pass  # read-only or no write schema — that's fine
 
     # Create CohortTable
     cohort_table = CohortTable(
@@ -724,10 +740,8 @@ def _write_cohort_to_db(
     write_schema = source.write_schema
     fqn = f'"{write_schema}"."{name}"'
 
-    try:
+    with contextlib.suppress(Exception):
         con.raw_sql(f'CREATE SCHEMA IF NOT EXISTS "{write_schema}"')
-    except Exception:
-        pass
 
     temp_reg = f"__omopy_cohort_{name}"
     native = con.con
@@ -736,10 +750,8 @@ def _write_cohort_to_db(
         con.raw_sql(f"DROP TABLE IF EXISTS {fqn}")
         con.raw_sql(f'CREATE TABLE {fqn} AS SELECT * FROM "{temp_reg}"')
     finally:
-        try:
+        with contextlib.suppress(Exception):
             native.unregister(temp_reg)
-        except Exception:
-            pass
 
 
 def _empty_cohort(

@@ -66,9 +66,12 @@ class TestCdmFromConWithPath:
 
     def test_from_path_string(self):
         from pathlib import Path
+
         from omopy.connector.cdm_from_con import cdm_from_con
 
-        db_path = Path(__file__).resolve().parent.parent.parent / "data" / "synthea.duckdb"
+        db_path = (
+            Path(__file__).resolve().parent.parent.parent / "data" / "synthea.duckdb"
+        )
         if not db_path.exists():
             pytest.skip("Synthea DB not found")
 
@@ -79,9 +82,12 @@ class TestCdmFromConWithPath:
 
     def test_from_path_object(self):
         from pathlib import Path
+
         from omopy.connector.cdm_from_con import cdm_from_con
 
-        db_path = Path(__file__).resolve().parent.parent.parent / "data" / "synthea.duckdb"
+        db_path = (
+            Path(__file__).resolve().parent.parent.parent / "data" / "synthea.duckdb"
+        )
         if not db_path.exists():
             pytest.skip("Synthea DB not found")
 
@@ -160,7 +166,6 @@ class TestCdmTableOperations:
         assert "year_of_birth" in cols
 
     def test_filter(self, synthea_cdm):
-        import ibis
 
         person = synthea_cdm["person"]
         males = person.filter(person.data.gender_concept_id == 8507)

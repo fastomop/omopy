@@ -18,8 +18,8 @@ __all__ = [
     "assert_list",
     "assert_logical",
     "assert_numeric",
-    "assert_true",
     "assert_table_columns",
+    "assert_true",
 ]
 
 
@@ -45,7 +45,10 @@ def assert_character(
     elif isinstance(value, Sequence):
         items = value
     else:
-        msg = f"`{name}` must be a string or sequence of strings, got {type(value).__name__}"
+        msg = (
+            f"`{name}` must be a string or sequence of"
+            f" strings, got {type(value).__name__}"
+        )
         raise TypeError(msg)
 
     for i, item in enumerate(items):
@@ -100,7 +103,11 @@ def assert_class(
         raise TypeError(msg)
 
     if not isinstance(value, cls):
-        expected = cls.__name__ if isinstance(cls, type) else " | ".join(c.__name__ for c in cls)
+        expected = (
+            cls.__name__
+            if isinstance(cls, type)
+            else " | ".join(c.__name__ for c in cls)
+        )
         msg = f"`{name}` must be an instance of {expected}, got {type(value).__name__}"
         raise TypeError(msg)
 

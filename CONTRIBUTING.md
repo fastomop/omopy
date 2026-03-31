@@ -267,9 +267,8 @@ before each commit. The hooks are configured in `.pre-commit-config.yaml`.
 
 | Hook                     | Purpose                                    |
 |--------------------------|--------------------------------------------|
-| `ruff-check`             | Lint Python code (with `--fix`)            |
+| `ruff`                   | Lint Python code (with `--fix`)            |
 | `ruff-format`            | Format Python code                         |
-| `mypy`                   | Static type checking                       |
 | `trailing-whitespace`    | Remove trailing whitespace                 |
 | `end-of-file-fixer`      | Ensure files end with a newline            |
 | `check-yaml`             | Validate YAML syntax                       |

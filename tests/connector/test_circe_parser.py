@@ -18,15 +18,6 @@ from omopy.connector.circe._parser import (
 )
 from omopy.connector.circe._types import (
     CohortExpression,
-    CollapseSettings,
-    ConceptSet,
-    CriteriaLimit,
-    DateOffsetStrategy,
-    DomainCriteria,
-    EndStrategy,
-    InclusionRule,
-    ObservationWindow,
-    PrimaryCriteria,
 )
 
 # Path to example cohort JSONs in the R package

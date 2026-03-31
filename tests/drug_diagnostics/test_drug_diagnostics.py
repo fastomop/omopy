@@ -13,9 +13,9 @@ from omopy.drug_diagnostics import (
 )
 from omopy.drug_diagnostics._checks import (
     _MISSING_COLUMNS,
-    _QUANTILE_NAMES,
     _check_days_between,
     _check_days_supply,
+    _check_diagnostics_summary,
     _check_dose_from_records,
     _check_exposure_duration,
     _check_missing,
@@ -25,12 +25,10 @@ from omopy.drug_diagnostics._checks import (
     _check_source_concept,
     _check_type,
     _check_verbatim_end_date,
-    _check_diagnostics_summary,
-    _quantile_stats,
     _obscure_df,
+    _quantile_stats,
 )
 from omopy.generics import SummarisedResult
-
 
 # =====================================================================
 # Test AVAILABLE_CHECKS constant
@@ -269,7 +267,9 @@ class TestCheckExposureDuration:
                 ],
             }
         )
-        result = _check_exposure_duration(df, ingredient_concept_id=1, ingredient_name="Test")
+        result = _check_exposure_duration(
+            df, ingredient_concept_id=1, ingredient_name="Test"
+        )
         assert result.height == 1
         assert result["n_records"][0] == 3
         assert result["n_negative_duration"][0] == 0
@@ -284,12 +284,16 @@ class TestCheckExposureDuration:
                 "drug_exposure_end_date": [dt.date(2020, 1, 1), dt.date(2020, 2, 28)],
             }
         )
-        result = _check_exposure_duration(df, ingredient_concept_id=1, ingredient_name="Test")
+        result = _check_exposure_duration(
+            df, ingredient_concept_id=1, ingredient_name="Test"
+        )
         assert result["n_negative_duration"][0] == 1
 
     def test_empty_df(self):
         df = pl.DataFrame(schema={"drug_exposure_start_date": pl.Date})
-        result = _check_exposure_duration(df, ingredient_concept_id=1, ingredient_name="Test")
+        result = _check_exposure_duration(
+            df, ingredient_concept_id=1, ingredient_name="Test"
+        )
         assert result.height == 0
 
 
@@ -308,7 +312,9 @@ class TestCheckType:
                 "concept_name": ["EHR", "EHR administration"],
             }
         )
-        result = _check_type(df, concept_df, ingredient_concept_id=1, ingredient_name="Test")
+        result = _check_type(
+            df, concept_df, ingredient_concept_id=1, ingredient_name="Test"
+        )
         assert result.height == 2
         assert "drug_type" in result.columns
         assert result["count"].sum() == 3
@@ -335,7 +341,9 @@ class TestCheckRoute:
                 "concept_name": ["Oral", "No matching concept"],
             }
         )
-        result = _check_route(df, concept_df, ingredient_concept_id=1, ingredient_name="Test")
+        result = _check_route(
+            df, concept_df, ingredient_concept_id=1, ingredient_name="Test"
+        )
         assert result.height == 2
 
 
@@ -350,7 +358,9 @@ class TestCheckSourceConcept:
                 "drug_source_value": ["tab100mg", "tab100mg", "cap200mg"],
             }
         )
-        result = _check_source_concept(df, ingredient_concept_id=1, ingredient_name="Test")
+        result = _check_source_concept(
+            df, ingredient_concept_id=1, ingredient_name="Test"
+        )
         assert result.height == 2
         assert "drug_source_value" in result.columns
 
@@ -391,7 +401,9 @@ class TestCheckVerbatimEndDate:
                 "verbatim_end_date": [dt.date(2020, 1, 10), None, dt.date(2020, 3, 1)],
             }
         )
-        result = _check_verbatim_end_date(df, ingredient_concept_id=1, ingredient_name="Test")
+        result = _check_verbatim_end_date(
+            df, ingredient_concept_id=1, ingredient_name="Test"
+        )
         assert result.height == 1
         assert result["n_verbatim_end_date_missing"][0] == 1
         assert result["n_verbatim_end_date_equal"][0] == 1
@@ -491,7 +503,9 @@ class TestCheckDaysBetween:
                 ],
             }
         )
-        result = _check_days_between(df, ingredient_concept_id=1, ingredient_name="Test")
+        result = _check_days_between(
+            df, ingredient_concept_id=1, ingredient_name="Test"
+        )
         assert result.height == 1
         assert result["n_persons"][0] == 2
         assert result["n_persons_multiple_records"][0] == 2
@@ -565,7 +579,7 @@ class TestMockDrugExposure:
     def test_reproducibility(self):
         r1 = mock_drug_exposure(seed=42)
         r2 = mock_drug_exposure(seed=42)
-        for check in r1.keys():
+        for check in r1:
             assert r1[check].equals(r2[check]), f"Check '{check}' not reproducible"
 
     def test_missing_check_structure(self):

@@ -11,8 +11,8 @@ import time
 
 import polars as pl
 
-from omopy.generics.cdm_reference import CdmReference
 from omopy.connector.db_source import DbSource
+from omopy.generics.cdm_reference import CdmReference
 
 __all__ = ["benchmark"]
 

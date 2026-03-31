@@ -5,9 +5,6 @@ The Synthea database may or may not have a death table. Tests handle both.
 
 from __future__ import annotations
 
-import polars as pl
-import pytest
-
 from omopy.profiles import add_death_date, add_death_days, add_death_flag
 
 

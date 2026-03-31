@@ -10,29 +10,26 @@ Implements the SQL logic for:
 
 from __future__ import annotations
 
-from typing import Any
-
 import ibis
 import ibis.expr.types as ir
 
+from omopy.connector.circe._domain_queries import build_domain_query
 from omopy.connector.circe._types import (
     CorrelatedCriteria,
     CriteriaGroup,
     CriteriaLimit,
     DemographicCriteria,
     InclusionRule,
-    NumericRange,
     Occurrence,
     TemporalWindow,
     WindowEndpoint,
 )
-from omopy.connector.circe._domain_queries import build_domain_query
 
 __all__ = [
-    "apply_observation_window",
-    "apply_limit",
-    "evaluate_criteria_group",
     "apply_inclusion_rules",
+    "apply_limit",
+    "apply_observation_window",
+    "evaluate_criteria_group",
 ]
 
 
@@ -139,7 +136,9 @@ def apply_limit(
 
     return (
         events.mutate(
-            _rn=ibis.row_number().over(ibis.window(group_by="person_id", order_by=order_col))
+            _rn=ibis.row_number().over(
+                ibis.window(group_by="person_id", order_by=order_col)
+            )
         )
         .filter(ibis._._rn == 0)
         .drop("_rn")
@@ -210,10 +209,7 @@ def _apply_temporal_window(
         ref_date = index_events.start_date
 
     # Determine which correlated event date to compare
-    if window.use_event_end:
-        comp_date_col = "end_date"
-    else:
-        comp_date_col = date_col
+    comp_date_col = "end_date" if window.use_event_end else date_col
 
     # Compute window boundaries
     win_start = _window_bound_expr(
@@ -284,7 +280,9 @@ def _evaluate_correlated_criteria(
 
     # Apply temporal window(s)
     if cc.start_window:
-        joined = _apply_temporal_window(correlated, index_events, cc.start_window, "start_date")
+        joined = _apply_temporal_window(
+            correlated, index_events, cc.start_window, "start_date"
+        )
     else:
         # No temporal window — just join on person_id
         joined = correlated.join(
@@ -294,12 +292,13 @@ def _evaluate_correlated_criteria(
 
     # Apply visit restriction
     if cc.restrict_visit:
-        joined = joined.filter(correlated.visit_occurrence_id == index_events.visit_occurrence_id)
+        joined = joined.filter(
+            correlated.visit_occurrence_id == index_events.visit_occurrence_id
+        )
 
     # Count occurrences per index event
     occ = cc.occurrence or Occurrence(type=2, count=1)
 
-    count_col = "correlated_event_id"
     if occ.is_distinct:
         agg_expr = joined.correlated_event_id.nunique()
     else:
@@ -308,7 +307,9 @@ def _evaluate_correlated_criteria(
         agg_expr = joined.count()
 
     # Group by index event and count
-    counts = joined.group_by([index_events.person_id, index_events.event_id]).agg(cnt=agg_expr)
+    counts = joined.group_by([index_events.person_id, index_events.event_id]).agg(
+        cnt=agg_expr
+    )
 
     # Apply occurrence filter
     if occ.type == 0:  # Exactly
@@ -341,7 +342,11 @@ def _evaluate_demographic_criteria(
             "person_id",
             "gender_concept_id",
             "year_of_birth",
-            *([c] for c in ["race_concept_id", "ethnicity_concept_id"] if c in person_tbl.columns),
+            *(
+                [c]
+                for c in ["race_concept_id", "ethnicity_concept_id"]
+                if c in person_tbl.columns
+            ),
         ),
         "person_id",
     )
@@ -450,7 +455,7 @@ def evaluate_criteria_group(
         return index_events.select("person_id", "event_id")
 
     # Combine results based on group type
-    index_key = index_events.select("person_id", "event_id")
+    index_events.select("person_id", "event_id")
 
     if group.type == "ALL":
         # All criteria must be met: INTERSECT

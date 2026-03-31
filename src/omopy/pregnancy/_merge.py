@@ -8,7 +8,6 @@ deduplication rounds minimising |hip_end − pps_end|.
 from __future__ import annotations
 
 import logging
-from datetime import timedelta
 
 import polars as pl
 
@@ -111,7 +110,7 @@ def _merge_hipps(
         # Iterative deduplication: assign best matches
         for _round in range(_MAX_DEDUP_ROUNDS):
             made_assignment = False
-            for hi, pi, diff in overlaps:
+            for hi, pi, _diff in overlaps:
                 if hi not in matched_hip and pi not in matched_pps:
                     matched_hip.add(hi)
                     matched_pps.add(pi)
@@ -129,7 +128,9 @@ def _merge_hipps(
                             "episode_start_date": min(
                                 h["episode_start_date"], p["episode_start_date"]
                             ),
-                            "episode_end_date": max(h["episode_end_date"], p["episode_end_date"]),
+                            "episode_end_date": max(
+                                h["episode_end_date"], p["episode_end_date"]
+                            ),
                             "outcome_date": h.get("outcome_date"),
                             "outcome_concept_id": h.get("outcome_concept_id"),
                             "n_pps_records": p.get("n_pps_records", 0),

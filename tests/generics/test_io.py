@@ -1,6 +1,5 @@
 """Tests for omopy.generics._io — import/export round-trips."""
 
-import json
 from pathlib import Path
 
 import polars as pl
@@ -17,7 +16,6 @@ from omopy.generics._io import (
 from omopy.generics._types import OVERALL
 from omopy.generics.codelist import Codelist, ConceptEntry, ConceptSetExpression
 from omopy.generics.summarised_result import SummarisedResult
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -38,9 +36,13 @@ def _sample_cse() -> ConceptSetExpression:
         {
             "diabetes": [
                 ConceptEntry(
-                    concept_id=201826, concept_name="Type 2 DM", include_descendants=True
+                    concept_id=201826,
+                    concept_name="Type 2 DM",
+                    include_descendants=True,
                 ),
-                ConceptEntry(concept_id=442793, concept_name="DM NOS", is_excluded=True),
+                ConceptEntry(
+                    concept_id=442793, concept_name="DM NOS", is_excluded=True
+                ),
             ],
             "hypertension": [
                 ConceptEntry(concept_id=316866, concept_name="HTN"),

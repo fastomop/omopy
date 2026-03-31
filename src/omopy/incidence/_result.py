@@ -6,8 +6,6 @@ which convert SummarisedResult objects into tidy DataFrames.
 
 from __future__ import annotations
 
-from typing import Any
-
 import polars as pl
 
 from omopy.generics._types import NAME_LEVEL_SEP
@@ -103,7 +101,9 @@ def _to_tidy(
 
     # Pivot estimate columns to wide
     index_cols = [
-        c for c in data.columns if c not in ("estimate_name", "estimate_type", "estimate_value")
+        c
+        for c in data.columns
+        if c not in ("estimate_name", "estimate_type", "estimate_value")
     ]
 
     wide = data.pivot(

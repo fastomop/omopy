@@ -315,7 +315,8 @@ def _estimate_survival(
             # Step 2: Remove NAs (washout exclusions)
             pre_washout = len(local_df)
             local_df = local_df.filter(
-                pl.col("outcome_time").is_not_null() & pl.col("outcome_status").is_not_null()
+                pl.col("outcome_time").is_not_null()
+                & pl.col("outcome_status").is_not_null()
             )
             n_after_washout = len(local_df)
             excluded_washout = pre_washout - n_after_washout
@@ -581,9 +582,9 @@ def _competing_risk_survival(
     # Get sorted unique event times
     event_times = np.sort(np.unique(times_arr[status_arr > 0]))
 
-    n_total = len(times_arr)
+    len(times_arr)
     cif1 = np.zeros(len(event_times))  # CIF for primary event
-    cif1_var = np.zeros(len(event_times))  # variance estimate
+    np.zeros(len(event_times))  # variance estimate
     overall_surv = 1.0
 
     for i, t in enumerate(event_times):
@@ -629,7 +630,9 @@ def _competing_risk_survival(
     # For a proper implementation, we'd use the full AJ variance formula
     # Here we use a simple approximation: SE ~ sqrt(CIF * (1-CIF) / n_risk)
     n_at_risk_at_times = (
-        np.array([np.sum(times_arr >= t) for t in timepoints]) if timepoints else np.array([])
+        np.array([np.sum(times_arr >= t) for t in timepoints])
+        if timepoints
+        else np.array([])
     )
 
     ci_lower = np.zeros(len(timepoints))
@@ -676,12 +679,12 @@ def _compute_risk_table(
     """Compute risk table with n_risk, n_events, n_censor per interval."""
     times = df["outcome_time"].to_numpy()
     events = df["outcome_status"].to_numpy()
-    n_total = len(times)
+    len(times)
 
     intervals = list(range(0, max_time + event_gap, event_gap))
     rows: list[dict[str, Any]] = []
 
-    for i, t_start in enumerate(intervals):
+    for _i, t_start in enumerate(intervals):
         t_end = t_start + event_gap
 
         # Number at risk at start of interval
@@ -792,7 +795,9 @@ def _compute_km_summary(
     # Restricted mean survival time (RMST)
     times = df["outcome_time"].to_numpy().astype(float)
     max_time = float(times.max()) if len(times) > 0 else 0.0
-    rmst_limit = float(restricted_mean_follow_up) if restricted_mean_follow_up else max_time
+    rmst_limit = (
+        float(restricted_mean_follow_up) if restricted_mean_follow_up else max_time
+    )
 
     # Compute RMST as area under KM curve up to rmst_limit
     sf = kmf.survival_function_
@@ -884,7 +889,9 @@ def _compute_cif_summary(
     max_time = float(times_arr.max()) if len(times_arr) > 0 else 0.0
 
     # RMST (area under 1-CIF curve)
-    rmst_limit = float(restricted_mean_follow_up) if restricted_mean_follow_up else max_time
+    rmst_limit = (
+        float(restricted_mean_follow_up) if restricted_mean_follow_up else max_time
+    )
     if len(event_times) > 0:
         et = np.concatenate([[0.0], event_times.astype(float)])
         cv = np.concatenate([[0.0], cif1.astype(float)])
@@ -895,10 +902,7 @@ def _compute_cif_summary(
             endpoint = float(np.interp(rmst_limit, et, cv))
             trunc_t = np.append(trunc_t, rmst_limit)
             trunc_c = np.append(trunc_c, endpoint)
-        if len(trunc_t) >= 2:
-            rmst = float(np.trapezoid(1 - trunc_c, trunc_t))
-        else:
-            rmst = 0.0
+        rmst = float(np.trapezoid(1 - trunc_c, trunc_t)) if len(trunc_t) >= 2 else 0.0
     else:
         rmst = rmst_limit
 
@@ -1061,7 +1065,9 @@ def _format_summary(
     rows: list[dict[str, str]] = []
 
     for est_name, est_val in summary.items():
-        est_type = "integer" if est_name in ("number_records", "n_events") else "numeric"
+        est_type = (
+            "integer" if est_name in ("number_records", "n_events") else "numeric"
+        )
         rows.append(
             {
                 "result_id": str(result_id),
@@ -1208,8 +1214,9 @@ def _cohort_name(ct: CohortTable, cohort_id: int) -> str:
 
 def _filter_cohort_table(ct: CohortTable, cohort_id: int) -> CohortTable:
     """Filter a CohortTable to a single cohort definition ID."""
-    from omopy.profiles._demographics import _get_ibis_table
     import ibis as _ibis
+
+    from omopy.profiles._demographics import _get_ibis_table
 
     tbl = _get_ibis_table(ct)
     filtered = tbl.filter(tbl["cohort_definition_id"] == _ibis.literal(cohort_id))

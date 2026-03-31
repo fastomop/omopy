@@ -12,7 +12,7 @@ keywords = [
     "ohdsi",
     "observational-health",
     "epidemiology",
-    "darwin-eu",
+    "fastomop",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -43,11 +43,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/darwin-eu/omopy"
-Documentation = "https://darwin-eu.github.io/omopy"
-Repository = "https://github.com/darwin-eu/omopy"
-Issues = "https://github.com/darwin-eu/omopy/issues"
-Changelog = "https://github.com/darwin-eu/omopy/releases"
+Homepage = "https://github.com/fastomop/omopy"
+Documentation = "https://fastomop.github.io/omopy"
+Repository = "https://github.com/fastomop/omopy"
+Issues = "https://github.com/fastomop/omopy/issues"
+Changelog = "https://github.com/fastomop/omopy/releases"
 
 [project.optional-dependencies]
 # Database backends (Phase 1+)
@@ -125,6 +125,16 @@ exclude = ["build", "dist", "omopy.egg-info", ".venv"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "RUF"]
+ignore = [
+    "A001",    # variable shadowing builtin (e.g. `type` module-level)
+    "A002",    # argument shadowing builtin — `type` param is an API convention
+    "RUF002",  # ambiguous Unicode in docstrings (×, –) — intentional
+    "RUF003",  # ambiguous Unicode in comments (×, –) — intentional
+    "RUF022",  # `__all__` not sorted — we group by category for readability
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B017"]  # `assertRaises(Exception)` OK in tests
 
 [tool.mypy]
 python_version = "3.14"

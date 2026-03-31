@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 import polars as pl
 
 from omopy.connector.data_hash import compute_data_hash

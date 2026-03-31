@@ -8,18 +8,17 @@ version, and returns a fully-populated CdmReference with lazy table access.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
-from omopy.generics._schema import CdmSchema
-from omopy.generics._types import CdmVersion
-from omopy.generics.cdm_reference import CdmReference
-from omopy.generics.cdm_table import CdmTable
 from omopy.connector._connection import (
     IbisConnection,
     connect_duckdb,
     detect_cdm_schema,
 )
 from omopy.connector.db_source import DbSource
+from omopy.generics._schema import CdmSchema
+from omopy.generics._types import CdmVersion
+from omopy.generics.cdm_reference import CdmReference
+from omopy.generics.cdm_table import CdmTable
 
 __all__ = ["cdm_from_con"]
 

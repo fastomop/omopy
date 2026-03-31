@@ -52,7 +52,6 @@ def mock_cohort_characteristics(
     strata_specs: list[tuple[str, str]] = [(OVERALL, OVERALL)]
 
     if n_strata > 0:
-        sex_levels = ["Male", "Female"]
         strata_specs.append(("sex", "Male"))
         strata_specs.append(("sex", "Female"))
         if n_strata > 1:

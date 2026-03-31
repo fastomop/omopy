@@ -6,12 +6,12 @@ using Plotly as the rendering backend.
 
 from __future__ import annotations
 
+import contextlib
 from typing import Any, Literal
 
 import polars as pl
 
 from omopy.generics.summarised_result import SummarisedResult
-from omopy.vis._format import tidy_result
 from omopy.vis._style import PlotStyle, customise_text, default_plot_style
 
 __all__ = [
@@ -355,7 +355,7 @@ def _prepare_plot_data(result: SummarisedResult | pl.DataFrame) -> pl.DataFrame:
         # Tidy: add settings, split name-level pairs, pivot estimates
         df = result.tidy()
         # Also pivot estimates wide
-        pivoted = result.pivot_estimates()
+        result.pivot_estimates()
         # Merge tidy columns (settings, split pairs) with pivoted estimates
         # Use tidy directly since it includes everything except pivoted estimates
         # Actually, for plotting, we need estimate columns as separate columns
@@ -363,7 +363,9 @@ def _prepare_plot_data(result: SummarisedResult | pl.DataFrame) -> pl.DataFrame:
         df = result.add_settings()
         df = SummarisedResult._split_name_level(df, "group_name", "group_level")
         df = SummarisedResult._split_name_level(df, "strata_name", "strata_level")
-        df = SummarisedResult._split_name_level(df, "additional_name", "additional_level")
+        df = SummarisedResult._split_name_level(
+            df, "additional_name", "additional_level"
+        )
 
         # Pivot estimate_name/estimate_value to wide
         if "estimate_name" in df.columns and "estimate_value" in df.columns:
@@ -372,15 +374,14 @@ def _prepare_plot_data(result: SummarisedResult | pl.DataFrame) -> pl.DataFrame:
                 for c in df.columns
                 if c not in ("estimate_name", "estimate_type", "estimate_value")
             ]
-            try:
+            # If pivot fails, keep as-is
+            with contextlib.suppress(Exception):
                 df = df.pivot(
                     on="estimate_name",
                     index=key_cols,
                     values="estimate_value",
                     aggregate_function="first",
                 )
-            except Exception:
-                pass  # If pivot fails, keep as-is
 
         return df
     return result
@@ -406,7 +407,11 @@ def _validate_plot_columns(
 
     missing = [c for c in required if c not in df.columns]
     if missing:
-        msg = f"Plot requires columns {missing} but they are not in the data. Available columns: {df.columns}"
+        msg = (
+            f"Plot requires columns {missing} but they are"
+            " not in the data."
+            f" Available columns: {df.columns}"
+        )
         raise ValueError(msg)
 
 
@@ -439,7 +444,11 @@ def _with_opacity(hex_color: str, opacity: float) -> str:
     """Convert a hex colour to an rgba string with given opacity."""
     hex_color = hex_color.lstrip("#")
     if len(hex_color) == 6:
-        r, g, b = int(hex_color[:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
+        r, g, b = (
+            int(hex_color[:2], 16),
+            int(hex_color[2:4], 16),
+            int(hex_color[4:6], 16),
+        )
         return f"rgba({r},{g},{b},{opacity})"
     return hex_color
 

@@ -10,7 +10,6 @@ This is the Python equivalent of R's ``compute.R``.
 from __future__ import annotations
 
 import uuid
-from typing import Any
 
 import ibis
 import ibis.expr.types as ir
@@ -18,7 +17,7 @@ import ibis.expr.types as ir
 from omopy.connector._connection import IbisConnection, _get_catalog
 from omopy.generics.cdm_table import CdmTable
 
-__all__ = ["compute_permanent", "append_permanent", "compute_query"]
+__all__ = ["append_permanent", "compute_permanent", "compute_query"]
 
 
 # ---------------------------------------------------------------------------
@@ -249,15 +248,14 @@ def append_permanent(
 
     # If table doesn't exist, create it
     if not _table_exists(con, name, schema):
-        return compute_permanent(ibis_expr, name=name, con=con, schema=schema, overwrite=False)
+        return compute_permanent(
+            ibis_expr, name=name, con=con, schema=schema, overwrite=False
+        )
 
     # Table exists — INSERT INTO ... SELECT ...
     sql_query = ibis.to_sql(ibis_expr)
 
-    if schema:
-        fqn = _fully_qualified_name(con, name, schema)
-    else:
-        fqn = f'"{name}"'
+    fqn = _fully_qualified_name(con, name, schema) if schema else f'"{name}"'
 
     insert_sql = f"INSERT INTO {fqn} {sql_query}"
     con.raw_sql(insert_sql)
@@ -316,7 +314,10 @@ def compute_query(
     if isinstance(expr, CdmTable):
         ibis_expr = expr.data
         if not isinstance(ibis_expr, ir.Table):
-            msg = f"compute_query requires an Ibis-backed CdmTable, got {type(ibis_expr).__name__}"
+            msg = (
+                "compute_query requires an Ibis-backed"
+                f" CdmTable, got {type(ibis_expr).__name__}"
+            )
             raise TypeError(msg)
     elif isinstance(expr, ir.Table):
         ibis_expr = expr

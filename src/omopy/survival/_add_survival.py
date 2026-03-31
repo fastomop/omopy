@@ -20,11 +20,8 @@ Algorithm (mirrors the R implementation):
 from __future__ import annotations
 
 import math
-from typing import Any
 
 import ibis
-import ibis.expr.types as ir
-import polars as pl
 
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.cdm_table import CdmTable
@@ -131,7 +128,9 @@ def add_cohort_survival(
     # Compute days_to_exit based on censoring strategy
     if censor_on_cohort_exit:
         # Censor at cohort_end_date
-        days_to_exit = (joined["cohort_end_date"] - joined["cohort_start_date"]).cast("int64")
+        days_to_exit = (joined["cohort_end_date"] - joined["cohort_start_date"]).cast(
+            "int64"
+        )
     else:
         # Censor at end of observation period
         days_to_exit = (joined["_obs_end"] - joined["cohort_start_date"]).cast("int64")
@@ -196,7 +195,9 @@ def add_cohort_survival(
         future_outcomes,
         (joined["subject_id"] == future_outcomes["_f_pid"])
         & (future_outcomes["_f_date"] >= joined["cohort_start_date"]),
-    ).mutate(_days_to_event=(lambda t: (t["_f_date"] - t["cohort_start_date"]).cast("int64")))
+    ).mutate(
+        _days_to_event=(lambda t: (t["_f_date"] - t["cohort_start_date"]).cast("int64"))
+    )
 
     # Take the FIRST (minimum) days_to_event per row
     group_cols2 = [c for c in joined.columns]
@@ -211,9 +212,9 @@ def add_cohort_survival(
     # Apply censor_on_date if provided
     if censor_on_date is not None:
         # censor_on_date is a column name in x with a date
-        days_to_censor_date = (with_event[censor_on_date] - with_event["cohort_start_date"]).cast(
-            "int64"
-        )
+        days_to_censor_date = (
+            with_event[censor_on_date] - with_event["cohort_start_date"]
+        ).cast("int64")
         censor_time = ibis.least(censor_time, days_to_censor_date)
 
     # Apply follow_up_days cap
@@ -225,7 +226,8 @@ def add_cohort_survival(
     # Event occurred if days_to_event is not null AND days_to_event <= censor_time
     status_expr = ibis.cases(
         (
-            with_event["_days_to_event"].notnull() & (with_event["_days_to_event"] <= censor_time),
+            with_event["_days_to_event"].notnull()
+            & (with_event["_days_to_event"] <= censor_time),
             1,
         ),
         else_=0,
@@ -234,7 +236,8 @@ def add_cohort_survival(
     # Time: days_to_event if event, censor_time if censored
     time_expr = ibis.cases(
         (
-            with_event["_days_to_event"].notnull() & (with_event["_days_to_event"] <= censor_time),
+            with_event["_days_to_event"].notnull()
+            & (with_event["_days_to_event"] <= censor_time),
             with_event["_days_to_event"],
         ),
         else_=censor_time,
@@ -253,7 +256,10 @@ def add_cohort_survival(
     result = with_event.mutate(**{status_column: final_status, time_column: final_time})
 
     # Select only original columns + new columns
-    select_cols = [c for c in orig_cols if c != "_row_id"] + [time_column, status_column]
+    select_cols = [c for c in orig_cols if c != "_row_id"] + [
+        time_column,
+        status_column,
+    ]
     result = result.select(*select_cols)
 
     return x._with_data(result)

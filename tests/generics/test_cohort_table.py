@@ -6,7 +6,6 @@ import pytest
 from omopy.generics.cdm_table import CdmTable
 from omopy.generics.cohort_table import COHORT_REQUIRED_COLUMNS, CohortTable
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

@@ -70,7 +70,9 @@ def available_prevalence_grouping(
     list[str]
         Available grouping variable names.
     """
-    return _available_grouping(result, ("point_prevalence", "period_prevalence"), varying=varying)
+    return _available_grouping(
+        result, ("point_prevalence", "period_prevalence"), varying=varying
+    )
 
 
 def _available_grouping(
@@ -106,7 +108,9 @@ def _available_grouping(
 
     if varying and not matching.is_empty():
         candidates = [
-            c for c in candidates if c in matching.columns and matching[c].n_unique() > 1
+            c
+            for c in candidates
+            if c in matching.columns and matching[c].n_unique() > 1
         ]
 
     return candidates

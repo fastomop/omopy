@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-import pytest
-
 from omopy.codelist import get_atc_codes, get_drug_ingredient_codes
 from omopy.generics.codelist import Codelist
-
 
 # ---------------------------------------------------------------------------
 # get_drug_ingredient_codes

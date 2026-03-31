@@ -17,12 +17,11 @@ from typing import TYPE_CHECKING, Any, Self
 import polars as pl
 
 from omopy.generics.cdm_table import CdmTable
-from omopy.generics.codelist import Codelist
 
 if TYPE_CHECKING:
     from omopy.generics.cdm_reference import CdmReference
 
-__all__ = ["CohortTable", "COHORT_REQUIRED_COLUMNS"]
+__all__ = ["COHORT_REQUIRED_COLUMNS", "CohortTable"]
 
 COHORT_REQUIRED_COLUMNS: tuple[str, ...] = (
     "cohort_definition_id",
@@ -47,7 +46,7 @@ class CohortTable(CdmTable):
     ``cohort_codelist`` attributes.
     """
 
-    __slots__ = ("_settings", "_attrition", "_cohort_codelist")
+    __slots__ = ("_attrition", "_cohort_codelist", "_settings")
 
     def __init__(
         self,
@@ -62,7 +61,9 @@ class CohortTable(CdmTable):
     ) -> None:
         super().__init__(data, tbl_name=tbl_name, tbl_source=tbl_source, cdm=cdm)
         self._settings = settings if settings is not None else self._default_settings()
-        self._attrition = attrition if attrition is not None else self._default_attrition()
+        self._attrition = (
+            attrition if attrition is not None else self._default_attrition()
+        )
         self._cohort_codelist = (
             cohort_codelist
             if cohort_codelist is not None
@@ -91,9 +92,13 @@ class CohortTable(CdmTable):
         """Create default settings from distinct cohort_definition_ids."""
         try:
             df = self.collect()
-            ids = df.select("cohort_definition_id").unique().sort("cohort_definition_id")
+            ids = (
+                df.select("cohort_definition_id").unique().sort("cohort_definition_id")
+            )
             return ids.with_columns(
-                pl.col("cohort_definition_id").cast(pl.Int64).alias("cohort_definition_id"),
+                pl.col("cohort_definition_id")
+                .cast(pl.Int64)
+                .alias("cohort_definition_id"),
             ).with_columns(
                 pl.concat_str(
                     [pl.lit("cohort_"), pl.col("cohort_definition_id").cast(pl.Utf8)]
@@ -211,4 +216,6 @@ class CohortTable(CdmTable):
     def __repr__(self) -> str:
         n_cohorts = len(self.cohort_ids)
         source = self._tbl_source
-        return f"CohortTable('{self._tbl_name}', source='{source}', cohorts={n_cohorts})"
+        return (
+            f"CohortTable('{self._tbl_name}', source='{source}', cohorts={n_cohorts})"
+        )

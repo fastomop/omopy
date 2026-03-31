@@ -6,14 +6,14 @@ import enum
 from typing import Literal
 
 __all__ = [
-    "CdmVersion",
-    "TableType",
-    "CdmDataType",
-    "TableGroup",
-    "SUPPORTED_CDM_VERSIONS",
+    "GROUP_COUNT_VARIABLES",
     "NAME_LEVEL_SEP",
     "OVERALL",
-    "GROUP_COUNT_VARIABLES",
+    "SUPPORTED_CDM_VERSIONS",
+    "CdmDataType",
+    "CdmVersion",
+    "TableGroup",
+    "TableType",
 ]
 
 # ---------------------------------------------------------------------------
@@ -38,7 +38,7 @@ GROUP_COUNT_VARIABLES: tuple[str, ...] = ("number subjects", "number records")
 # ---------------------------------------------------------------------------
 
 
-class CdmVersion(str, enum.Enum):
+class CdmVersion(enum.StrEnum):
     """Supported OMOP CDM versions."""
 
     V5_3 = "5.3"
@@ -48,7 +48,7 @@ class CdmVersion(str, enum.Enum):
         return self.value
 
 
-class TableType(str, enum.Enum):
+class TableType(enum.StrEnum):
     """Classification of CDM table types."""
 
     CDM_TABLE = "cdm_table"
@@ -59,7 +59,7 @@ class TableType(str, enum.Enum):
         return self.value
 
 
-class CdmDataType(str, enum.Enum):
+class CdmDataType(enum.StrEnum):
     """Data types used in OMOP CDM field specifications."""
 
     INTEGER = "integer"
@@ -82,7 +82,7 @@ class CdmDataType(str, enum.Enum):
             raise ValueError(msg) from None
 
 
-class TableGroup(str, enum.Enum):
+class TableGroup(enum.StrEnum):
     """Logical groupings of CDM tables for batch selection."""
 
     VOCAB = "vocab"
@@ -95,7 +95,7 @@ class TableGroup(str, enum.Enum):
         return self.value
 
 
-class TableSchema(str, enum.Enum):
+class TableSchema(enum.StrEnum):
     """Database schema a CDM table lives in."""
 
     CDM = "cdm"

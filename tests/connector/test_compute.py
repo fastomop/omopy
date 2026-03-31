@@ -1,23 +1,21 @@
-"""Tests for omopy.connector.compute — compute_permanent, append_permanent, compute_query."""
+"""Tests for omopy.connector.compute.
+
+Covers compute_permanent, append_permanent, compute_query.
+"""
 
 from __future__ import annotations
 
-import datetime
-
 import ibis
-import polars as pl
-import pyarrow as pa
 import pytest
 
+from omopy.connector._connection import _get_catalog
 from omopy.connector.compute import (
+    _table_exists,
+    _unique_table_name,
     append_permanent,
     compute_permanent,
     compute_query,
-    _table_exists,
-    _unique_table_name,
 )
-from omopy.connector._connection import _get_catalog
-
 
 # ---------------------------------------------------------------------------
 # Fixtures

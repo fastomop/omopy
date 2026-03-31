@@ -12,12 +12,10 @@ import datetime
 import itertools
 from typing import Any, Literal
 
-import ibis
 import ibis.expr.types as ir
 import polars as pl
 
 from omopy.generics.cdm_reference import CdmReference
-from omopy.generics.cdm_table import CdmTable
 from omopy.generics.cohort_table import CohortTable
 from omopy.profiles._demographics import _get_ibis_table
 
@@ -45,7 +43,8 @@ def generate_denominator_cohort_set(
     *,
     cohort_date_range: tuple[datetime.date | None, datetime.date | None] = (None, None),
     age_group: list[tuple[int, int]] | None = None,
-    sex: list[Literal["Both", "Male", "Female"]] | Literal["Both", "Male", "Female"] = "Both",
+    sex: list[Literal["Both", "Male", "Female"]]
+    | Literal["Both", "Male", "Female"] = "Both",
     days_prior_observation: int | list[int] = 0,
     requirement_interactions: bool = True,
 ) -> CdmReference:
@@ -89,7 +88,9 @@ def generate_denominator_cohort_set(
         days_prior_observation = [days_prior_observation]
 
     # Build specification combos
-    specs = _build_specs(age_group, sex, days_prior_observation, requirement_interactions)
+    specs = _build_specs(
+        age_group, sex, days_prior_observation, requirement_interactions
+    )
 
     # Get person + observation_period
     person_tbl = _get_ibis_table(cdm["person"])
@@ -119,7 +120,9 @@ def generate_denominator_cohort_set(
 
     # Concatenate results
     cohort_data = pl.concat(all_cohort_rows) if all_cohort_rows else _empty_cohort_df()
-    attrition_data = pl.concat(all_attrition) if all_attrition else _empty_attrition_df()
+    attrition_data = (
+        pl.concat(all_attrition) if all_attrition else _empty_attrition_df()
+    )
 
     # Build settings
     settings_df = _build_settings(specs)
@@ -144,7 +147,8 @@ def generate_target_denominator_cohort_set(
     cohort_date_range: tuple[datetime.date | None, datetime.date | None] = (None, None),
     time_at_risk: tuple[int, float] | list[tuple[int, float]] | None = None,
     age_group: list[tuple[int, int]] | None = None,
-    sex: list[Literal["Both", "Male", "Female"]] | Literal["Both", "Male", "Female"] = "Both",
+    sex: list[Literal["Both", "Male", "Female"]]
+    | Literal["Both", "Male", "Female"] = "Both",
     days_prior_observation: int | list[int] = 0,
     requirements_at_entry: bool = True,
     requirement_interactions: bool = True,
@@ -209,7 +213,9 @@ def generate_target_denominator_cohort_set(
     if target_cohort_id is not None:
         if isinstance(target_cohort_id, int):
             target_cohort_id = [target_cohort_id]
-        target_data = target_data.filter(pl.col("cohort_definition_id").is_in(target_cohort_id))
+        target_data = target_data.filter(
+            pl.col("cohort_definition_id").is_in(target_cohort_id)
+        )
 
     # Build specification combos (including time_at_risk)
     specs = _build_target_specs(
@@ -243,7 +249,9 @@ def generate_target_denominator_cohort_set(
         all_attrition.append(attrition_df)
 
     cohort_data = pl.concat(all_cohort_rows) if all_cohort_rows else _empty_cohort_df()
-    attrition_data = pl.concat(all_attrition) if all_attrition else _empty_attrition_df()
+    attrition_data = (
+        pl.concat(all_attrition) if all_attrition else _empty_attrition_df()
+    )
 
     settings_df = _build_target_settings(specs, target_cohort_table)
 
@@ -318,7 +326,9 @@ def _build_target_specs(
 ) -> list[dict[str, Any]]:
     """Build specifications for target-based denominators."""
     if interactions:
-        combos = list(itertools.product(age_groups, sexes, days_prior_list, time_at_risk_list))
+        combos = list(
+            itertools.product(age_groups, sexes, days_prior_list, time_at_risk_list)
+        )
     else:
         combos = []
         seen: set[tuple[Any, ...]] = set()
@@ -373,7 +383,9 @@ def _build_settings(specs: list[dict[str, Any]]) -> pl.DataFrame:
     rows = []
     for spec in specs:
         age_label = f"{spec['age_min']} to {spec['age_max']}"
-        cohort_name = f"{age_label}; {spec['sex']}; {spec['days_prior_observation']} prior obs"
+        cohort_name = (
+            f"{age_label}; {spec['sex']}; {spec['days_prior_observation']} prior obs"
+        )
         rows.append(
             {
                 "cohort_definition_id": spec["cohort_definition_id"],
@@ -391,7 +403,9 @@ def _build_settings(specs: list[dict[str, Any]]) -> pl.DataFrame:
     )
 
 
-def _build_target_settings(specs: list[dict[str, Any]], target_table: str) -> pl.DataFrame:
+def _build_target_settings(
+    specs: list[dict[str, Any]], target_table: str
+) -> pl.DataFrame:
     """Build the settings DataFrame for target-based denominators."""
     rows = []
     for spec in specs:
@@ -483,7 +497,9 @@ def _build_general_denominator(
         pl.col("observation_period_start_date")
         .clip(lower_bound=study_start)
         .alias("cohort_start_date"),
-        pl.col("observation_period_end_date").clip(upper_bound=study_end).alias("cohort_end_date"),
+        pl.col("observation_period_end_date")
+        .clip(upper_bound=study_end)
+        .alias("cohort_end_date"),
     ).filter(pl.col("cohort_start_date") <= pl.col("cohort_end_date"))
 
     after_clip_records = len(df)
@@ -499,7 +515,9 @@ def _build_general_denominator(
     )
 
     if df.is_empty():
-        return _empty_cohort_df_with_id(cohort_id), _make_attrition(cohort_id, attrition_steps)
+        return _empty_cohort_df_with_id(cohort_id), _make_attrition(
+            cohort_id, attrition_steps
+        )
 
     # Step 3: Apply sex filter
     prev_records = len(df)
@@ -522,7 +540,9 @@ def _build_general_denominator(
         )
 
     if df.is_empty():
-        return _empty_cohort_df_with_id(cohort_id), _make_attrition(cohort_id, attrition_steps)
+        return _empty_cohort_df_with_id(cohort_id), _make_attrition(
+            cohort_id, attrition_steps
+        )
 
     # Step 4: Apply prior observation requirement
     prev_records = len(df)
@@ -537,7 +557,10 @@ def _build_general_denominator(
         df = (
             df.with_columns(
                 pl.when(pl.col("_prior_obs_days") < days_prior)
-                .then(pl.col("observation_period_start_date") + pl.duration(days=days_prior))
+                .then(
+                    pl.col("observation_period_start_date")
+                    + pl.duration(days=days_prior)
+                )
                 .otherwise(pl.col("cohort_start_date"))
                 .alias("cohort_start_date")
             )
@@ -559,7 +582,9 @@ def _build_general_denominator(
         )
 
     if df.is_empty():
-        return _empty_cohort_df_with_id(cohort_id), _make_attrition(cohort_id, attrition_steps)
+        return _empty_cohort_df_with_id(cohort_id), _make_attrition(
+            cohort_id, attrition_steps
+        )
 
     # Step 5: Apply age restriction
     prev_records = len(df)
@@ -581,7 +606,9 @@ def _build_general_denominator(
         )
 
     if df.is_empty():
-        return _empty_cohort_df_with_id(cohort_id), _make_attrition(cohort_id, attrition_steps)
+        return _empty_cohort_df_with_id(cohort_id), _make_attrition(
+            cohort_id, attrition_steps
+        )
 
     # Step 6: Final cohort construction
     result = df.select(
@@ -654,7 +681,9 @@ def _build_target_denominator(
         # Use observation period end as the end
         tar = tar.join(obs_df, on="person_id", how="left")
         tar = tar.with_columns(
-            (pl.col("cohort_start_date") + pl.duration(days=tar_start)).alias("denom_start"),
+            (pl.col("cohort_start_date") + pl.duration(days=tar_start)).alias(
+                "denom_start"
+            ),
             pl.col("observation_period_end_date").alias("denom_end"),
         ).filter(
             (pl.col("denom_start") >= pl.col("observation_period_start_date"))
@@ -663,8 +692,12 @@ def _build_target_denominator(
     else:
         tar_end_int = int(tar_end)
         tar = tar.with_columns(
-            (pl.col("cohort_start_date") + pl.duration(days=tar_start)).alias("denom_start"),
-            (pl.col("cohort_start_date") + pl.duration(days=tar_end_int)).alias("denom_end"),
+            (pl.col("cohort_start_date") + pl.duration(days=tar_start)).alias(
+                "denom_start"
+            ),
+            (pl.col("cohort_start_date") + pl.duration(days=tar_end_int)).alias(
+                "denom_end"
+            ),
         )
         # Clip to observation period
         tar = tar.join(obs_df, on="person_id", how="left")
@@ -699,7 +732,9 @@ def _build_target_denominator(
     ]
 
     if df.is_empty():
-        return _empty_cohort_df_with_id(cohort_id), _make_attrition(cohort_id, attrition_steps)
+        return _empty_cohort_df_with_id(cohort_id), _make_attrition(
+            cohort_id, attrition_steps
+        )
 
     # Apply sex filter
     prev_records = len(df)
@@ -722,7 +757,9 @@ def _build_target_denominator(
         )
 
     if df.is_empty():
-        return _empty_cohort_df_with_id(cohort_id), _make_attrition(cohort_id, attrition_steps)
+        return _empty_cohort_df_with_id(cohort_id), _make_attrition(
+            cohort_id, attrition_steps
+        )
 
     # Apply prior observation
     prev_records = len(df)
@@ -749,7 +786,10 @@ def _build_target_denominator(
             df = (
                 df.with_columns(
                     pl.when(pl.col("_prior_obs_days") < days_prior)
-                    .then(pl.col("observation_period_start_date") + pl.duration(days=days_prior))
+                    .then(
+                        pl.col("observation_period_start_date")
+                        + pl.duration(days=days_prior)
+                    )
                     .otherwise(pl.col("denom_start"))
                     .alias("denom_start")
                 )
@@ -771,7 +811,9 @@ def _build_target_denominator(
         )
 
     if df.is_empty():
-        return _empty_cohort_df_with_id(cohort_id), _make_attrition(cohort_id, attrition_steps)
+        return _empty_cohort_df_with_id(cohort_id), _make_attrition(
+            cohort_id, attrition_steps
+        )
 
     # Apply age restriction
     prev_records = len(df)
@@ -793,7 +835,9 @@ def _build_target_denominator(
         )
 
     if df.is_empty():
-        return _empty_cohort_df_with_id(cohort_id), _make_attrition(cohort_id, attrition_steps)
+        return _empty_cohort_df_with_id(cohort_id), _make_attrition(
+            cohort_id, attrition_steps
+        )
 
     # Final construction
     result = df.select(
@@ -811,7 +855,9 @@ def _build_target_denominator(
 # ---------------------------------------------------------------------------
 
 
-def _apply_age_restriction(df: pl.DataFrame, age_min: int, age_max: int) -> pl.DataFrame:
+def _apply_age_restriction(
+    df: pl.DataFrame, age_min: int, age_max: int
+) -> pl.DataFrame:
     """Restrict denominator cohort entry/exit by age.
 
     A person enters the day they reach ``age_min`` (or cohort_start_date,
@@ -834,7 +880,9 @@ def _apply_age_restriction(df: pl.DataFrame, age_min: int, age_max: int) -> pl.D
     # Clip cohort dates
     df = (
         df.with_columns(
-            pl.max_horizontal("cohort_start_date", "_age_entry").alias("cohort_start_date"),
+            pl.max_horizontal("cohort_start_date", "_age_entry").alias(
+                "cohort_start_date"
+            ),
             pl.min_horizontal("cohort_end_date", "_age_exit").alias("cohort_end_date"),
         )
         .filter(pl.col("cohort_start_date") <= pl.col("cohort_end_date"))
@@ -854,7 +902,9 @@ def _apply_age_restriction_target(
         # Age must be within range at denom_start
         df = (
             df.with_columns(
-                _compute_age_at_date(pl.col("_birth_date"), pl.col("denom_start")).alias("_age")
+                _compute_age_at_date(
+                    pl.col("_birth_date"), pl.col("denom_start")
+                ).alias("_age")
             )
             .filter((pl.col("_age") >= age_min) & (pl.col("_age") <= age_max))
             .drop("_age", "_birth_date")

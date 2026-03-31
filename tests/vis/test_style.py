@@ -10,7 +10,6 @@ from omopy.vis._style import (
     default_table_style,
 )
 
-
 # ── customise_text ────────────────────────────────────────────────────────
 
 
@@ -38,7 +37,9 @@ class TestCustomiseText:
         assert result == "HELLO_WORLD"
 
     def test_custom_overrides_fun(self):
-        result = customise_text("cdm_name", fun=str.upper, custom={"cdm_name": "Database"})
+        result = customise_text(
+            "cdm_name", fun=str.upper, custom={"cdm_name": "Database"}
+        )
         assert result == "Database"
 
     def test_keep_overrides_fun(self):

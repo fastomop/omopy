@@ -7,18 +7,17 @@ or random sampling, equivalent to R's ``cdmSubsetCohort()`` and
 
 from __future__ import annotations
 
-from typing import Any
+import contextlib
 
 import ibis
 import ibis.expr.types as ir
 import polars as pl
 
+from omopy.connector.db_source import DbSource
 from omopy.generics.cdm_reference import CdmReference
 from omopy.generics.cdm_table import CdmTable
-from omopy.generics.cohort_table import CohortTable
-from omopy.connector.db_source import DbSource
 
-__all__ = ["cdm_subset", "cdm_subset_cohort", "cdm_sample"]
+__all__ = ["cdm_sample", "cdm_subset", "cdm_subset_cohort"]
 
 
 def cdm_subset(
@@ -102,7 +101,9 @@ def cdm_subset_cohort(
         cohort_df = cohort_df.filter(pl.col("cohort_definition_id").is_in(cohort_id))
 
     # Get distinct person IDs as a Polars Series
-    subject_ids = cohort_df.select("subject_id").unique().rename({"subject_id": "person_id"})
+    subject_ids = (
+        cohort_df.select("subject_id").unique().rename({"subject_id": "person_id"})
+    )
 
     # Upload as Ibis temp table if we have a DB-backed CDM, otherwise stay Polars
     source = cdm.cdm_source
@@ -164,10 +165,8 @@ def cdm_sample(
 
     # Random sample — use order_by(random()) for database-side sampling
     if seed is not None:
-        try:
+        with contextlib.suppress(Exception):
             source.connection.raw_sql(f"SELECT setseed({seed / 2**31})")
-        except Exception:
-            pass
 
     sampled = eligible.order_by(ibis.random()).limit(n)
 
@@ -193,10 +192,8 @@ def _polars_to_ibis_temp(
 
 def _drop_ibis_temp(source: DbSource, temp_name: str) -> None:
     """Clean up a temporary table."""
-    try:
+    with contextlib.suppress(Exception):
         source.connection.con.unregister(temp_name)
-    except Exception:
-        pass
 
 
 def _subset_cdm_by_person_list(
@@ -263,7 +260,9 @@ def _subset_cdm_by_persons_ibis(
                 # Polars data — materialise person_ids and join in Polars
                 pid_df = pl.from_arrow(person_ids.to_pyarrow())
                 if isinstance(data, pl.LazyFrame):
-                    filtered = data.join(pid_df.lazy(), on="person_id", how="inner").collect()
+                    filtered = data.join(
+                        pid_df.lazy(), on="person_id", how="inner"
+                    ).collect()
                 else:
                     filtered = data.join(pid_df, on="person_id", how="inner")
             else:
@@ -273,9 +272,13 @@ def _subset_cdm_by_persons_ibis(
         elif "subject_id" in cols:
             # Cohort tables use subject_id
             if isinstance(data, (pl.DataFrame, pl.LazyFrame)):
-                pid_df = pl.from_arrow(person_ids.to_pyarrow()).rename({"person_id": "subject_id"})
+                pid_df = pl.from_arrow(person_ids.to_pyarrow()).rename(
+                    {"person_id": "subject_id"}
+                )
                 if isinstance(data, pl.LazyFrame):
-                    filtered = data.join(pid_df.lazy(), on="subject_id", how="inner").collect()
+                    filtered = data.join(
+                        pid_df.lazy(), on="subject_id", how="inner"
+                    ).collect()
                 else:
                     filtered = data.join(pid_df, on="subject_id", how="inner")
             else:

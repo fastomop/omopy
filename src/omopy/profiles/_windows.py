@@ -51,7 +51,11 @@ def validate_windows(
     ValueError
         If any window has ``lower > upper``.
     """
-    if isinstance(windows, tuple) and len(windows) == 2 and not isinstance(windows[0], tuple):
+    if (
+        isinstance(windows, tuple)
+        and len(windows) == 2
+        and not isinstance(windows[0], tuple)
+    ):
         # Single window
         windows = [windows]  # type: ignore[assignment]
 

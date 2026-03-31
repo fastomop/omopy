@@ -163,7 +163,8 @@ def _plot_missing(
     import plotly.express as px
 
     data = result.data.filter(
-        (pl.col("variable_name") == "missing") & (pl.col("estimate_name") == "proportion_missing")
+        (pl.col("variable_name") == "missing")
+        & (pl.col("estimate_name") == "proportion_missing")
     )
 
     if data.height == 0:

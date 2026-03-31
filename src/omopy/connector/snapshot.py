@@ -8,15 +8,13 @@ and CDM source information.  Equivalent to R's ``snapshot()``.
 from __future__ import annotations
 
 import datetime
-from typing import Any
 
-import ibis
 import polars as pl
 from pydantic import BaseModel, ConfigDict
 
 from omopy.generics.cdm_reference import CdmReference
 
-__all__ = ["snapshot", "CdmSnapshot"]
+__all__ = ["CdmSnapshot", "snapshot"]
 
 
 class CdmSnapshot(BaseModel):
@@ -180,9 +178,9 @@ def _observation_period_range(
 
     # Convert numpy/pandas dates to Python dates
     if earliest is not None and hasattr(earliest, "date"):
-        earliest = earliest.date() if callable(getattr(earliest, "date")) else earliest
+        earliest = earliest.date() if callable(earliest.date) else earliest
     if latest is not None and hasattr(latest, "date"):
-        latest = latest.date() if callable(getattr(latest, "date")) else latest
+        latest = latest.date() if callable(latest.date) else latest
     # Handle pandas Timestamp
     if earliest is not None and not isinstance(earliest, datetime.date):
         try:

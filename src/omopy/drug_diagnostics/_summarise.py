@@ -11,13 +11,12 @@ from typing import Any
 
 import polars as pl
 
+from omopy.drug_diagnostics._checks import DiagnosticsResult
 from omopy.generics._types import OVERALL
 from omopy.generics.summarised_result import (
     SUMMARISED_RESULT_COLUMNS,
     SummarisedResult,
 )
-
-from omopy.drug_diagnostics._checks import DiagnosticsResult
 
 __all__ = ["summarise_drug_diagnostics"]
 
@@ -148,7 +147,12 @@ def _summarise_missing(
         group_name = "ingredient_concept_id &&& ingredient"
         group_level = f"{ing_id} &&& {ing_name}"
 
-        for est_name in ("n_records", "n_missing", "n_not_missing", "proportion_missing"):
+        for est_name in (
+            "n_records",
+            "n_missing",
+            "n_not_missing",
+            "proportion_missing",
+        ):
             val = record.get(est_name)
             est_value = "NA" if val is None else str(val)
             est_type = "integer" if est_name.startswith("n_") else "numeric"
@@ -182,7 +186,10 @@ def _summarise_categorical(
     check_name: str,
     category_col: str,
 ) -> list[dict[str, Any]]:
-    """Convert categorical check results (type, route, sig, source_concept) into rows."""
+    """Convert categorical check results into rows.
+
+    Handles type, route, sig, source_concept.
+    """
     rows: list[dict[str, Any]] = []
 
     for record in df.iter_rows(named=True):
@@ -227,11 +234,22 @@ def _summarise_quantile(
     check_name: str,
     prefix: str,
 ) -> list[dict[str, Any]]:
-    """Convert quantile check results (exposure_duration, days_supply, etc.) into rows."""
+    """Convert quantile check results into rows.
+
+    Handles exposure_duration, days_supply, etc.
+    """
     from omopy.drug_diagnostics._checks import _QUANTILE_NAMES
 
     rows: list[dict[str, Any]] = []
-    stat_names = list(_QUANTILE_NAMES) + ["mean", "sd", "min", "max", "count", "count_missing"]
+    stat_names = [
+        *list(_QUANTILE_NAMES),
+        "mean",
+        "sd",
+        "min",
+        "max",
+        "count",
+        "count_missing",
+    ]
 
     for record in df.iter_rows(named=True):
         ing_id = record.get("ingredient_concept_id", "")

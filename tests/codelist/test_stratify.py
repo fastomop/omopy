@@ -1,12 +1,16 @@
-"""Tests for omopy.codelist._stratify — stratify_by_domain / vocabulary / concept_class."""
+"""Tests for omopy.codelist._stratify.
+
+Covers stratify_by_domain / vocabulary / concept_class.
+"""
 
 from __future__ import annotations
 
-import pytest
-
-from omopy.codelist import stratify_by_domain, stratify_by_vocabulary, stratify_by_concept_class
+from omopy.codelist import (
+    stratify_by_concept_class,
+    stratify_by_domain,
+    stratify_by_vocabulary,
+)
 from omopy.generics.codelist import Codelist
-
 
 # ---------------------------------------------------------------------------
 # stratify_by_domain

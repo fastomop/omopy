@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-import polars as pl
 
 from omopy.connector.cdm_flatten import cdm_flatten
 

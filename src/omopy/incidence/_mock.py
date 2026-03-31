@@ -10,7 +10,6 @@ from __future__ import annotations
 import datetime
 import random
 import time
-from typing import Any
 
 import polars as pl
 
@@ -125,7 +124,7 @@ def mock_incidence_prevalence(
 
     # Generate target cohort (everyone is in the target)
     target_rows = []
-    for i, obs in enumerate(obs_rows, start=1):
+    for _i, obs in enumerate(obs_rows, start=1):
         target_rows.append(
             {
                 "cohort_definition_id": 1,
@@ -146,7 +145,7 @@ def mock_incidence_prevalence(
 
     # Generate outcome cohort
     outcome_rows = []
-    for i, obs in enumerate(obs_rows, start=1):
+    for _i, obs in enumerate(obs_rows, start=1):
         if random.random() < outcome_prevalence:
             obs_start = obs["observation_period_start_date"]
             obs_end = obs["observation_period_end_date"]
@@ -199,7 +198,9 @@ def mock_incidence_prevalence(
     )
 
     cdm["target"] = CohortTable(target_df, tbl_name="target", settings=target_settings)
-    cdm["outcome"] = CohortTable(outcome_df, tbl_name="outcome", settings=outcome_settings)
+    cdm["outcome"] = CohortTable(
+        outcome_df, tbl_name="outcome", settings=outcome_settings
+    )
 
     return cdm
 

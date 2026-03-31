@@ -17,17 +17,14 @@ Covers:
 from __future__ import annotations
 
 import datetime
-import math
 
-import omopy  # noqa: F401 — triggers CPython 3.14 typing compat shim
 import polars as pl
 import pytest
 
+import omopy  # noqa: F401 — triggers CPython 3.14 typing compat shim
 from omopy.generics.cdm_reference import CdmReference
-from omopy.generics.cdm_table import CdmTable
 from omopy.generics.cohort_table import CohortTable
 from omopy.generics.summarised_result import SummarisedResult
-
 
 # ===================================================================
 # Module imports
@@ -161,7 +158,9 @@ class TestMock:
     def test_mock_outcome_prevalence(self):
         from omopy.incidence import mock_incidence_prevalence
 
-        cdm = mock_incidence_prevalence(sample_size=1000, outcome_prevalence=0.5, seed=99)
+        cdm = mock_incidence_prevalence(
+            sample_size=1000, outcome_prevalence=0.5, seed=99
+        )
         outcome = cdm["outcome"].collect()
         # With 50% prevalence and 1000 persons, expect ~500 outcomes
         # Allow wide range due to randomness
@@ -263,7 +262,9 @@ class TestDenominatorGeneration:
         denom = cdm["denominator"].collect()
         # All subjects should be male
         person = mock_cdm["person"].collect()
-        male_ids = set(person.filter(pl.col("gender_concept_id") == 8507)["person_id"].to_list())
+        male_ids = set(
+            person.filter(pl.col("gender_concept_id") == 8507)["person_id"].to_list()
+        )
         denom_ids = set(denom["subject_id"].to_list())
         assert denom_ids <= male_ids
 
@@ -376,7 +377,9 @@ class TestTargetDenominatorGeneration:
         denom = cdm["denominator"].collect()
         if not denom.is_empty():
             # Duration should be at most 365 days
-            durations = (denom["cohort_end_date"] - denom["cohort_start_date"]).dt.total_days()
+            durations = (
+                denom["cohort_end_date"] - denom["cohort_start_date"]
+            ).dt.total_days()
             assert durations.max() <= 365
 
     def test_target_denominator_settings(self, mock_cdm):
@@ -843,7 +846,7 @@ class TestConfidenceIntervals:
 
         lower, upper = _wilson_ci(50, 100)
         assert lower < 0.5 < upper
-        assert 0.0 <= lower
+        assert lower >= 0.0
         assert upper <= 1.0
 
     def test_wilson_ci_empty_population(self):

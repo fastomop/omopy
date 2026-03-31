@@ -37,7 +37,9 @@ class TestSnapshot:
     def test_observation_period_dates_are_dates(self, synthea_cdm):
         result = snapshot(synthea_cdm)
         if result.earliest_observation_period_start_date is not None:
-            assert isinstance(result.earliest_observation_period_start_date, datetime.date)
+            assert isinstance(
+                result.earliest_observation_period_start_date, datetime.date
+            )
         if result.latest_observation_period_end_date is not None:
             assert isinstance(result.latest_observation_period_end_date, datetime.date)
 

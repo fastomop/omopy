@@ -13,7 +13,6 @@ import polars as pl
 import pytest
 
 from omopy.pregnancy import (
-    OUTCOME_CATEGORIES,
     PregnancyResult,
     identify_pregnancies,
     mock_pregnancy_cdm,
