@@ -1,0 +1,47 @@
+graph TD
+    DB["🗄️ synthea_1k.duckdb<br/>10,681 patients"]
+
+    DB --> CAD["Coronary Arteriosclerosis<br/>concept 317576<br/>1,243 subjects"]
+    DB --> CLOP["Clopidogrel<br/>concept 1322184<br/>1,473 subjects"]
+    DB --> CODELIST["Codelist: coronary keyword search"]
+
+    subgraph CAD_benchmarks [" "]
+        B02["02 Cohort Generation<br/>1,243 subjects"]
+        B03["03 Patient Profiles<br/>100 subjects"]
+        B04["04 Characteristics<br/>1,243 subjects"]
+        B05["05 Incidence<br/>1,220 events"]
+        B07["07 Survival<br/>1,243 subjects"]
+    end
+
+    subgraph CLOP_benchmarks [" "]
+        B06["06 Drug Utilisation<br/>1,473 subjects"]
+        B10["10 Drug Diagnostics<br/>1,473 subjects"]
+    end
+
+    CAD --> B02
+    CAD --> B03
+    CAD --> B04
+    CAD --> B05
+    CAD --> B07
+
+    CLOP --> B06
+    CLOP --> B10
+
+    CODELIST --> B08["08 Codelist Generation<br/>1,985 concepts"]
+
+    DB -.-> SIM["Simvastatin · 1539403"]
+
+    subgraph TP_group [" "]
+        B09["09 Treatment Patterns<br/>0 subjects"]
+        TP_NOTE["⚠️ 0 results: Synthea concept-based<br/>cohorts have no drug_exposure matches"]
+    end
+
+    CAD --> B09
+    CLOP --> B09
+    SIM --> B09
+    B09 ~~~ TP_NOTE
+
+    style TP_NOTE fill:#fff3cd,stroke:#ffc107,color:#856404
+    style CAD_benchmarks fill:none,stroke:none
+    style CLOP_benchmarks fill:none,stroke:none
+    style TP_group fill:none,stroke:none
