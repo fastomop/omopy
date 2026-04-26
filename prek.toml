@@ -1,0 +1,40 @@
+minimum_prek_version = "0.3.9"
+default_language_version.python = "3.13"
+
+exclude = "^(\\.venv/|alembic/versions/|\\.agents/|\\.claude/)"
+
+[[repos]]
+repo = "builtin"
+hooks = [
+    { id = "trailing-whitespace", args = [
+        "--markdown-linebreak-ext=md",
+    ] },
+    { id = "end-of-file-fixer" },
+    { id = "check-added-large-files", args = [
+        "--maxkb=1024",
+    ] },
+    { id = "check-merge-conflict" },
+    { id = "detect-private-key" },
+    { id = "check-json" },
+    { id = "check-toml" },
+    { id = "check-yaml", args = [
+        "--allow-multiple-documents",
+    ], exclude = "^helm/trevor/templates/" },
+]
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "ruff-check"
+name = "ruff lint"
+language = "system"
+entry = "uv run ruff check --fix --force-exclude"
+types = ["python"]
+
+[[repos.hooks]]
+id = "ruff-format"
+name = "ruff format"
+language = "system"
+entry = "uv run ruff format --force-exclude"
+types = ["python"]

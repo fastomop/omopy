@@ -88,7 +88,7 @@ dev = [
     "mkdocs-material>=9.7.6",
     "mypy>=1.10",
     "pre-commit>=3.7",
-    "prek>=0.3.8",
+    "prek>=0.3.10",
     "pytest-cov>=5.0",
     "pytest>=8.0",
     "ruff>=0.5",
@@ -126,15 +126,15 @@ exclude = ["build", "dist", "omopy.egg-info", ".venv"]
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM", "RUF"]
 ignore = [
-    "A001",    # variable shadowing builtin (e.g. `type` module-level)
-    "A002",    # argument shadowing builtin — `type` param is an API convention
-    "RUF002",  # ambiguous Unicode in docstrings (×, –) — intentional
-    "RUF003",  # ambiguous Unicode in comments (×, –) — intentional
-    "RUF022",  # `__all__` not sorted — we group by category for readability
+    "A001",   # variable shadowing builtin (e.g. `type` module-level)
+    "A002",   # argument shadowing builtin — `type` param is an API convention
+    "RUF002", # ambiguous Unicode in docstrings (×, –) — intentional
+    "RUF003", # ambiguous Unicode in comments (×, –) — intentional
+    "RUF022", # `__all__` not sorted — we group by category for readability
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["B017"]  # `assertRaises(Exception)` OK in tests
+"tests/**" = ["B017"] # `assertRaises(Exception)` OK in tests
 
 [tool.mypy]
 python_version = "3.14"
