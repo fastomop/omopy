@@ -218,12 +218,12 @@ results — not just similar row counts.
 
 ### Test Suite
 
-OMOPy maintains a comprehensive test suite ensuring correctness:
+OMOPy maintains a comprehensive automated quality workflow to help ensure correctness:
 
-- **1,619+ unit tests** covering all 13 modules
-- Continuous integration via GitHub Actions on every push and PR
-- Ruff linting + formatting enforced (zero tolerance for lint errors)
-- Pre-commit hooks prevent non-conforming code from being committed
+- Unit and integration tests cover core functionality across the project
+- Continuous integration runs checks on repository changes
+- Ruff linting and formatting are applied as part of the development workflow
+- Pre-commit hooks help catch non-conforming changes before they are committed
 
 ### OMOP CDM Conformance
 

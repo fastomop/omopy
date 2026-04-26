@@ -8,7 +8,7 @@ t0 <- proc.time()
 con <- dbConnect(duckdb(), dbdir = DB_PATH)
 cdm <- cdmFromCon(con = con, cdmSchema = "main", writeSchema = "main", cdmName = "synthea_1k")
 
-# Coronary arteriosclerosis (317576) — 1244 records in this DB
+# Coronary arteriosclerosis (317576) — 1243 records in this DB
 cdm <- generateConceptCohortSet(
   cdm = cdm,
   conceptSet = list(coronary_artery = 317576),
