@@ -1,14 +1,14 @@
 """Benchmark 07: Cohort Survival — omopy.survival.estimate_single_event_survival()"""
-import sys; sys.path.insert(0, "benchmarks/python")
-from helpers import connect_cdm, save_result, save_timing, Timer
+
+from helpers import Timer, connect_cdm, save_result, save_timing
+
+from omopy.connector import generate_concept_cohort_set
+from omopy.generics import Codelist
+from omopy.survival import estimate_single_event_survival
 
 print("=== 07: Survival ===")
 t = Timer()
 cdm = connect_cdm()
-
-from omopy.generics import Codelist
-from omopy.connector import generate_concept_cohort_set
-from omopy.survival import estimate_single_event_survival
 
 cdm = generate_concept_cohort_set(
     cdm,

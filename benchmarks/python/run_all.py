@@ -1,4 +1,5 @@
 """Run all Python benchmark scripts sequentially."""
+
 import subprocess
 import sys
 from pathlib import Path

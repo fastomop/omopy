@@ -1,14 +1,14 @@
 """Benchmark 02: Cohort Generation — omopy.connector.generate_concept_cohort_set()"""
-import sys; sys.path.insert(0, "benchmarks/python")
-from helpers import connect_cdm, save_result, save_timing, Timer
+
 import polars as pl
+from helpers import Timer, connect_cdm, save_result, save_timing
+
+from omopy.connector import generate_concept_cohort_set
+from omopy.generics import Codelist
 
 print("=== 02: Cohort Generation ===")
 t = Timer()
 cdm = connect_cdm()
-
-from omopy.generics import Codelist
-from omopy.connector import generate_concept_cohort_set
 
 codelist = Codelist({"coronary_artery": [317576]})
 cdm = generate_concept_cohort_set(cdm, codelist, name="target_cohort")

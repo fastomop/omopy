@@ -1,16 +1,18 @@
 """Benchmark 05: Incidence — omopy.incidence.estimate_incidence()"""
-import sys; sys.path.insert(0, "benchmarks/python")
-from helpers import connect_cdm, save_result, save_timing, Timer
+
+from helpers import Timer, connect_cdm, save_result, save_timing
+
+from omopy.connector import generate_concept_cohort_set
+from omopy.generics import Codelist
+from omopy.incidence import estimate_incidence, generate_denominator_cohort_set
 
 print("=== 05: Incidence ===")
 t = Timer()
 cdm = connect_cdm()
 
-from omopy.generics import Codelist
-from omopy.connector import generate_concept_cohort_set
-from omopy.incidence import generate_denominator_cohort_set, estimate_incidence
-
-cdm = generate_concept_cohort_set(cdm, Codelist({"coronary_artery": [317576]}), name="outcome_cohort")
+cdm = generate_concept_cohort_set(
+    cdm, Codelist({"coronary_artery": [317576]}), name="outcome_cohort"
+)
 cdm = generate_denominator_cohort_set(cdm, name="denominator", days_prior_observation=0)
 
 result = estimate_incidence(

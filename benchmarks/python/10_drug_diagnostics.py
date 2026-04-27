@@ -1,13 +1,13 @@
 """Benchmark 10: Drug Exposure Diagnostics — omopy.drug_diagnostics.execute_checks()"""
-import sys; sys.path.insert(0, "benchmarks/python")
-from helpers import connect_cdm, save_result, save_timing, Timer
+
 import polars as pl
+from helpers import Timer, connect_cdm, save_result, save_timing
+
+from omopy.drug_diagnostics import execute_checks
 
 print("=== 10: Drug Diagnostics ===")
 t = Timer()
 cdm = connect_cdm()
-
-from omopy.drug_diagnostics import execute_checks
 
 result = execute_checks(
     cdm,

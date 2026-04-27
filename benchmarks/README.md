@@ -7,8 +7,7 @@ results.
 ## Prerequisites
 
 - **Python** with OMOPy installed (`uv sync`)
-- **R** 4.5+ (`C:\Users\Ian.Farr\AppData\Local\Programs\R\R-4.5.2\bin`)
-- **Java** 11+ (for Synthea data generation)
+- **R** 4.5+ available on `PATH`
 
 ## Quick Start
 
@@ -102,3 +101,19 @@ Each benchmark pair (R + Python) performs the same analysis:
 | 08 | Codelist generation | "coronary" keyword search |
 | 09 | Treatment patterns | Clopidogrel + simvastatin |
 | 10 | Drug diagnostics | Clopidogrel |
+
+## Not Benchmarked
+
+- **PregnancyIdentifier** (`omopy.pregnancy`) — a logical candidate for
+  comparison against the R
+  [PregnancyIdentifier](https://github.com/darwin-eu/PregnancyIdentifier)
+  package, but omitted because the Synthea test dataset lacks the
+  pregnancy-related OMOP concepts (gestational timing, pregnancy outcomes)
+  required by the HIPPS algorithm. Both R and Python would return empty
+  results, making the comparison uninformative.
+- **omopgenerics** (`omopy.generics`) — core type system with no
+  standalone analysis output to compare.
+- **visOmopResults** (`omopy.vis`) — formatting and plotting utilities,
+  not numerical results.
+- **TestGenerator** (`omopy.testing`) — synthetic test data generation
+  utility.

@@ -55,7 +55,11 @@ plugins:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
@@ -102,6 +106,8 @@ nav:
       - omopy.pregnancy: reference/pregnancy.md
       - omopy.testing: reference/testing.md
   - Project:
+      - R Package Mapping: r-package-mapping.md
+      - R vs Python Comparison: comparison.md
       - Rewrite Roadmap: roadmap.md
       - Audit Trail: audit-trail.md
 
