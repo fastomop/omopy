@@ -464,9 +464,15 @@ def _normalise_cohort_set(
     # String: could be a path or JSON
     if isinstance(cohort_set, str):
         p = Path(cohort_set)
-        if p.is_dir():
+        try:
+            is_dir = p.is_dir()
+            is_file = p.is_file()
+        except OSError:
+            is_dir = False
+            is_file = False
+        if is_dir:
             return read_cohort_set(p)
-        elif p.is_file():
+        elif is_file:
             return read_cohort_set(p.parent)  # treat as directory
         else:
             # Assume it's a JSON string

@@ -4,8 +4,8 @@ version = "0.1.0"
 description = "Pythonic, type-safe interface for OMOP CDM databases"
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.14"
-authors = [{ name = "DARWIN EU Coordination Centre" }]
+requires-python = ">=3.13"
+authors = [{ name = "vvcb" }]
 keywords = [
     "omop",
     "cdm",
