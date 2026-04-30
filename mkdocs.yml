@@ -1,8 +1,8 @@
 site_name: OMOPy
 site_description: Pythonic, type-safe interface for OMOP CDM databases
-site_url: https://omopy.readthedocs.io/
-repo_url: https://github.com/darwin-eu/omopy
-repo_name: darwin-eu/omopy
+site_url: https://https://fastomop.github.io/omopy/
+repo_url: https://github.com/fastomop/omopy
+repo_name: fastomop/omopy
 
 theme:
   name: material
@@ -108,4 +108,4 @@ nav:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/darwin-eu/omopy
+      link: https://github.com/fastomop/omopy

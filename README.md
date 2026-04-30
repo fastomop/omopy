@@ -1,7 +1,7 @@
 # OMOPy
 
-[![CI](https://github.com/darwin-eu/omopy/actions/workflows/ci.yml/badge.svg)](https://github.com/darwin-eu/omopy/actions/workflows/ci.yml)
-[![Docs](https://github.com/darwin-eu/omopy/actions/workflows/docs.yml/badge.svg)](https://darwin-eu.github.io/omopy)
+[![CI](https://github.com/fastomop/omopy/actions/workflows/ci.yml/badge.svg)](https://github.com/fastomop/omopy/actions/workflows/ci.yml)
+[![Docs](https://github.com/fastomop/omopy/actions/workflows/docs.yml/badge.svg)](https://darwin-eu.github.io/omopy)
 [![PyPI](https://img.shields.io/pypi/v/omopy)](https://pypi.org/project/omopy/)
 [![Python](https://img.shields.io/pypi/pyversions/omopy)](https://pypi.org/project/omopy/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -163,7 +163,7 @@ Full API documentation is available at
 
 ```bash
 # Clone and install
-git clone https://github.com/darwin-eu/omopy.git
+git clone https://github.com/fastomop/omopy.git
 cd omopy
 uv sync --all-extras --dev
 

@@ -43,7 +43,7 @@ pip install omopy[all]
 Clone the repository and install with dev dependencies:
 
 ```bash
-git clone https://github.com/darwin-eu/omopy.git
+git clone https://github.com/fastomop/omopy.git
 cd omopy
 uv sync          # installs all deps + dev tools
 uv run pytest    # run the test suite

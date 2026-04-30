@@ -36,7 +36,7 @@ OMOPy uses [uv](https://docs.astral.sh/uv/) as its package manager and
 
 ```bash
 # Clone the repository
-git clone https://github.com/darwin-eu/omopy.git
+git clone https://github.com/fastomop/omopy.git
 cd omopy
 
 # Install uv (if not already installed)
