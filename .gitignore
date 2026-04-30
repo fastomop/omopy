@@ -207,4 +207,20 @@ marimo/_lsp/
 __marimo__/
 
 scrapbooks/
+
+# Local connection scripts
+connect_databricks.py
+pytest_output.txt
+
+# Real patient data — never commit
+tests_real/
+data_real/
+
+# Generated benchmark data and cache
+data/synthea_1k.duckdb
+data/synthea_1k.duckdb.wal
+benchmarks/.eunomia_cache/
+benchmarks/r/results/
+benchmarks/python/results/
+benchmarks/report/
 .gitnexus
